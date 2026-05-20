@@ -1,0 +1,303 @@
+/* Reset */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: "Inter", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+ 
+/* Page background and A4 container */
+.page-bg {
+  width: 100%;
+  min-height: 100%;
+  background: linear-gradient(90deg, #071523 0%, #071523 70%, #0f3a48 100%);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+}
+ 
+/* A4 card */
+.a4-scrollable {
+  position: relative;
+  width: 595px;  /* A4 width in px at 72dpi */
+  height: 842px; /* A4 height */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: #ffffff;
+  background: linear-gradient(90deg, rgba(6,25,35,1) 0%, rgba(6,25,35,1) 78%, rgba(12,47,62,1) 100%);
+  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,0.03);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+ 
+/* Hide decorative blur wrapper and circles if present */
+.a4-blur-bg,
+.blur-circle {
+  display: none !important;
+}
+ 
+/* Main content: make a column so footer can be pushed to bottom */
+.main-content {
+  padding: 12px 36px 28px 36px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+ 
+  /* new: layout as column and fill the a4-scrollable height */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+ 
+/* Universal section wrapper to standardize spacing between tiles */
+.section-block {
+  margin: 18px 0;        /* consistent vertical rhythm between sections */
+  padding: 0;
+  box-sizing: border-box;
+}
+ 
+/* Reduce extra spacing for very first block so title aligns like ref */
+.main-content > .section-block:first-child {
+  margin-top: 4px;
+}
+ 
+/* Title at top - underline uses requested color rgba(221,243,255,0.5) */
+.title-centered {
+  color: #7FDBFF;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  margin: 4px 0 0 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(221, 243, 255, 0.5);
+  position: relative;
+  z-index: 2;
+}
+ 
+/* Emotional Connection section
+   - Keep bottom rule and avoid duplicate margins (spacing controlled by .section-block)
+*/
+.emotional-table {
+  display: flex;
+  width: 100%;
+  border-top: none;
+  border-bottom: 1px solid rgba(221, 243, 255, 0.5);
+  padding: 14px 0;
+  margin: 0;               /* spacing handled by section-block */
+  gap: 12px;
+  box-sizing: border-box;
+}
+ 
+.emotional-table-col {
+  flex: 1;
+  padding: 0 8px;
+  position: relative;
+  box-sizing: border-box;
+}
+ 
+/* Column separator - visible and uses requested color */
+.emotional-table-col:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: rgba(221, 243, 255, 0.5);
+  z-index: 3;
+}
+ 
+/* headings / body text to match page 1 */
+.box-heading {
+  color: #E8F6FF;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+ 
+.box-body {
+  color: #cbd5e1;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0;
+}
+ 
+/* Differentiation Statement (wide heading) */
+.differentiation-title {
+  color: #86E3FF;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  position: relative;
+  z-index: 2;
+}
+ 
+.differentiation-desc {
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 0 0;
+  max-width: 62%;
+  box-sizing: border-box;
+}
+ 
+/* Two columns on the right/bottom matching page 1 spacing */
+.two-col-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 0;
+  gap: 12px;
+  box-sizing: border-box;
+}
+ 
+.diff-left {
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 56%;
+  margin: 0;
+}
+ 
+.diff-right {
+  color: #7FDBFF;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: right;
+  max-width: 40%;
+  margin: 0;
+}
+ 
+/* Style & Tone three columns layout */
+.style-tone-three-col {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  margin: 0;
+  align-items: flex-start;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+}
+ 
+.style-tone-col {
+  flex: 1;
+  padding: 0 8px;
+  position: relative;
+  box-sizing: border-box;
+}
+ 
+.style-tone-label {
+  color: #9fb2c8;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+ 
+.style-tone-value {
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.5;
+}
+ 
+/* Column separators for style-tone columns - visible and matching color */
+.style-tone-col:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: rgba(221, 243, 255, 0.5);
+  z-index: 3;
+}
+ 
+/* Tagline section */
+.promise-section {
+  margin: 0;
+  box-sizing: border-box;
+}
+ 
+.promise-title {
+  color: #86E3FF;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+ 
+.tagline-list {
+  margin-top: 0;
+  padding-left: 18px;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.6;
+}
+ 
+/* Tagline row */
+.tagline-row {
+  margin: 0 0 8px 0;
+}
+ 
+/* Footer - push to bottom using margin-top:auto */
+.footer-quote {
+  margin-top: auto; /* key: pushes footer to bottom of .main-content */
+  text-align: center;
+  font-size: 11px;
+  color: #9fb2c8;
+  font-style: italic;
+  position: relative;
+  z-index: 2;
+  padding-top: 18px;      /* space between content and the rule */
+  padding-bottom: 8px;    /* breathing room from bottom edge */
+  width: 100%;
+  box-sizing: border-box;
+}
+ 
+/* subtle horizontal rule above footer — thin and centered */
+.footer-quote::before {
+  content: "";
+  display: block;
+  width: 85%;
+  height: 1px;
+  margin: 0 auto 12px;
+  background: rgba(221, 243, 255, 0.08); /* very subtle */
+  opacity: 1;
+}
+ 
+/* Utility: keep content above decorations */
+.a4-scrollable > *:not(.a4-blur-bg) {
+  position: relative;
+  z-index: 2;
+}
+ 
+/* Ensure decorative blurs if present stay behind */
+.a4-blur-bg, .blur-circle {
+  z-index: 0 !important;
+  pointer-events: none;
+}
+ 
+/* small responsive / print tweaks for rendering-to-pdf */
+@media print {
+  .page-bg { padding-top: 0; }
+  .a4-scrollable { box-shadow: none; border: none; }
+  .title-centered { border-bottom-width: 1px; }
+  .emotional-table { border-bottom-width: 1px; }
+  .emotional-table-col:not(:last-child)::after,
+  .style-tone-col:not(:last-child)::after {
+    width: 1px;
+    background: rgba(221, 243, 255, 0.5);
+  }
+}
+ 
+ 

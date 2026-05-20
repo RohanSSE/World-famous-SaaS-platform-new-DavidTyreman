@@ -1,0 +1,202 @@
+/* ManifestoPage.css */
+.a4-scrollable {
+  width: 595px;
+  height: 842px;
+  background: #0a1727;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  color: #FFFFFF;
+}
+
+.a4-scrollable::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(270deg, rgba(134, 227, 255, 0.3) 0%, rgba(134, 227, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.main-content {
+  width: 100%;
+  height: 100%;
+  padding: 24px 30px 20px 30px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+.manifesto-title {
+  color: #D4FBFF;
+  font-size: 14px;
+  font-weight: 400;
+  font-style: italic;
+  text-align: center;
+  margin-bottom: 18px; /* Reduced space */
+}
+
+.brand-manifesto-heading {
+  text-align: left;
+  color: #D4FBFF;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 0 0 18px 0;
+}
+
+.brand-overview-section {
+  margin-bottom: 12px;
+}
+
+.overview-box {
+  border: 1px solid #8EE5FF !important;
+  border-radius: 11px;
+  padding: 14px 19px;
+  background: #101e35 !important;
+  color: #fff;
+  margin-bottom: 6px;
+  font-size: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+
+.label {
+  color: #c1deff;
+  font-size: 14px;
+}
+
+.value {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 260;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #86E3FF; /* Updated color */
+  margin-top: 4px;
+  margin-bottom: 2px;
+  display: block;
+  text-align: left;
+}
+
+/* -- TWO-COLUMN FLEX LAYOUT -- */
+.two-col-row {
+  display: flex;
+  gap: 28px;
+  margin: 6px 0 8px 0;
+}
+
+.two-col-row > div {
+  flex: 1 1 0;
+}
+
+/* Content inside columns */
+.origin-value {
+  color: #e4fafd;
+  font-size: 11px;
+  margin-top: 4px;
+  line-height: 1.4;
+  font-weight: 200;
+  text-align: left;
+}
+
+.dna-list {
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.dna-item {
+  background: #D9FBFF;
+  color: #001A32;
+  padding: 7px 12px;
+  border: 1px solid #34D6DC;
+  border-radius: 6px;
+  font-weight: 400;
+  font-size: 12px;
+  margin-bottom: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.assumptions-section {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.assumptions-list {
+  margin-top: 3px;
+}
+
+.assumption-item {
+  color: #e4fafd;
+  font-size: 11px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.brand-promise-section {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+.promise-value {
+  color: #e4fafd;
+  font-size: 11px;
+  margin-top: 4px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.brand-emotional-section {
+  margin-top: 12px;
+}
+
+.emotional-value {
+  color: #e4fafd;
+  font-size: 12px;
+  margin-top: 7px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.brand-differentiation-section {
+  margin-top: 12px;
+}
+
+.differentiation-value {
+  color: #e4fafd;
+  font-size: 12px;
+  margin-top: 7px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.brand-tagline-section {
+  margin-top: 12px;
+}
+
+.tagline-value {
+  color: #e4fafd;
+  font-size: 12px;
+  margin-top: 7px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.tagline-value div {
+  margin-bottom: 4px;
+}
+

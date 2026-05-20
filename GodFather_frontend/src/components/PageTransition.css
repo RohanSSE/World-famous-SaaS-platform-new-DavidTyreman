@@ -1,0 +1,24 @@
+/* Smooth page content fade in - very subtle */
+.page-content {
+  opacity: 0;
+  animation: smoothFadeIn 0.2s ease-out forwards;
+}
+
+.page-content.loaded {
+  opacity: 1;
+}
+
+/* Very subtle fade with no transform movement */
+@keyframes smoothFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Remove any transform movement for no visible "jump" */
+.page-content.loading {
+  opacity: 0;
+}

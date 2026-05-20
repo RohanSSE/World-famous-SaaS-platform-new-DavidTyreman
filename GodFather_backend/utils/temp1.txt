@@ -1,0 +1,9 @@
+ssh username@remote-server-ip 
+
+
+
+ssh lnjstaging@20.197.2.65
+
+	
+
+latest commit 0ca0faefb0d37960866c44dc9737b3e9ff356e3b on godfather

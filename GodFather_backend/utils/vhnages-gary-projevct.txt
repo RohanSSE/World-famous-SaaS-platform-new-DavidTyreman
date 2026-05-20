@@ -1,0 +1,59 @@
+Backend
+New field on Gemini config
+Add boundary_filter_rules (JSON) on GeminiConfiguration with 6 optional lists: approved postcodes, forbidden postcodes, forbidden suburbs, forbidden streets, blacklisted properties, accommodation keywords.
+API
+No new endpoints. Existing GET/PUT gemini/configs/{id}/ will return and accept boundary_filter_rules (serializer + migration).
+Filter + prompt using rules
+response_filter.py:
+get_effective_boundary_lists(overrides) → merge DB overrides with code defaults.
+build_boundary_prompt_instruction_from_lists(lists) → build prompt text from those lists.
+filter_response_text(..., overrides=None) and filter_tool_data_by_boundary(..., overrides=None) use these effective lists when overrides is passed.
+services.py:
+Pass config.boundary_filter_rules into build_unified_gemini_base and into both filter calls so prompt and post-response filter use the same rules (from DB or code defaults).
+Frontend
+New section in Gemini Settings
+In Edit (and Create) Gemini Configuration screens, add a “Geographic / Boundary Filter” section with 6 inputs (one per list), e.g. multiline or comma-separated:
+Approved postcodes
+Forbidden postcodes
+Forbidden suburbs
+Forbidden streets
+Blacklisted properties
+Accommodation keywords
+Behaviour
+Load: Read configData.boundary_filter_rules and show the six lists in the inputs.
+Save: Convert inputs to six arrays, put them in boundary_filter_rules, and send with the rest of the config in the existing update (PUT) / create (POST) reques
+
+In one line:
+Backend stores and exposes one JSON field of six lists on Gemini config and uses it for prompt + filter; frontend adds one section with six fields to view/edit those lists on the existing Gemini Settings edit/create forms.
+
+Summary of what was implemented:
+Backend
+Model 1
+Added nullable boundary_filter_rules JSONField on GeminiConfiguration (default None).
+Stored value: { approved_postcodes, forbidden_postcodes, forbidden_suburbs, forbidden_streets, blacklisted_properties, accommodation_keywords } (each a list of strings).
+Migration 2
+Adds the boundary_filter_rules field.
+Run when your env has dependencies: python manage.py migrate gemini.
+Serializer 3
+Included boundary_filter_rules in GeminiConfigurationSerializer so GET/PUT use it.
+Response filter 4
+get_effective_boundary_lists(overrides) – merges admin overrides with code defaults; returns the six sets.
+build_boundary_prompt_instruction_from_lists(lists_dict) – builds the boundary prompt block from those lists.
+filter_response_text(body, overrides=None) and filter_tool_data_by_boundary(tool_data, overrides=None) – optional overrides; when set, use effective lists from overrides.
+Services 5
+build_unified_gemini_base(..., boundary_filter_rules=None) – uses boundary_filter_rules to build the boundary instruction (or code default).
+process_user_message – passes config.boundary_filter_rules into build_unified_gemini_base and into both filter calls.
+Frontend
+Edit Gemini Configuration 6
+New “Geographic / Boundary Filter” section with six multiline fields (one per list).
+Values: newline- or comma-separated; parsed to arrays and saved as boundary_filter_rules on update.
+Loads configData.boundary_filter_rules into the form; empty/missing keys fall back to [].
+Create Gemini Configuration 7
+Same “Geographic / Boundary Filter” section and the same six fields.
+Create payload includes boundary_filter_rules (default empty arrays).
+Behaviour
+No overrides: boundary_filter_rules is null or empty → prompt and filters use existing code defaults; behaviour unchanged.
+With overrides: Admin fills one or more lists in Gemini Settings → only non-empty lists override; missing/empty lists still use code defaults.
+Existing behaviour: No changes to other config fields, prompts, or WhatsApp flow; only the new field and UI were added.
+Run the migration when your backend env is ready (e.g. after pip install python-decouple or in your normal run environment):
+cd Backend && python manage.py migrate gemin
