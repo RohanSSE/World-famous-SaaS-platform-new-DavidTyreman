@@ -1,0 +1,308 @@
+/* Progress Celebration Container */
+.progress-celebration-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Progress Celebration Content */
+.progress-celebration-content {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  padding: 40px 50px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.1);
+  min-width: 400px;
+  max-width: 500px;
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.4s ease-out;
+  pointer-events: auto;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.progress-celebration-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    #3959E5 0%, 
+    #C0F9FF 25%, 
+    #8B5CF6 50%, 
+    #EC6251 75%, 
+    #3959E5 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Header */
+.progress-celebration-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.celebration-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.celebration-icon svg {
+  width: 100%;
+  height: 100%;
+  color: #4FC3F7;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.check-circle {
+  animation: drawCircle 0.6s ease-out forwards;
+  stroke-dasharray: 62.83;
+  stroke-dashoffset: 62.83;
+}
+
+@keyframes drawCircle {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.check-mark {
+  animation: drawCheck 0.4s ease-out 0.3s forwards;
+  stroke-dasharray: 10;
+  stroke-dashoffset: 10;
+}
+
+@keyframes drawCheck {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Spinner */
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(79, 195, 247, 0.2);
+  border-top-color: #4FC3F7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.celebration-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #4FC3F7 0%, #86E3FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: titlePulse 0.5s ease-out;
+}
+
+@keyframes titlePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.celebration-subtitle {
+  font-size: 16px;
+  color: #C0F9FF;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* Progress Bar */
+.progress-bar-wrapper {
+  position: relative;
+  margin-top: 20px;
+}
+
+.progress-bar-background {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    #3959E5 0%, 
+    #4FC3F7 50%, 
+    #86E3FF 100%);
+  border-radius: 10px;
+  position: relative;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 20px rgba(79, 195, 247, 0.5);
+  overflow: hidden;
+}
+
+.progress-bar-fill.complete {
+  background: linear-gradient(90deg, 
+    #4FC3F7 0%, 
+    #86E3FF 50%, 
+    #4FC3F7 100%);
+  background-size: 200% 100%;
+  animation: progressComplete 1s ease-in-out infinite;
+}
+
+@keyframes progressComplete {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.progress-bar-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.4) 50%, 
+    transparent 100%);
+  animation: shine 2s infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.progress-percentage {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #86E3FF;
+  text-shadow: 0 0 10px rgba(134, 227, 255, 0.5);
+}
+
+/* Celebration Particles */
+.celebration-particles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  pointer-events: none;
+}
+
+.celebration-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, #4FC3F7 0%, #86E3FF 100%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: particleBurst 1s ease-out forwards;
+  box-shadow: 0 0 10px rgba(79, 195, 247, 0.8);
+}
+
+@keyframes particleBurst {
+  0% {
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(
+      calc(-50% + var(--x)),
+      calc(-50% + var(--y))
+    ) scale(1) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .progress-celebration-content {
+    min-width: 90%;
+    padding: 30px 25px;
+  }
+  
+  .celebration-title {
+    font-size: 24px;
+  }
+}

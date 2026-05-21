@@ -1,0 +1,554 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+@keyframes panelFadeIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+@keyframes particleDrift {
+  0%   { transform: translateY(0px) translateX(0px); opacity: 0.4; }
+  50%  { transform: translateY(-18px) translateX(8px); opacity: 0.7; }
+  100% { transform: translateY(0px) translateX(0px); opacity: 0.4; }
+}
+@keyframes rotateSlow {
+  to { transform: rotate(360deg); }
+}
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes modalSlideIn {
+  from { opacity: 0; transform: translateY(40px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+* { box-sizing: border-box; }
+button:focus { outline: none; }
+
+/* ── Modal Overlay ── */
+/* .bjm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 1, 22, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: modalFadeIn 0.3s ease forwards;
+} */
+
+/* ── Modal Box ── */
+/* .bjm-modal {
+  position: relative;
+  width: 100%;
+  max-width: 1080px;
+  max-height: 100vh;
+  overflow-y: auto;
+  background: #000122;
+  background-image: radial-gradient(ellipse at top left, #1a2847 0%, #000122 50%);
+  border: 1px solid rgba(57, 89, 229, 0.2);
+  border-radius: 24px;
+  padding: 48px 32px 56px;
+  color: #fff;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  animation: modalSlideIn 0.45s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+  box-shadow: 0 0 80px rgba(57, 89, 229, 0.18), 0 40px 100px rgba(0, 0, 0, 0.7);
+} */
+
+/* Close button */
+.bjm-close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+.bjm-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* ── Background particles ── */
+.bjm-bg-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* ── Header ── */
+/* .bjm-header {
+  text-align: center;
+  margin-bottom: 48px;
+  position: relative;
+  z-index: 1;
+} */
+.bjm-header-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #8ee5ff;
+  background: rgba(57, 89, 229, 0.12);
+  border: 1px solid rgba(57, 89, 229, 0.3);
+  border-radius: 99px;
+  padding: 6px 18px;
+  margin-bottom: 20px;
+}
+.bjm-heading {
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  font-size: clamp(24px, 4vw, 42px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 14px;
+  color: #fff;
+}
+.bjm-heading-accent {
+  background: linear-gradient(135deg, #3959E5 0%, #8ee5ff 60%, #C0F9FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.bjm-subheading {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 300;
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Main content ── */
+.bjm-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  position: relative;
+  z-index: 1;
+  align-items: stretch;
+}
+
+
+/* ── Horizontal Steps Row ── */
+.bjm-steps-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  position: relative;
+
+  overflow-x: auto;
+  padding-bottom: 10px;
+
+  scrollbar-width: none;
+}
+
+.bjm-steps-row::-webkit-scrollbar {
+  display: none;
+}
+
+
+
+/* Each step column */
+.bjm-step-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  padding: 0 8px;
+
+  min-width: 140px;
+  flex: 0 0 auto;
+}
+
+
+/* Horizontal connector track between steps */
+.bjm-connector-track-h {
+  position: absolute;
+  top: 20px; /* vertically centered on the badge */
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 1px;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bjm-connector-fill-h {
+  height: 100%;
+  width: 0%;
+  border-radius: 1px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Step top area: badge + connector */
+.bjm-step-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  margin-bottom: 12px;
+  justify-content: center;
+}
+
+/* Number badge */
+.bjm-num-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  transition: all 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+  position: relative;
+  z-index: 1;
+}
+
+/* Icon wrap */
+.bjm-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: all 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+/* Text area below icon */
+.bjm-step-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  padding: 0 2px;
+}
+.bjm-step-label-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.bjm-step-label {
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  transition: color 0.25s ease;
+  text-align: center;
+}
+.bjm-step-tagline {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  transition: color 0.25s ease;
+  text-align: center;
+}
+.bjm-optional-badge {
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  letter-spacing: 0.08em;
+  color: #8ee5ff;
+  background: rgba(57, 89, 229, 0.15);
+  border: 1px solid rgba(57, 89, 229, 0.3);
+  border-radius: 99px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+
+/* ── Detail Panel ── */
+.bjm-detail-panel {
+  width: 100%;
+  position: relative;
+}
+.bjm-detail-panel-inner {
+  background: rgba(14, 18, 42, 0.85);
+  border: 1px solid;
+  border-radius: 20px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 28px 28px 24px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* Watermark number */
+/* .bjm-watermark-num {
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  font-size: 100px;
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+} */
+
+/* Top stripe */
+.bjm-panel-top-stripe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 20px 20px 0 0;
+}
+
+/* Icon in panel */
+.bjm-panel-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+/* Panel text */
+.bjm-panel-body {
+  flex: 1;
+  min-width: 0;
+}
+.bjm-panel-step-num {
+  font-size: 10px;
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.25);
+  margin-bottom: 6px;
+}
+.bjm-panel-title {
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  line-height: 1.2;
+  color: #fff;
+}
+.bjm-panel-tagline {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+.bjm-panel-divider {
+  height: 1px;
+  width: 100%;
+  margin-bottom: 14px;
+  border-radius: 1px;
+}
+.bjm-panel-description {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.7;
+  margin: 0 0 0;
+  font-weight: 300;
+}
+.bjm-panel-optional {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 10px 14px;
+  border: 1px solid;
+  border-radius: 10px;
+  background: rgba(57, 89, 229, 0.06);
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+/* Panel right: nav + dots */
+.bjm-panel-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.bjm-progress-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.bjm-dot {
+  height: 8px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.bjm-panel-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bjm-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.bjm-nav-label {
+  font-size: 12px;
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* Empty state */
+.bjm-detail-panel-empty {
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.015);
+}
+.bjm-empty-icon {
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.08);
+  animation: rotateSlow 12s linear infinite;
+  display: block;
+}
+.bjm-empty-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.2);
+  text-align: center;
+  line-height: 1.7;
+  margin: 0;
+  font-style: italic;
+}
+
+.bjm-fullscreen {
+  min-height: 100vh;
+  width: 100%;
+  background: #000122;
+  background-image: radial-gradient(ellipse at top left, #1a2847 0%, #000122 50%);
+  padding: 20px 40px;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow-x: hidden;
+}
+
+
+.bjm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 30px;
+}
+
+.bjm-header-side {
+  flex: 1;
+}
+
+.bjm-header-center {
+  flex: 2;
+  text-align: center;
+}
+
+.bjm-header-side.right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+
+.bjm-continue-btn {
+  background: linear-gradient(135deg, #3959E5, #507FEC, #8EE5FF);
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-family: 'NeueHaasGrotTextRound', sans-serif;
+  transition: all 0.25s ease;
+}
+
+.bjm-continue-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(57, 89, 229, 0.4);
+}
+
+.bjm-title {
+  font-size: clamp(24px, 4vw, 42px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 14px;
+  background: linear-gradient(135deg, #3959E5 0%, #8ee5ff 60%, #C0F9FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+
+/* Align tagline + optional in one row */
+.bjm-panel-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap; /* prevents breaking layout on smaller screens */
+  margin-bottom: 14px;
+}
+
+.bjm-panel-optional-inline {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border: 1px solid;
+  border-radius: 999px;
+  background: rgba(57, 89, 229, 0.06);
+  line-height: 1.4;
+  white-space: nowrap;
+}

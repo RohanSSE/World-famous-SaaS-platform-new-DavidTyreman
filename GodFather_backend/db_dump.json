@@ -1,0 +1,3752 @@
+[
+  {
+    "model": "admin.logentry",
+    "pk": 1,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-01-31T10:57:27.450Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 8,
+      "object_id": "2",
+      "object_repr": "arpita@gmail.com",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 2,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-01-31T11:01:06.553Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 14,
+      "object_id": "4",
+      "object_repr": "ADVANT - arpita@gmail.com",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 3,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-01-31T11:02:56.870Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Name\"]}}]",
+      "content_type": 10,
+      "object_id": "1",
+      "object_repr": "client",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 4,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-01-31T11:03:22.897Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Role\"]}}]",
+      "content_type": 8,
+      "object_id": "2",
+      "object_repr": "arpita@gmail.com",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 5,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T04:59:27.444Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\", \"Category\", \"Order\", \"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "2",
+      "object_repr": "Q1: What is your brand or company name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 6,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T04:59:57.500Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\", \"Category\", \"Order\", \"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "2",
+      "object_repr": "Q2: What type of business do you run?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 7,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:00:53.932Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\", \"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "1",
+      "object_repr": "Q1: What is your brand or company name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 8,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:02:03.848Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "2",
+      "object_repr": "Q2: What type of business do you run?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 9,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:03:33.773Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "3",
+      "object_repr": "Q3: What do you offer to your customers?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 10,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:04:13.057Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "3",
+      "object_repr": "Q3: What do you offer to your customers?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 11,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:05:26.173Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "4",
+      "object_repr": "Q4: Who are your main customers?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 12,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:05:34.248Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "4",
+      "object_repr": "Q4: Who are your main customers?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 13,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:06:07.926Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "5",
+      "object_repr": "Q5: What problem do you solve for them?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 14,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:12:45.036Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "2",
+      "object_repr": "Q2: What type of business do you run?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 15,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:14:33.611Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "2",
+      "object_repr": "Q2: What type of business do you run?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 16,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:15:26.378Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "3",
+      "object_repr": "Q3: What do you offer to your customers?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 17,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:29:33.983Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "5",
+      "object_repr": "Q5: What problem do you solve for them?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 18,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:30:28.272Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "6",
+      "object_repr": "Q6: What motivated you to start this business?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 19,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:31:18.367Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "7",
+      "object_repr": "Q7: In one sentence, what do you believe your business",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 20,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:32:54.470Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "7",
+      "object_repr": "Q7: In one sentence, what do you believe your business",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 21,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:32:59.444Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "7",
+      "object_repr": "Q7: In one sentence, what do you believe your business",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 22,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:33:59.198Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "8",
+      "object_repr": "Q8: Right now, is your business seen as a vendor or a ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 23,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:36:47.525Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "9",
+      "object_repr": "Q9: What frustrates you about how the market reacts to",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 24,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:37:30.307Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "10",
+      "object_repr": "Q10: Where do you feel your business is undervalued or ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 25,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:38:50.102Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "11",
+      "object_repr": "Q11: What makes your brand different from others?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 26,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:39:39.656Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "12",
+      "object_repr": "Q12: What do you want people to feel or think about you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 27,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:40:18.346Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "13",
+      "object_repr": "Q13: Where do you want your brand to go in the future?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 28,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:41:12.892Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "14",
+      "object_repr": "Q14: What felt broken or wrong in your industry when yo",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 29,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:42:43.078Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "15",
+      "object_repr": "Q15: What belief do you have that most competitors don\ufffd",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 30,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:43:47.151Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "16",
+      "object_repr": "Q16: If products disappear, what IDEA does your busines",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 31,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:43:58.563Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "16",
+      "object_repr": "Q16: If products disappear, what IDEA does your busines",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 32,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:44:39.614Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "17",
+      "object_repr": "Q17: \ufffdThe world would be better if people ______.\ufffd",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 33,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:45:34.282Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "18",
+      "object_repr": "Q18: What change do you want your customers to experien",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 34,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:46:11.191Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "19",
+      "object_repr": "Q19: What does your brand stand against or refuse to ac",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 35,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-02T05:46:59.689Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "20",
+      "object_repr": "Q20: What are the three non-negotiable values of your b",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 36,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T05:52:00.004Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "4",
+      "object_repr": "Q4: Who are your main customers?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 37,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T09:40:08.131Z",
+      "change_message": "[]",
+      "content_type": 14,
+      "object_id": "4",
+      "object_repr": "ADVANT - arpita@gmail.com",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 38,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-02T10:07:25.298Z",
+      "change_message": "[]",
+      "content_type": 13,
+      "object_id": "4",
+      "object_repr": "Answer object (4)",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 39,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-11T07:43:19.121Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Order\"]}}]",
+      "content_type": 12,
+      "object_id": "2",
+      "object_repr": "Q1: What type of business do you run?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 40,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-11T07:44:36.368Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Order\"]}}]",
+      "content_type": 12,
+      "object_id": "2",
+      "object_repr": "Q2: What type of business do you run?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 41,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T06:49:08.251Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "21",
+      "object_repr": "Q1: What motivated you to start this business in the f",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 42,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T06:49:49.963Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Category\", \"Order\"]}}]",
+      "content_type": 12,
+      "object_id": "1",
+      "object_repr": "Q21: What is your brand or company name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 43,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T06:50:00.601Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "21",
+      "object_repr": "Q1: What motivated you to start this business in the f",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 44,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T06:50:35.515Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "22",
+      "object_repr": "Q22: In one sentence, what do you currently believe you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 45,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.418Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "2",
+      "object_repr": "Q2: What type of business do you run?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 46,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.427Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "3",
+      "object_repr": "Q3: What do you offer to your customers?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 47,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.432Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "4",
+      "object_repr": "Q4: Who are your main customers?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 48,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.438Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "6",
+      "object_repr": "Q6: What motivated you to start this business?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 49,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.443Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "7",
+      "object_repr": "Q7: In one sentence, what do you believe your business",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 50,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.448Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "8",
+      "object_repr": "Q8: Right now, is your business seen as a vendor or a ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 51,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.454Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "9",
+      "object_repr": "Q9: What frustrates you about how the market reacts to",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 52,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.459Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "11",
+      "object_repr": "Q11: What makes your brand different from others?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 53,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.464Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "12",
+      "object_repr": "Q12: What do you want people to feel or think about you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 54,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.468Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "13",
+      "object_repr": "Q13: Where do you want your brand to go in the future?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 55,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.472Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "14",
+      "object_repr": "Q14: What felt broken or wrong in your industry when yo",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 56,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.477Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "15",
+      "object_repr": "Q15: What belief do you have that most competitors don\ufffd",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 57,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.481Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "16",
+      "object_repr": "Q16: If products disappear, what IDEA does your busines",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 58,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.487Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "17",
+      "object_repr": "Q17: \ufffdThe world would be better if people ______.\ufffd",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 59,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.491Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "18",
+      "object_repr": "Q18: What change do you want your customers to experien",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 60,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.496Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "19",
+      "object_repr": "Q19: What does your brand stand against or refuse to ac",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 61,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.502Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "20",
+      "object_repr": "Q20: What are the three non-negotiable values of your b",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 62,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:13.507Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "22",
+      "object_repr": "Q22: In one sentence, what do you currently believe you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 63,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:39.465Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "21",
+      "object_repr": "Q1: What motivated you to start this business in the f",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 64,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:39.471Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "5",
+      "object_repr": "Q5: What problem do you solve for them?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 65,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:39.477Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "10",
+      "object_repr": "Q10: Where do you feel your business is undervalued or ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 66,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T07:04:39.482Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "1",
+      "object_repr": "Q21: What is your brand or company name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 67,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T07:09:30.905Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "23",
+      "object_repr": "Q1: What is your name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 68,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T07:09:48.175Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "24",
+      "object_repr": "Q2: What is your brand's name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 69,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T07:12:41.257Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\"]}}]",
+      "content_type": 12,
+      "object_id": "23",
+      "object_repr": "Q1: What\ufffds your name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 70,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T07:12:45.387Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\"]}}]",
+      "content_type": 12,
+      "object_id": "24",
+      "object_repr": "Q2: What\ufffds your brand or company called?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 71,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T07:13:00.551Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "25",
+      "object_repr": "Q3: What industry or business are you in?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 72,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T07:13:19.046Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "26",
+      "object_repr": "Q4: Do you have a website? (optional)",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 73,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T07:14:05.967Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "27",
+      "object_repr": "Q4: Where are you based? (optional)",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 74,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T07:14:49.220Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Order\"]}}]",
+      "content_type": 12,
+      "object_id": "27",
+      "object_repr": "Q5: Where are you based? (optional)",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 75,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T07:15:27.860Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "28",
+      "object_repr": "Q6: What motivated you to start this business in the f",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 76,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T07:15:58.903Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "29",
+      "object_repr": "Q7: In one sentence, what do you currently believe you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 77,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T09:44:58.750Z",
+      "change_message": "",
+      "content_type": 14,
+      "object_id": "6",
+      "object_repr": "Brandsugge - admin@example.com",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 78,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T09:44:58.758Z",
+      "change_message": "",
+      "content_type": 14,
+      "object_id": "5",
+      "object_repr": "ABcdefijij - admin@example.com",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 79,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T09:49:31.015Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Category\"]}}]",
+      "content_type": 12,
+      "object_id": "29",
+      "object_repr": "Q7: In one sentence, what do you currently believe you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 80,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T09:49:35.861Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Category\"]}}]",
+      "content_type": 12,
+      "object_id": "28",
+      "object_repr": "Q6: What motivated you to start this business in the f",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 81,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T10:10:13.674Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "23",
+      "object_repr": "Q1: What\ufffds your name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 82,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T10:10:13.684Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "24",
+      "object_repr": "Q2: What\ufffds your brand or company called?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 83,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T10:10:13.689Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "25",
+      "object_repr": "Q3: What industry or business are you in?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 84,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T10:10:13.694Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "26",
+      "object_repr": "Q4: Do you have a website? (optional)",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 85,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T10:10:13.699Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "27",
+      "object_repr": "Q5: Where are you based? (optional)",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 86,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T10:10:13.704Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "28",
+      "object_repr": "Q6: What motivated you to start this business in the f",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 87,
+    "fields": {
+      "action_flag": 3,
+      "action_time": "2026-02-12T10:10:13.709Z",
+      "change_message": "",
+      "content_type": 12,
+      "object_id": "29",
+      "object_repr": "Q7: In one sentence, what do you currently believe you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 88,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T10:11:57.959Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "30",
+      "object_repr": "Q1: What\ufffds your name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 89,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T10:12:03.992Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "30",
+      "object_repr": "Q1: What\ufffds your name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 90,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T10:12:23.170Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "31",
+      "object_repr": "Q1: What\ufffds your brand or company called?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 91,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T10:33:22.701Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Order\"]}}]",
+      "content_type": 12,
+      "object_id": "31",
+      "object_repr": "Q2: What\ufffds your brand or company called?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 92,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T10:33:53.926Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "32",
+      "object_repr": "Q3: What industry or business are you in?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 93,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T10:34:15.760Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "33",
+      "object_repr": "Q4: Do you have a website? (optional)",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 94,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T10:34:28.529Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "34",
+      "object_repr": "Q5: Where are you based? (optional)",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 95,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T10:35:00.439Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "35",
+      "object_repr": "Q6: What motivated you to start this business in the f",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 96,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T11:03:46.310Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "36",
+      "object_repr": "Q7: In one sentence, what do you currently believe you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 97,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T11:03:52.866Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "36",
+      "object_repr": "Q7: In one sentence, what do you currently believe you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 98,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T11:17:11.445Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "37",
+      "object_repr": "Q8: Right now, how do you think your business is perce",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 99,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T11:17:37.997Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "38",
+      "object_repr": "Q9: What frustrates you most about how the market resp",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 100,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T11:17:43.908Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Stage\"]}}]",
+      "content_type": 12,
+      "object_id": "37",
+      "object_repr": "Q8: Right now, how do you think your business is perce",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 101,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T11:18:05.679Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\"]}}]",
+      "content_type": 12,
+      "object_id": "30",
+      "object_repr": "Q1: What\ufffds your good name?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 102,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T11:18:28.756Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "38",
+      "object_repr": "Q9: What frustrates you most about how the market resp",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 103,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T11:19:31.845Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "39",
+      "object_repr": "Q10: Where do you feel your business is misunderstood o",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 104,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T11:21:25.814Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "40",
+      "object_repr": "Q11: When you entered your industry, what felt broken, ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 105,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T11:22:39.115Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "41",
+      "object_repr": "Q12: What belief do you hold about your industry that m",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 106,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T11:22:43.482Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "40",
+      "object_repr": "Q11: When you entered your industry, what felt broken, ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 107,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-12T11:23:34.329Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "42",
+      "object_repr": "Q13: Strip away products and services \ufffd what IDEA does ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 108,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T11:23:38.878Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "42",
+      "object_repr": "Q13: Strip away products and services \ufffd what IDEA does ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 109,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T12:50:59.111Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\"]}}]",
+      "content_type": 12,
+      "object_id": "31",
+      "object_repr": "Q2: What is your current brand slogan or tagline?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 110,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T12:51:08.291Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\"]}}]",
+      "content_type": 12,
+      "object_id": "32",
+      "object_repr": "Q3: What\ufffds your brand or company called?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 111,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T12:51:18.196Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\"]}}]",
+      "content_type": 12,
+      "object_id": "31",
+      "object_repr": "Q2: What\ufffds your brand or company called?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 112,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T12:51:27.204Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\"]}}]",
+      "content_type": 12,
+      "object_id": "32",
+      "object_repr": "Q3: What is your current brand slogan or tagline?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 113,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T12:51:39.203Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\"]}}]",
+      "content_type": 12,
+      "object_id": "33",
+      "object_repr": "Q4: What industry or business are you in?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 114,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-12T12:51:53.555Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\"]}}]",
+      "content_type": 12,
+      "object_id": "34",
+      "object_repr": "Q5: Do you have a website? (optional)",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 115,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T07:30:13.704Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "35",
+      "object_repr": "Q6: What motivated you to start this business in the f",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 116,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T07:30:43.001Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "36",
+      "object_repr": "Q7: In one sentence, what do you currently believe you",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 117,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T07:32:54.058Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\", \"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "37",
+      "object_repr": "Q8: When you entered your industry, what felt broken, ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 118,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T07:34:02.995Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\", \"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "38",
+      "object_repr": "Q9: Strip away products and services \ufffd what IDEA does ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 119,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T07:36:34.213Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\", \"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "39",
+      "object_repr": "Q10: Because of your brand, what change should your cus",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 120,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T07:37:59.697Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\", \"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "40",
+      "object_repr": "Q11: What three values are non-negotiable in how you do",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 121,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T07:39:01.430Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\", \"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "41",
+      "object_repr": "Q12: Who do you most want to serve \ufffd not just who is wi",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 122,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T07:40:10.303Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Text\", \"Help text\"]}}]",
+      "content_type": 12,
+      "object_id": "42",
+      "object_repr": "Q13: What can someone always expect when they choose yo",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 123,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T07:42:51.003Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "43",
+      "object_repr": "Q14: Right now, how do you think your business is perce",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 124,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:39:01.500Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "44",
+      "object_repr": "Q16: What frustrates you most about how the market resp",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 125,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T08:39:16.203Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Order\"]}}]",
+      "content_type": 12,
+      "object_id": "44",
+      "object_repr": "Q15: What frustrates you most about how the market resp",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 126,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:41:55.861Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "45",
+      "object_repr": "Q16: Where do you feel your business is misunderstood o",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 127,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:44:03.497Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "46",
+      "object_repr": "Q17: What belief do you hold about your industry that m",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 128,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:46:26.706Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "47",
+      "object_repr": "Q18: Finish this sentence:\r\n\ufffdThe world would be better ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 129,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:47:21.417Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "48",
+      "object_repr": "Q19: What is your brand willing to challenge, reject, o",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 130,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:48:20.518Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "49",
+      "object_repr": "Q20: When your brand enters a room, what happens to the",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 131,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:48:53.569Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "50",
+      "object_repr": "Q21: If your brand were a person, how would people desc",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 132,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:51:04.577Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "51",
+      "object_repr": "Q22: After working with you, how should your client fee",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 133,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:51:46.782Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "52",
+      "object_repr": "Q23: What do you do differently that actually matters t",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 134,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:53:41.699Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "53",
+      "object_repr": "Q24: What do you refuse to compete on?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 135,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T08:54:29.705Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "54",
+      "object_repr": "Q24: Five years from now, what do you want people to sa",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 136,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T08:54:39.259Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Order\"]}}]",
+      "content_type": 12,
+      "object_id": "54",
+      "object_repr": "Q25: Five years from now, what do you want people to sa",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 137,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T08:57:45.570Z",
+      "change_message": "[{\"changed\": {\"fields\": [\"Stage\"]}}]",
+      "content_type": 12,
+      "object_id": "51",
+      "object_repr": "Q22: After working with you, how should your client fee",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 138,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T10:34:46.288Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "55",
+      "object_repr": "Q26: What is your ideal client afraid to admit out loud",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 139,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T10:35:47.339Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "56",
+      "object_repr": "Q27: Who is your brand intentionally not for?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 140,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T10:35:54.035Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "55",
+      "object_repr": "Q26: What is your ideal client afraid to admit out loud",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 141,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T10:35:59.052Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "56",
+      "object_repr": "Q27: Who is your brand intentionally not for?",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 142,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T11:04:07.545Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "57",
+      "object_repr": "Q28: What would make someone recommend you without hesi",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 143,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T11:04:59.842Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "58",
+      "object_repr": "Q29: What kind of work do you want more of \ufffd and what d",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 144,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T11:06:18.975Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "59",
+      "object_repr": "Q30: What do you know you\ufffdve been avoiding in your busi",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 145,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T11:07:19.962Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "60",
+      "object_repr": "Q31: Where are you currently playing smaller than you s",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 146,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T11:08:07.842Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "61",
+      "object_repr": "Q32: Are you willing to polarize your market in order t",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 147,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T11:11:40.760Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "62",
+      "object_repr": "Q33: If you fully committed to this brand direction, wh",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 148,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T11:12:24.320Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "63",
+      "object_repr": "Q34: On a scale of 1\ufffd10, how ready are you to act like ",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 149,
+    "fields": {
+      "action_flag": 1,
+      "action_time": "2026-02-13T11:13:10.889Z",
+      "change_message": "[{\"added\": {}}]",
+      "content_type": 12,
+      "object_id": "64",
+      "object_repr": "Q35: Do you give me permission to challenge your thinki",
+      "user": 1
+    }
+  },
+  {
+    "model": "admin.logentry",
+    "pk": 150,
+    "fields": {
+      "action_flag": 2,
+      "action_time": "2026-02-13T11:13:16.399Z",
+      "change_message": "[]",
+      "content_type": 12,
+      "object_id": "64",
+      "object_repr": "Q35: Do you give me permission to challenge your thinki",
+      "user": 1
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 1,
+    "fields": {
+      "codename": "add_logentry",
+      "content_type": 1,
+      "name": "Can add log entry"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 2,
+    "fields": {
+      "codename": "change_logentry",
+      "content_type": 1,
+      "name": "Can change log entry"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 3,
+    "fields": {
+      "codename": "delete_logentry",
+      "content_type": 1,
+      "name": "Can delete log entry"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 4,
+    "fields": {
+      "codename": "view_logentry",
+      "content_type": 1,
+      "name": "Can view log entry"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 5,
+    "fields": {
+      "codename": "add_permission",
+      "content_type": 2,
+      "name": "Can add permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 6,
+    "fields": {
+      "codename": "change_permission",
+      "content_type": 2,
+      "name": "Can change permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 7,
+    "fields": {
+      "codename": "delete_permission",
+      "content_type": 2,
+      "name": "Can delete permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 8,
+    "fields": {
+      "codename": "view_permission",
+      "content_type": 2,
+      "name": "Can view permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 9,
+    "fields": {
+      "codename": "add_group",
+      "content_type": 3,
+      "name": "Can add group"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 10,
+    "fields": {
+      "codename": "change_group",
+      "content_type": 3,
+      "name": "Can change group"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 11,
+    "fields": {
+      "codename": "delete_group",
+      "content_type": 3,
+      "name": "Can delete group"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 12,
+    "fields": {
+      "codename": "view_group",
+      "content_type": 3,
+      "name": "Can view group"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 13,
+    "fields": {
+      "codename": "add_contenttype",
+      "content_type": 4,
+      "name": "Can add content type"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 14,
+    "fields": {
+      "codename": "change_contenttype",
+      "content_type": 4,
+      "name": "Can change content type"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 15,
+    "fields": {
+      "codename": "delete_contenttype",
+      "content_type": 4,
+      "name": "Can delete content type"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 16,
+    "fields": {
+      "codename": "view_contenttype",
+      "content_type": 4,
+      "name": "Can view content type"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 17,
+    "fields": {
+      "codename": "add_session",
+      "content_type": 5,
+      "name": "Can add session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 18,
+    "fields": {
+      "codename": "change_session",
+      "content_type": 5,
+      "name": "Can change session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 19,
+    "fields": {
+      "codename": "delete_session",
+      "content_type": 5,
+      "name": "Can delete session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 20,
+    "fields": {
+      "codename": "view_session",
+      "content_type": 5,
+      "name": "Can view session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 21,
+    "fields": {
+      "codename": "add_dashboard",
+      "content_type": 6,
+      "name": "Can add dashboard"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 22,
+    "fields": {
+      "codename": "change_dashboard",
+      "content_type": 6,
+      "name": "Can change dashboard"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 23,
+    "fields": {
+      "codename": "delete_dashboard",
+      "content_type": 6,
+      "name": "Can delete dashboard"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 24,
+    "fields": {
+      "codename": "view_dashboard",
+      "content_type": 6,
+      "name": "Can view dashboard"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 25,
+    "fields": {
+      "codename": "add_permission",
+      "content_type": 7,
+      "name": "Can add Permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 26,
+    "fields": {
+      "codename": "change_permission",
+      "content_type": 7,
+      "name": "Can change Permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 27,
+    "fields": {
+      "codename": "delete_permission",
+      "content_type": 7,
+      "name": "Can delete Permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 28,
+    "fields": {
+      "codename": "view_permission",
+      "content_type": 7,
+      "name": "Can view Permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 29,
+    "fields": {
+      "codename": "add_user",
+      "content_type": 8,
+      "name": "Can add User"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 30,
+    "fields": {
+      "codename": "change_user",
+      "content_type": 8,
+      "name": "Can change User"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 31,
+    "fields": {
+      "codename": "delete_user",
+      "content_type": 8,
+      "name": "Can delete User"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 32,
+    "fields": {
+      "codename": "view_user",
+      "content_type": 8,
+      "name": "Can view User"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 33,
+    "fields": {
+      "codename": "add_agency",
+      "content_type": 9,
+      "name": "Can add Agency"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 34,
+    "fields": {
+      "codename": "change_agency",
+      "content_type": 9,
+      "name": "Can change Agency"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 35,
+    "fields": {
+      "codename": "delete_agency",
+      "content_type": 9,
+      "name": "Can delete Agency"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 36,
+    "fields": {
+      "codename": "view_agency",
+      "content_type": 9,
+      "name": "Can view Agency"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 37,
+    "fields": {
+      "codename": "add_role",
+      "content_type": 10,
+      "name": "Can add Role"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 38,
+    "fields": {
+      "codename": "change_role",
+      "content_type": 10,
+      "name": "Can change Role"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 39,
+    "fields": {
+      "codename": "delete_role",
+      "content_type": 10,
+      "name": "Can delete Role"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 40,
+    "fields": {
+      "codename": "view_role",
+      "content_type": 10,
+      "name": "Can view Role"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 41,
+    "fields": {
+      "codename": "add_document",
+      "content_type": 11,
+      "name": "Can add document"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 42,
+    "fields": {
+      "codename": "change_document",
+      "content_type": 11,
+      "name": "Can change document"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 43,
+    "fields": {
+      "codename": "delete_document",
+      "content_type": 11,
+      "name": "Can delete document"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 44,
+    "fields": {
+      "codename": "view_document",
+      "content_type": 11,
+      "name": "Can view document"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 45,
+    "fields": {
+      "codename": "add_question",
+      "content_type": 12,
+      "name": "Can add question"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 46,
+    "fields": {
+      "codename": "change_question",
+      "content_type": 12,
+      "name": "Can change question"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 47,
+    "fields": {
+      "codename": "delete_question",
+      "content_type": 12,
+      "name": "Can delete question"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 48,
+    "fields": {
+      "codename": "view_question",
+      "content_type": 12,
+      "name": "Can view question"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 49,
+    "fields": {
+      "codename": "add_answer",
+      "content_type": 13,
+      "name": "Can add answer"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 50,
+    "fields": {
+      "codename": "change_answer",
+      "content_type": 13,
+      "name": "Can change answer"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 51,
+    "fields": {
+      "codename": "delete_answer",
+      "content_type": 13,
+      "name": "Can delete answer"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 52,
+    "fields": {
+      "codename": "view_answer",
+      "content_type": 13,
+      "name": "Can view answer"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 53,
+    "fields": {
+      "codename": "add_session",
+      "content_type": 14,
+      "name": "Can add session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 54,
+    "fields": {
+      "codename": "change_session",
+      "content_type": 14,
+      "name": "Can change session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 55,
+    "fields": {
+      "codename": "delete_session",
+      "content_type": 14,
+      "name": "Can delete session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 56,
+    "fields": {
+      "codename": "view_session",
+      "content_type": 14,
+      "name": "Can view session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 57,
+    "fields": {
+      "codename": "add_reviewcomment",
+      "content_type": 15,
+      "name": "Can add review comment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 58,
+    "fields": {
+      "codename": "change_reviewcomment",
+      "content_type": 15,
+      "name": "Can change review comment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 59,
+    "fields": {
+      "codename": "delete_reviewcomment",
+      "content_type": 15,
+      "name": "Can delete review comment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 60,
+    "fields": {
+      "codename": "view_reviewcomment",
+      "content_type": 15,
+      "name": "Can view review comment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 61,
+    "fields": {
+      "codename": "add_aioutput",
+      "content_type": 16,
+      "name": "Can add ai output"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 62,
+    "fields": {
+      "codename": "change_aioutput",
+      "content_type": 16,
+      "name": "Can change ai output"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 63,
+    "fields": {
+      "codename": "delete_aioutput",
+      "content_type": 16,
+      "name": "Can delete ai output"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 64,
+    "fields": {
+      "codename": "view_aioutput",
+      "content_type": 16,
+      "name": "Can view ai output"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 65,
+    "fields": {
+      "codename": "add_conversation",
+      "content_type": 17,
+      "name": "Can add conversation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 66,
+    "fields": {
+      "codename": "change_conversation",
+      "content_type": 17,
+      "name": "Can change conversation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 67,
+    "fields": {
+      "codename": "delete_conversation",
+      "content_type": 17,
+      "name": "Can delete conversation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 68,
+    "fields": {
+      "codename": "view_conversation",
+      "content_type": 17,
+      "name": "Can view conversation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 69,
+    "fields": {
+      "codename": "add_foundationsummary",
+      "content_type": 18,
+      "name": "Can add foundation summary"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 70,
+    "fields": {
+      "codename": "change_foundationsummary",
+      "content_type": 18,
+      "name": "Can change foundation summary"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 71,
+    "fields": {
+      "codename": "delete_foundationsummary",
+      "content_type": 18,
+      "name": "Can delete foundation summary"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 72,
+    "fields": {
+      "codename": "view_foundationsummary",
+      "content_type": 18,
+      "name": "Can view foundation summary"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 1,
+    "fields": {
+      "app_label": "admin",
+      "model": "logentry"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 2,
+    "fields": {
+      "app_label": "auth",
+      "model": "permission"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 3,
+    "fields": {
+      "app_label": "auth",
+      "model": "group"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 4,
+    "fields": {
+      "app_label": "contenttypes",
+      "model": "contenttype"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 5,
+    "fields": {
+      "app_label": "sessions",
+      "model": "session"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 6,
+    "fields": {
+      "app_label": "accounts",
+      "model": "dashboard"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 7,
+    "fields": {
+      "app_label": "accounts",
+      "model": "permission"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 8,
+    "fields": {
+      "app_label": "accounts",
+      "model": "user"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 9,
+    "fields": {
+      "app_label": "accounts",
+      "model": "agency"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 10,
+    "fields": {
+      "app_label": "accounts",
+      "model": "role"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 11,
+    "fields": {
+      "app_label": "document",
+      "model": "document"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 12,
+    "fields": {
+      "app_label": "user_sessions",
+      "model": "question"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 13,
+    "fields": {
+      "app_label": "user_sessions",
+      "model": "answer"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 14,
+    "fields": {
+      "app_label": "user_sessions",
+      "model": "session"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 15,
+    "fields": {
+      "app_label": "user_sessions",
+      "model": "reviewcomment"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 16,
+    "fields": {
+      "app_label": "user_sessions",
+      "model": "aioutput"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 17,
+    "fields": {
+      "app_label": "user_sessions",
+      "model": "conversation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 18,
+    "fields": {
+      "app_label": "user_sessions",
+      "model": "foundationsummary"
+    }
+  },
+  {
+    "model": "sessions.session",
+    "pk": "j9gexirbujv2afjuy6szod07tdjofl08",
+    "fields": {
+      "expire_date": "2026-02-12T04:06:58.894Z",
+      "session_data": ".eJxVjMsOwiAQRf-FtSG8oS7d-w1kYAapGkhKuzL-uzbpQrf3nHNfLMK21rgNWuKM7MwkO_1uCfKD2g7wDu3Wee5tXebEd4UfdPBrR3peDvfvoMKo39prkywSOYXBGZV80QWmTMEVmwlkEGpyWgmptUErSkngDUplvdCYVWDvD-ZtN6A:1vlJJ4:K9RCMRS1MhBdkjRacUPZaC8Bfd89Pv49Stf3J3mq5vk"
+    }
+  },
+  {
+    "model": "sessions.session",
+    "pk": "ko6rh3at31y3gwi1h8pltjx7wxzg4f9t",
+    "fields": {
+      "expire_date": "2026-02-17T07:18:18.882Z",
+      "session_data": ".eJxVjMsOwiAQRf-FtSG8oS7d-w1kYAapGkhKuzL-uzbpQrf3nHNfLMK21rgNWuKM7MwkO_1uCfKD2g7wDu3Wee5tXebEd4UfdPBrR3peDvfvoMKo39prkywSOYXBGZV80QWmTMEVmwlkEGpyWgmptUErSkngDUplvdCYVWDvD-ZtN6A:1vnAfy:Dcu3UiQ-jDWo2LquYNZfgUU60YF7iXEpfvdUyFP0dCo"
+    }
+  },
+  {
+    "model": "sessions.session",
+    "pk": "uuvxvf8s6988rqubhpatapn10olk7fol",
+    "fields": {
+      "expire_date": "2026-02-19T05:07:50.863Z",
+      "session_data": ".eJxVjMsOwiAQRf-FtSG8oS7d-w1kYAapGkhKuzL-uzbpQrf3nHNfLMK21rgNWuKM7MwkO_1uCfKD2g7wDu3Wee5tXebEd4UfdPBrR3peDvfvoMKo39prkywSOYXBGZV80QWmTMEVmwlkEGpyWgmptUErSkngDUplvdCYVWDvD-ZtN6A:1vnrao:7qe7Md9iNhRUzZXt2fpJ3Q6wzyDkBMCdMnIUUMd0_6E"
+    }
+  },
+  {
+    "model": "sessions.session",
+    "pk": "zc4jlgn4nff4z09c9odnekui3lgsvkd7",
+    "fields": {
+      "expire_date": "2026-02-18T07:11:48.604Z",
+      "session_data": ".eJxVjMsOwiAQRf-FtSG8oS7d-w1kYAapGkhKuzL-uzbpQrf3nHNfLMK21rgNWuKM7MwkO_1uCfKD2g7wDu3Wee5tXebEd4UfdPBrR3peDvfvoMKo39prkywSOYXBGZV80QWmTMEVmwlkEGpyWgmptUErSkngDUplvdCYVWDvD-ZtN6A:1vnX3E:AX7pd_6Jy0x2gllJretOhKnmqkY5FF4i7rVoJ-mrn0s"
+    }
+  },
+  {
+    "model": "accounts.role",
+    "pk": 1,
+    "fields": {
+      "created_at": "2026-01-27T10:24:41.680Z",
+      "dashboards": [],
+      "description": "",
+      "is_active": true,
+      "name": "client",
+      "permissions": [],
+      "updated_at": "2026-01-31T11:02:56.864Z"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 1,
+    "fields": {
+      "agency": null,
+      "created_at": "2026-01-27T10:24:42.085Z",
+      "date_joined": "2026-01-27T10:24:41.678Z",
+      "email": "admin@example.com",
+      "first_name": "",
+      "groups": [],
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true,
+      "last_login": "2026-02-05T05:07:50.858Z",
+      "last_name": "",
+      "password": "pbkdf2_sha256$600000$aDeNV2dEPpNkPnJWV8CrUd$mKSEY+/grPmuAnFBLQJFGeaNuwXM7Y7EJP+Qv/1IdZo=",
+      "phone_number": null,
+      "role": 1,
+      "updated_at": "2026-01-27T10:24:42.085Z",
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 2,
+    "fields": {
+      "agency": null,
+      "created_at": "2026-01-31T10:57:27.446Z",
+      "date_joined": "2026-01-31T10:57:27.040Z",
+      "email": "arpita@gmail.com",
+      "first_name": "",
+      "groups": [],
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "last_login": null,
+      "last_name": "",
+      "password": "pbkdf2_sha256$600000$VDLS9DjM4ZvSMpKErAmQs9$uNMUlWT7GsiwS31uwQ2Xy4EdNLJtCeao+xkBdqufY3A=",
+      "phone_number": "6666666666",
+      "role": 1,
+      "updated_at": "2026-01-31T11:03:22.888Z",
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 3,
+    "fields": {
+      "agency": null,
+      "created_at": "2026-02-18T09:50:32.942Z",
+      "date_joined": "2026-02-18T09:50:32.505Z",
+      "email": "temp@gmail.com",
+      "first_name": "",
+      "groups": [],
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "last_login": null,
+      "last_name": "",
+      "password": "pbkdf2_sha256$600000$m1nyBdP1n0NFZSEbHmwouF$A5sU/tHgZAwuCcsLOmL4hSjM0XvLWMspWKPfmj1AZKQ=",
+      "phone_number": null,
+      "role": 1,
+      "updated_at": "2026-02-18T09:50:32.942Z",
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "user_sessions.session",
+    "pk": 1,
+    "fields": {
+      "agency": null,
+      "completed_at": null,
+      "created_at": "2026-01-30T12:29:37.337Z",
+      "created_by": 1,
+      "is_active": true,
+      "is_locked": false,
+      "locked_at": null,
+      "locked_by": null,
+      "status": "pending",
+      "title": "Test Session",
+      "updated_at": "2026-01-30T12:29:37.337Z"
+    }
+  },
+  {
+    "model": "user_sessions.session",
+    "pk": 2,
+    "fields": {
+      "agency": null,
+      "completed_at": null,
+      "created_at": "2026-01-30T12:38:53.504Z",
+      "created_by": 1,
+      "is_active": true,
+      "is_locked": false,
+      "locked_at": null,
+      "locked_by": null,
+      "status": "pending",
+      "title": "Test Session",
+      "updated_at": "2026-01-30T12:38:53.504Z"
+    }
+  },
+  {
+    "model": "user_sessions.session",
+    "pk": 3,
+    "fields": {
+      "agency": null,
+      "completed_at": null,
+      "created_at": "2026-01-30T12:54:37.990Z",
+      "created_by": 1,
+      "is_active": true,
+      "is_locked": false,
+      "locked_at": null,
+      "locked_by": null,
+      "status": "pending",
+      "title": "Test Session",
+      "updated_at": "2026-01-30T12:54:37.990Z"
+    }
+  },
+  {
+    "model": "user_sessions.session",
+    "pk": 4,
+    "fields": {
+      "agency": null,
+      "completed_at": null,
+      "created_at": "2026-01-31T11:01:06.549Z",
+      "created_by": 2,
+      "is_active": true,
+      "is_locked": false,
+      "locked_at": null,
+      "locked_by": null,
+      "status": "in_progress",
+      "title": "ADVANT",
+      "updated_at": "2026-02-02T09:40:08.127Z"
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 30,
+    "fields": {
+      "category": "brand_identity",
+      "created_at": "2026-02-12T10:11:57.954Z",
+      "help_text": "",
+      "is_active": true,
+      "is_required": true,
+      "order": 1,
+      "placeholder": null,
+      "stage": 1,
+      "text": "What\ufffds your good name?",
+      "updated_at": "2026-02-12T11:18:05.677Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 31,
+    "fields": {
+      "category": "brand_identity",
+      "created_at": "2026-02-12T10:12:23.166Z",
+      "help_text": "",
+      "is_active": true,
+      "is_required": true,
+      "order": 2,
+      "placeholder": null,
+      "stage": 1,
+      "text": "What\ufffds your brand or company called?",
+      "updated_at": "2026-02-12T12:51:18.193Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 32,
+    "fields": {
+      "category": "brand_identity",
+      "created_at": "2026-02-12T10:33:53.924Z",
+      "help_text": "",
+      "is_active": true,
+      "is_required": true,
+      "order": 3,
+      "placeholder": null,
+      "stage": 1,
+      "text": "What is your current brand slogan or tagline?",
+      "updated_at": "2026-02-12T12:51:27.200Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 33,
+    "fields": {
+      "category": "brand_identity",
+      "created_at": "2026-02-12T10:34:15.757Z",
+      "help_text": "",
+      "is_active": true,
+      "is_required": true,
+      "order": 4,
+      "placeholder": null,
+      "stage": 1,
+      "text": "What industry or business are you in?",
+      "updated_at": "2026-02-12T12:51:39.199Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 34,
+    "fields": {
+      "category": "brand_identity",
+      "created_at": "2026-02-12T10:34:28.525Z",
+      "help_text": "",
+      "is_active": true,
+      "is_required": true,
+      "order": 5,
+      "placeholder": null,
+      "stage": 1,
+      "text": "Do you have a website? (optional)",
+      "updated_at": "2026-02-12T12:51:53.553Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 35,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-12T10:35:00.436Z",
+      "help_text": "If you had to name the spirit behind it in one word or short phrase, what is it?",
+      "is_active": true,
+      "is_required": true,
+      "order": 6,
+      "placeholder": null,
+      "stage": 2,
+      "text": "What motivated you to start this business in the first place?",
+      "updated_at": "2026-02-13T07:30:13.699Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 36,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-12T11:03:46.306Z",
+      "help_text": "(No services or features \ufffd focus on meaning or change.)",
+      "is_active": true,
+      "is_required": true,
+      "order": 7,
+      "placeholder": null,
+      "stage": 2,
+      "text": "In one sentence, what do you currently believe your business does?",
+      "updated_at": "2026-02-13T07:30:42.998Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 37,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-12T11:17:11.442Z",
+      "help_text": "Describe what you felt was being done poorly, carelessly, or the \ufffdeasy way\ufffd instead of the right way.",
+      "is_active": true,
+      "is_required": true,
+      "order": 8,
+      "placeholder": null,
+      "stage": 2,
+      "text": "When you entered your industry, what felt broken, lazy, or wrong about how things were done?",
+      "updated_at": "2026-02-13T07:32:54.056Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 38,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-12T11:17:37.994Z",
+      "help_text": "If your products disappeared, what would your brand still stand for?",
+      "is_active": true,
+      "is_required": true,
+      "order": 9,
+      "placeholder": null,
+      "stage": 2,
+      "text": "Strip away products and services \ufffd what IDEA does your business stand for?",
+      "updated_at": "2026-02-13T07:34:02.991Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 39,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-12T11:19:31.842Z",
+      "help_text": "Think confidence, clarity, or behaviour change\ufffdnot features or deliverables.",
+      "is_active": true,
+      "is_required": true,
+      "order": 10,
+      "placeholder": null,
+      "stage": 2,
+      "text": "Because of your brand, what change should your customers experience in themselves?",
+      "updated_at": "2026-02-13T07:36:34.210Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 40,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-12T11:21:25.811Z",
+      "help_text": "What principles guide every decision you make?",
+      "is_active": true,
+      "is_required": true,
+      "order": 11,
+      "placeholder": null,
+      "stage": 2,
+      "text": "What three values are non-negotiable in how you do business?",
+      "updated_at": "2026-02-13T07:37:59.694Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 41,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-12T11:22:39.111Z",
+      "help_text": "If money were not the filter, who would you choose to serve?",
+      "is_active": true,
+      "is_required": true,
+      "order": 12,
+      "placeholder": null,
+      "stage": 2,
+      "text": "Who do you most want to serve \ufffd not just who is willing to pay you?",
+      "updated_at": "2026-02-13T07:39:01.427Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 42,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-12T11:23:34.326Z",
+      "help_text": "What consistent experience or standard do you never compromise on?",
+      "is_active": true,
+      "is_required": true,
+      "order": 13,
+      "placeholder": null,
+      "stage": 2,
+      "text": "What can someone always expect when they choose your brand?",
+      "updated_at": "2026-02-13T07:40:10.299Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 43,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T07:42:51.001Z",
+      "help_text": "Do people come to you just to buy, for expertise, or because they trust you most?",
+      "is_active": true,
+      "is_required": true,
+      "order": 14,
+      "placeholder": null,
+      "stage": 3,
+      "text": "Right now, how do you think your business is perceived \ufffd as a vendor, a specialist, or a go-to brand? Why?",
+      "updated_at": "2026-02-13T07:42:51.001Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 44,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:39:01.494Z",
+      "help_text": "What keeps making you think, \ufffdThey\ufffdre missing the point\ufffd?",
+      "is_active": true,
+      "is_required": true,
+      "order": 15,
+      "placeholder": null,
+      "stage": 3,
+      "text": "What frustrates you most about how the market responds to your business today?",
+      "updated_at": "2026-02-13T08:39:16.200Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 45,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:41:55.857Z",
+      "help_text": "In which areas do customers or the market underestimate or misunderstand you?",
+      "is_active": true,
+      "is_required": true,
+      "order": 16,
+      "placeholder": null,
+      "stage": 3,
+      "text": "Where do you feel your business is misunderstood or undervalued?",
+      "updated_at": "2026-02-13T08:41:55.857Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 46,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:44:03.494Z",
+      "help_text": "What do you think the industry gets wrong, even if it\ufffds unpopular?",
+      "is_active": true,
+      "is_required": true,
+      "order": 17,
+      "placeholder": null,
+      "stage": 3,
+      "text": "What belief do you hold about your industry that most competitors would disagree with?",
+      "updated_at": "2026-02-13T08:44:03.494Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 47,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:46:26.704Z",
+      "help_text": "Think about a belief, behaviour, or mindset you want to see more of in the world.",
+      "is_active": true,
+      "is_required": true,
+      "order": 18,
+      "placeholder": null,
+      "stage": 3,
+      "text": "Finish this sentence:\r\n\ufffdThe world would be better if people __________.\ufffd",
+      "updated_at": "2026-02-13T08:46:26.704Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 48,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:47:21.414Z",
+      "help_text": "Where do you draw a clear line and say, \ufffdWe don\ufffdt do that\ufffd?",
+      "is_active": true,
+      "is_required": true,
+      "order": 19,
+      "placeholder": null,
+      "stage": 3,
+      "text": "What is your brand willing to challenge, reject, or stand against?",
+      "updated_at": "2026-02-13T08:47:21.414Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 49,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:48:20.516Z",
+      "help_text": "What changes in the room because your brand is there?",
+      "is_active": true,
+      "is_required": true,
+      "order": 20,
+      "placeholder": null,
+      "stage": 3,
+      "text": "When your brand enters a room, what happens to the energy?",
+      "updated_at": "2026-02-13T08:48:20.516Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 50,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:48:53.567Z",
+      "help_text": "What three words would someone use to describe your brand after one meeting?",
+      "is_active": true,
+      "is_required": true,
+      "order": 21,
+      "placeholder": null,
+      "stage": 3,
+      "text": "If your brand were a person, how would people describe them after one meeting?",
+      "updated_at": "2026-02-13T08:48:53.567Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 51,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:51:04.575Z",
+      "help_text": "What emotional shift should your client experience because of you?",
+      "is_active": true,
+      "is_required": true,
+      "order": 22,
+      "placeholder": null,
+      "stage": 3,
+      "text": "After working with you, how should your client feel that they didn\ufffdt before?",
+      "updated_at": "2026-02-13T08:57:45.568Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 52,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:51:46.780Z",
+      "help_text": "Focus on what makes a real difference to clients, not just what sounds unique.",
+      "is_active": true,
+      "is_required": true,
+      "order": 23,
+      "placeholder": null,
+      "stage": 3,
+      "text": "What do you do differently that actually matters to your clients?",
+      "updated_at": "2026-02-13T08:51:46.780Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 53,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:53:41.696Z",
+      "help_text": "What race are you deliberately not running?",
+      "is_active": true,
+      "is_required": true,
+      "order": 24,
+      "placeholder": null,
+      "stage": 3,
+      "text": "What do you refuse to compete on?",
+      "updated_at": "2026-02-13T08:53:41.696Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 54,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T08:54:29.703Z",
+      "help_text": "If someone describes your brand in the future, what should they say first?",
+      "is_active": true,
+      "is_required": true,
+      "order": 25,
+      "placeholder": null,
+      "stage": 3,
+      "text": "Five years from now, what do you want people to say your brand is known for?",
+      "updated_at": "2026-02-13T08:54:39.257Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 55,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T10:34:46.276Z",
+      "help_text": "What\ufffds the uncomfortable truth your client is scared to admit?",
+      "is_active": true,
+      "is_required": false,
+      "order": 26,
+      "placeholder": null,
+      "stage": 4,
+      "text": "What is your ideal client afraid to admit out loud?",
+      "updated_at": "2026-02-13T10:35:54.033Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 56,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T10:35:47.337Z",
+      "help_text": "Describe the audience your brand is intentionally not targeting.",
+      "is_active": true,
+      "is_required": false,
+      "order": 27,
+      "placeholder": null,
+      "stage": 4,
+      "text": "Who is your brand intentionally not for?",
+      "updated_at": "2026-02-13T10:35:59.048Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 57,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T11:04:07.541Z",
+      "help_text": "Think about the one experience or result that makes people talk about you.",
+      "is_active": true,
+      "is_required": false,
+      "order": 28,
+      "placeholder": null,
+      "stage": 4,
+      "text": "What would make someone recommend you without hesitation?",
+      "updated_at": "2026-02-13T11:04:07.541Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 58,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T11:04:59.839Z",
+      "help_text": "If you could choose, what would you do more\ufffdand what would you stop doing?",
+      "is_active": true,
+      "is_required": false,
+      "order": 29,
+      "placeholder": null,
+      "stage": 4,
+      "text": "What kind of work do you want more of \ufffd and what do you want less of?",
+      "updated_at": "2026-02-13T11:04:59.839Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 59,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T11:06:18.973Z",
+      "help_text": "Think about the hard or uncomfortable thing you keep putting off.",
+      "is_active": true,
+      "is_required": false,
+      "order": 30,
+      "placeholder": null,
+      "stage": 4,
+      "text": "What do you know you\ufffdve been avoiding in your business?",
+      "updated_at": "2026-02-13T11:06:18.973Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 60,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T11:07:19.960Z",
+      "help_text": "In which area are you being too cautious or not aiming high enough?",
+      "is_active": true,
+      "is_required": false,
+      "order": 31,
+      "placeholder": null,
+      "stage": 4,
+      "text": "Where are you currently playing smaller than you should be?",
+      "updated_at": "2026-02-13T11:07:19.960Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 61,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T11:08:07.840Z",
+      "help_text": "This means not everyone will like or choose you. Are you okay with that?",
+      "is_active": true,
+      "is_required": false,
+      "order": 32,
+      "placeholder": null,
+      "stage": 4,
+      "text": "Are you willing to polarize your market in order to become a true go-to brand?",
+      "updated_at": "2026-02-13T11:08:07.840Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 62,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T11:11:40.756Z",
+      "help_text": "What would you have to stop doing to take this direction seriously?",
+      "is_active": true,
+      "is_required": false,
+      "order": 33,
+      "placeholder": null,
+      "stage": 4,
+      "text": "If you fully committed to this brand direction, what would you need to stop doing?",
+      "updated_at": "2026-02-13T11:11:40.756Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 63,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T11:12:24.317Z",
+      "help_text": "1 means \ufffdnot ready,\ufffd 10 means \ufffdfully committed.\ufffd Choose honestly.",
+      "is_active": true,
+      "is_required": false,
+      "order": 34,
+      "placeholder": null,
+      "stage": 4,
+      "text": "On a scale of 1\ufffd10, how ready are you to act like a brand \ufffd not a vendor?",
+      "updated_at": "2026-02-13T11:12:24.317Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.question",
+    "pk": 64,
+    "fields": {
+      "category": "other",
+      "created_at": "2026-02-13T11:13:10.887Z",
+      "help_text": "This means being open to honest feedback, even when it\ufffds uncomfortable.",
+      "is_active": true,
+      "is_required": false,
+      "order": 35,
+      "placeholder": null,
+      "stage": 4,
+      "text": "Do you give me permission to challenge your thinking and elevate your brand \ufffd even when it feels uncomfortable?",
+      "updated_at": "2026-02-13T11:13:16.397Z",
+      "visible_to_roles": []
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 27,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "fdf",
+      "answered_by": 1,
+      "created_at": "2026-02-13T06:26:24.552Z",
+      "is_ai_accepted": false,
+      "question": 30,
+      "session": 4,
+      "updated_at": "2026-02-18T06:11:44.396Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 28,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "bgbgb",
+      "answered_by": 1,
+      "created_at": "2026-02-13T06:26:24.599Z",
+      "is_ai_accepted": false,
+      "question": 31,
+      "session": 4,
+      "updated_at": "2026-02-18T06:11:44.433Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 29,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "bgbgb",
+      "answered_by": 1,
+      "created_at": "2026-02-13T06:26:24.630Z",
+      "is_ai_accepted": false,
+      "question": 32,
+      "session": 4,
+      "updated_at": "2026-02-18T06:11:44.477Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 30,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "gbgb",
+      "answered_by": 1,
+      "created_at": "2026-02-13T06:26:24.660Z",
+      "is_ai_accepted": false,
+      "question": 33,
+      "session": 4,
+      "updated_at": "2026-02-18T06:11:44.514Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 31,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "gbgbgb",
+      "answered_by": 1,
+      "created_at": "2026-02-13T06:26:24.690Z",
+      "is_ai_accepted": false,
+      "question": 34,
+      "session": 4,
+      "updated_at": "2026-02-18T06:11:44.551Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 32,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "ssgsg",
+      "answered_by": 1,
+      "created_at": "2026-02-13T06:27:29.340Z",
+      "is_ai_accepted": false,
+      "question": 39,
+      "session": 4,
+      "updated_at": "2026-02-13T10:44:16.521Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 33,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "sgsg",
+      "answered_by": 1,
+      "created_at": "2026-02-13T06:27:30.704Z",
+      "is_ai_accepted": false,
+      "question": 40,
+      "session": 4,
+      "updated_at": "2026-02-13T10:44:17.210Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 34,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "sgsg",
+      "answered_by": 1,
+      "created_at": "2026-02-13T06:27:31.582Z",
+      "is_ai_accepted": false,
+      "question": 41,
+      "session": 4,
+      "updated_at": "2026-02-13T10:44:17.753Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 35,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "sgt",
+      "answered_by": 1,
+      "created_at": "2026-02-13T06:27:33.317Z",
+      "is_ai_accepted": false,
+      "question": 42,
+      "session": 4,
+      "updated_at": "2026-02-18T06:11:59.930Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 36,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "dd",
+      "answered_by": 1,
+      "created_at": "2026-02-13T10:44:15.475Z",
+      "is_ai_accepted": false,
+      "question": 35,
+      "session": 4,
+      "updated_at": "2026-02-16T12:43:33.686Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 37,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "ddf",
+      "answered_by": 1,
+      "created_at": "2026-02-13T10:44:15.651Z",
+      "is_ai_accepted": false,
+      "question": 36,
+      "session": 4,
+      "updated_at": "2026-02-16T09:16:59.361Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 38,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "sgs",
+      "answered_by": 1,
+      "created_at": "2026-02-13T10:44:15.827Z",
+      "is_ai_accepted": false,
+      "question": 37,
+      "session": 4,
+      "updated_at": "2026-02-13T10:44:15.827Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.answer",
+    "pk": 39,
+    "fields": {
+      "ai_suggestion": null,
+      "answer_text": "sg",
+      "answered_by": 1,
+      "created_at": "2026-02-13T10:44:16.310Z",
+      "is_ai_accepted": false,
+      "question": 38,
+      "session": 4,
+      "updated_at": "2026-02-13T10:44:16.310Z",
+      "version": 1
+    }
+  },
+  {
+    "model": "user_sessions.foundationsummary",
+    "pk": 1,
+    "fields": {
+      "created_at": "2026-01-30T12:54:55.203Z",
+      "error_message": null,
+      "generated_by": 1,
+      "session": 2,
+      "status": "completed",
+      "summary_text": "**THE BRAND GODFATHER SUMMARY: UNVEILING THE TRUE ESSENCE**\n\nIn the realm of branding, the heart beats strongest where emotions run deepest. The brand in question, at its core, is a beacon of confidence and creativity. It doesn\ufffdt just dabble in superficial solutions; it addresses the fundamental human need to feel empowered and inspired. This isn\ufffdt about a product or service\ufffdit\ufffds about transforming the way people see themselves and the world around them.\n\n**Core Themes:**\n\n1. **Empowerment Through Confidence:**\n   Confidence is the cornerstone of personal and professional success. This brand doesn\ufffdt just pay lip service to this idea; it embodies it. By helping individuals feel sure of themselves, it creates a ripple effect that touches every aspect of their lives. Confidence is contagious, and this brand spreads it like wildfire.\n\n2. **Fueling Creativity:**\n   Creativity is the lifeblood of innovation. It\ufffds the spark that ignites progress and change. This brand taps into the wellspring of creativity within each individual, encouraging them to explore, imagine, and create. It\ufffds about breaking down barriers and unleashing potential.\n\n**Authentic Brand Identity:**\n\nThe brand\ufffds identity is rooted in its ability to make people feel alive and capable. It\ufffds not just another name in the market; it\ufffds a movement. It stands for authenticity, not just in what it offers but in how it communicates. The brand speaks directly to the soul, bypassing the noise of the mundane and resonating on a profound level.\n\n**Unique Insights:**\n\n1. **Emotion Over Explanation:**\n   This brand understands that people don\ufffdt remember pitches\ufffdthey remember how they felt. It\ufffds not about inundating customers with information; it\ufffds about crafting moments that stir the soul. The brand\ufffds power lies in its ability to connect emotionally, creating lasting bonds that go beyond transactions.\n\n2. **Behavior as Proof:**\n   Words without action are empty. This brand\ufffds credibility is built on the behaviors it inspires and the transformations it facilitates. It doesn\ufffdt promise change; it delivers it. The proof is in the stories of those who\ufffdve felt its impact, standing taller and dreaming bigger.\n\n**Recurring Patterns:**\n\n1. **Specificity Over Vagueness:**\n   The brand\ufffds messaging is sharp and focused. It doesn\ufffdt deal in generalities; it paints vivid pictures that captivate and compel. This approach ensures that its audience not only understands its value but feels it on a visceral level.\n\n2. **Boldness Over Safety:**\n   Playing it safe is the enemy of progress. This brand refuses to tiptoe around the edges; it dives in headfirst. Its boldness is its badge of honor, challenging conventions and setting new standards.\n\n**Synthesizing the Brand\ufffds True Essence:**\n\nAt its essence, this brand is a catalyst for personal growth and transformation. It\ufffds a guide, a mentor, a cheerleader. It doesn\ufffdt just offer products or services; it offers a new way of being. It\ufffds about unlocking the potential within each individual, empowering them to face the world with confidence and creativity.\n\nThis brand isn\ufffdt just part of its customers\ufffd lives; it becomes part of their stories, woven into the fabric of their journeys. It\ufffds a brand that is felt deeply, remembered fondly, and cherished eternally. It stands as a testament to the power of belief\ufffdthe belief in oneself and the limitless possibilities that belief can unlock.\n\nIn a world cluttered with noise, this brand is a clear, resonant voice. It doesn\ufffdt just participate in the conversation; it leads it. The brand\ufffds true essence is its unwavering commitment to making people feel alive, capable, and inspired. It\ufffds not just a brand; it\ufffds a revolution of the heart and mind. And that, my friends, is how you create a legacy.",
+      "updated_at": "2026-01-30T12:55:23.302Z"
+    }
+  },
+  {
+    "model": "user_sessions.foundationsummary",
+    "pk": 2,
+    "fields": {
+      "created_at": "2026-02-02T04:57:10.328Z",
+      "error_message": null,
+      "generated_by": 1,
+      "session": 3,
+      "status": "completed",
+      "summary_text": "**The Heartbeat of the Brand: Unleashing Confidence and Creativity**\n\nIn the chaotic symphony of modern brands, where noise often drowns out meaning, a brand that chooses to focus on emotion over explanation stands out like a beacon. This brand, dedicated to instilling confidence and creativity, does just that. It cuts through the white noise of empty promises and hollow slogans, reaching into the emotional core of its audience. At its heart lies a profound understanding that what people crave isn't just products or services but empowerment and inspiration.\n\n**Core Themes: Confidence and Creativity**\n\nAt the epicenter of this brand are two powerhouse themes: confidence and creativity. These are not mere buzzwords; they are the lifeblood coursing through its veins. Confidence is more than a feeling\ufffdit's a transformation. This brand exists to turn self-doubt into self-assurance, to take the uncertain and mold them into the bold. Creativity, on the other hand, is the spark that ignites innovation, the catalyst that transforms ordinary into extraordinary. Together, these themes forge an unbreakable bond that promises more than just change\ufffdit promises evolution.\n\n**Authentic Brand Identity: Empowerment Embodied**\n\nAn authentic brand identity is one that doesn\ufffdt just speak but acts. Words are powerful, but without behavior to back them up, they are hollow. This brand's identity is a tapestry woven from actions that empower. Every touchpoint, every interaction is designed to uplift and inspire. It's not about selling a product; it's about fostering a movement. This brand doesn't just offer tools for creativity; it offers the keys to unlock potential. It doesn't just suggest confidence; it instills it.\n\n**Unique Insights: Understanding the Emotional Journey**\n\nUnique insights are the hidden gems that transform a brand from ordinary to unforgettable. This brand understands that confidence and creativity are not destinations, but journeys. It recognizes that the path to self-assurance is often fraught with challenges and that the road to creativity is paved with self-expression and exploration. By acknowledging these journeys, the brand positions itself as a guide, a mentor, a trusted ally in the pursuit of personal growth and self-discovery.\n\n**Recurring Patterns: Consistency in Empowerment**\n\nPatterns reveal truths. The recurring theme of empowerment is the thread that holds this brand together. Whether it's through storytelling, customer interactions, or product offerings, the brand consistently reinforces its commitment to help individuals realize their potential. It's not a one-time promise; it's a relentless pursuit of making every customer feel seen, heard, and valued. This consistency builds trust, and trust is the foundation upon which lasting relationships are built.\n\n**Synthesis: The Brand\ufffds True Essence**\n\nAt its core, this brand is a revolution wrapped in simplicity. It is the quiet confidence of a mentor, the gentle push of a friend, and the unyielding belief of a leader. Its essence is captured in the transformative power it gives to its audience\ufffdan audience that doesn't just consume but participates, creates, and grows. In a world where brands often shout to be heard, this brand whispers truths that resonate louder than any campaign.\n\nIn conclusion, this brand's essence is not defined by what it offers but by what it ignites within its audience. Confidence and creativity are the twin flames that light the path forward, and this brand is the torchbearer. It is bold, it is specific, and above all, it is felt. In the grand tapestry of branding, this brand doesn't just fit in; it stands out, a testament to the power of emotion over explanation.",
+      "updated_at": "2026-02-02T04:57:30.442Z"
+    }
+  },
+  {
+    "model": "user_sessions.foundationsummary",
+    "pk": 3,
+    "fields": {
+      "created_at": "2026-02-02T05:56:53.968Z",
+      "error_message": "Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}",
+      "generated_by": 1,
+      "session": 4,
+      "status": "failed",
+      "summary_text": "**CuriousGenius: Unleashing the Power of Learning for All**\n\nCuriousGenius isn't just a name; it's a declaration. A rallying cry for those who yearn to learn, to explore, and to conquer the unknown. At its core, CuriousGenius is a service platform that transcends traditional educational boundaries, offering a sanctuary for the inquisitive minds of small businesses and individual seekers alike. Here, learning is not confined by age or demographic; it is a universal right, a boundless journey.\n\n**The Essence of CuriousGenius**\n\nCuriousGenius has carved out a unique space in the crowded world of educational services by refusing to pigeonhole its audience. This brand is a friend, a guide, a trusted companion on the path to enlightenment. It offers products and services designed to demystify complex subjects, clear confusions, and empower its users with knowledge. The mission is simple yet profound: to save time, conserve resources, and simplify the learning process.\n\n**A Promise of Quality and Care**\n\nWhat sets CuriousGenius apart is its unwavering commitment to quality and customer care. In a world where many educational platforms treat users as mere numbers, CuriousGenius sees each learner as an individual with unique needs and aspirations. This brand is not just about delivering content; it's about crafting an experience that resonates on a personal level. It's about building a community where learning is not a chore but a passion.\n\n**A Brand Without Borders**\n\nCuriousGenius is not content with serving a niche market. Its vision is expansive, its ambitions global. By refusing to restrict itself to a specific age group or demographic, CuriousGenius embodies the belief that learning is for everyone. This inclusivity is not just a marketing strategy; it's a core value that permeates every aspect of the brand. It's a testament to the belief that knowledge is the great equalizer, the key to unlocking human potential.\n\n**The Emotional Connection**\n\nAt the heart of CuriousGenius is an emotional truth: learning is deeply personal. It's about more than acquiring skills; it's about empowerment, transformation, and growth. CuriousGenius understands this emotional journey and positions itself as a catalyst for change. It wants its users to feel supported, inspired, and free to explore new horizons. This emotional connection is the lifeblood of the brand, the secret ingredient that turns customers into advocates.\n\n**The Road Ahead**\n\nCuriousGenius is on a mission to expand its reach and impact. The goal is not just to grow in size but to deepen its influence, to touch more lives, and to inspire a global community of learners. This vision of growth is not rooted in financial gain but in a genuine desire to make a difference. CuriousGenius is driven by a passion for education and a belief in the transformative power of knowledge.\n\n**In Conclusion**\n\nCuriousGenius is more than a brand; it's a movement. A movement that champions the cause of lifelong learning, that celebrates curiosity, and that empowers individuals to take control of their educational journeys. It is a brand that understands the power of knowledge and the importance of community. In a world that often feels fragmented and disconnected, CuriousGenius offers a beacon of hope, a reminder that learning is a shared human experience that unites us all. \n\nThis is CuriousGenius: a brand that dares to dream, to innovate, and to inspire. A brand that is not just about what you learn, but about who you become in the process.",
+      "updated_at": "2026-02-11T04:56:28.200Z"
+    }
+  }
+]

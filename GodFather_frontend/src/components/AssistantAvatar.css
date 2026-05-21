@@ -1,0 +1,415 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+/* Invisible full-screen overlay; click to close help options */
+.assistant-help-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 149;
+  background: transparent;
+  cursor: default;
+}
+
+.assistant-avatar-wrapper {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 150;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+/* Center area: avatar + semi-circle help menu (positioned relative to avatar in corner) */
+.assistant-help-center {
+  position: relative;
+  width: 280px;
+  height: 260px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+/* Rectangular box: wraps semi-circle options, centered on avatar so options stay relative to it */
+.assistant-semicircle-box {
+  position: absolute;
+  /* Center of box (140,130) = center of avatar at bottom-right of 280x260 area: (225,205) */
+  left: 85px;
+  top: 75px;
+  width: 280px;
+  height: 260px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 152;
+}
+
+.assistant-semicircle-box .assistant-circle-option {
+  pointer-events: auto;
+}
+
+.assistant-avatar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 110px;
+  height: 110px;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  overflow: visible;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.assistant-avatar-container:hover {
+  transform: scale(1.08);
+}
+
+.assistant-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Main CTA when help menu is closed */
+.assistant-click-for-help {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: #6874DD;
+  padding: 6px 14px;
+  border-radius: 99px;
+  box-shadow: 0 4px 16px rgba(104, 116, 221, 0.4);
+  pointer-events: none;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+}
+
+/* Semi-circle option bubbles (arc along bottom half) — transparent, no border */
+.assistant-circle-option {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-72px);
+  background: transparent;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: none;
+  z-index: 152;
+  transition: transform 0.2s, opacity 0.2s;
+  animation: semicircleOptionIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  -webkit-font-smoothing: antialiased;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+}
+
+.assistant-semicircle-box .assistant-circle-option:nth-child(1) { animation-delay: 0.05s; }
+.assistant-semicircle-box .assistant-circle-option:nth-child(2) { animation-delay: 0.12s; }
+.assistant-semicircle-box .assistant-circle-option:nth-child(3) { animation-delay: 0.19s; }
+
+.assistant-circle-option:hover {
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-72px) scale(1.05);
+  opacity: 0.95;
+}
+
+.assistant-circle-option-inner {
+  display: inline-block;
+  transform: rotate(calc(-1 * var(--angle)));
+}
+
+@keyframes semicircleOptionIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-45px) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-72px) scale(1);
+  }
+}
+
+.assistant-bubble-container {
+  position: absolute;
+  bottom: 130px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: auto;
+  z-index: 151;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.assistant-bubble {
+  background: #6874DD;
+  color: white;
+  padding: 20px 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(104, 116, 221, 0.35);
+  max-width: 320px;
+  min-width: 280px;
+  margin-bottom: 10px;
+  position: relative;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+}
+
+.bubble-pointer {
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-top: 15px solid #6874DD;
+  margin-right: 10px;
+}
+
+.bubble-intro h4,
+.bubble-complete h4 {
+  margin: 0 0 10px 0;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.4;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+}
+
+.bubble-intro p,
+.bubble-complete p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 400;
+  opacity: 0.95;
+  line-height: 1.5;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+}
+
+.assistant-bubble-cta {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.assistant-bubble-cta:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.02);
+}
+
+.assistant-bubble-click-hint {
+  margin: 10px 0 0 0;
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.35;
+  font-style: italic;
+}
+
+.complete-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.bubble-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-info {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 12px;
+  border-radius: 10px;
+  animation: fadeInDown 0.5s ease;
+}
+
+.step-info.next {
+  opacity: 0.85;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.step-text {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.45;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+}
+
+.bubble-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 19px;
+  cursor: pointer;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.2s;
+  z-index: 100;
+  padding: 0;
+  line-height: 1;
+}
+
+.bubble-close-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.1);
+}
+
+.bubble-close-btn:active {
+  transform: scale(0.95);
+}
+
+.route-message {
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0 0 12px 0;
+  opacity: 0.95;
+}
+
+/* Review journey bubble — beside avatar, left side, slight bottom */
+.assistant-review-bubble-beside {
+  position: absolute;
+  right: 100%;
+  bottom: 24px;
+  margin-right: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2;
+}
+
+.assistant-review-bubble-beside .assistant-review-bubble {
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+.assistant-review-bubble-beside .assistant-review-bubble-pointer {
+  margin-left: 0;
+  margin-right: 0;
+  border-left: 10px solid #6874DD;
+  border-right: none;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  flex-shrink: 0;
+}
+
+.assistant-review-bubble {
+  background: #6874DD;
+  color: white;
+  padding: 10px 36px 10px 16px;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(104, 116, 221, 0.4);
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  flex-shrink: 0;
+}
+
+.assistant-review-bubble-close {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.assistant-review-bubble-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.assistant-review-bubble-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  line-height: 1.35;
+  font-family: 'DM Sans', -apple-system, sans-serif;
+}
+
+.assistant-review-bubble-btn:hover {
+  text-decoration: none;
+}
+
+.assistant-review-bubble-pointer {
+  width: 0;
+  height: 0;
+  flex-shrink: 0;
+}

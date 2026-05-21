@@ -1,0 +1,333 @@
+/* ========================================
+   CHAT UNLOCK MODAL - Final Adjustments
+   ======================================== */
+
+:root {
+  /* Modal dimensions */
+  --img-width: 520px;
+  --img-height: 350px;
+  
+  /* Content positioning */
+  --title-top-pct: 8%;
+  --icon-top-pct: 28%;
+  --sub-top-pct: 60%;
+  --cta-top-pct: 76%;
+  
+  /* Overlay styling */
+  --overlay-dark: rgba(0, 0, 0, 0.85);
+  --overlay-blur: 16px;
+  
+  /* Updated button colors from your palette */
+  --btn-gradient-start: #3959E5;
+  --btn-gradient-mid: #507FEC;
+  --btn-gradient-end: #8EE5FF;
+  --unlock-border: rgba(91, 127, 255, 0.22);
+  --unlock-shadow: rgba(57, 89, 229, 0.35);
+}
+
+/* ==================
+   OVERLAY & CONTAINER
+   ================== */
+.cun-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay-dark);
+  backdrop-filter: blur(var(--overlay-blur));
+  -webkit-backdrop-filter: blur(var(--overlay-blur));
+  z-index: 12000;
+  padding: 24px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ==================
+   IMAGE CARD (MAIN MODAL)
+   ================== */
+.cun-image-card {
+  width: var(--img-width);
+  height: var(--img-height);
+  max-width: calc(96vw - 48px);
+  max-height: calc(92vh - 48px);
+  
+  /* Keep original background gradient */
+  background: linear-gradient(180deg, #030b2b 0%, #020925 50%, #020f3f 100%);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  
+  border: 1px solid var(--unlock-border);
+  border-radius: 32px;
+  box-shadow: 
+    0 0 0 1px rgba(9, 2, 75, 0.08) inset,
+    0 0 40px rgba(91, 127, 255, 0.1),
+    0 20px 60px rgba(0, 0, 0, 0.7);
+  
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  
+  animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==================
+   CONTENT - TITLE (SMALLER SIZE)
+   ================== */
+.cun-image-title {
+  position: absolute;
+  left: 50%;
+  top: var(--title-top-pct);
+  transform: translateX(-50%);
+  
+  margin: 0;
+  color: #ffffff;
+  font-size: 36px; /* REDUCED from 48px */
+  font-weight: 700; /* REDUCED from 800 */
+  letter-spacing: -0.3px;
+  text-align: center;
+  white-space: nowrap;
+  
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 4;
+  pointer-events: none;
+  
+  animation: titleFadeIn 0.6s ease 0.2s backwards;
+}
+
+@keyframes titleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ==================
+   LOCK ICON (MIDDLE)
+   ================== */
+.cun-lock-icon {
+  position: absolute;
+  left: 50%;
+  top: var(--icon-top-pct);
+  transform: translateX(-50%);
+  
+  width: 120px;
+  height: auto;
+  z-index: 4;
+  pointer-events: none;
+  
+  animation: iconBounce 0.8s ease 0.3s backwards;
+}
+
+@keyframes iconBounce {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.3);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* ==================
+   CONTENT - SUBTITLE (SINGLE LINE)
+   ================== */
+.cun-image-sub {
+  position: absolute;
+  left: 50%;
+  top: var(--sub-top-pct);
+  transform: translateX(-50%);
+  
+  margin: 0;
+  color: rgba(245, 250, 255, 0.92);
+  font-size: 16px; /* Slightly smaller for single line */
+  font-weight: 300; /* Light weight */
+  letter-spacing: 0.3px;
+  text-align: center;
+  white-space: nowrap; /* FORCE SINGLE LINE */
+  
+  max-width: 95%;
+  z-index: 4;
+  pointer-events: none;
+  
+  animation: subtitleFadeIn 0.6s ease 0.4s backwards;
+}
+
+@keyframes subtitleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ==================
+   CTA BUTTON - UPDATED GRADIENT
+   ================== */
+.cun-image-cta {
+  position: absolute;
+  left: 50%;
+  top: var(--cta-top-pct);
+  transform: translateX(-50%);
+  z-index: 5;
+  
+  min-width: 220px;
+  padding: 10px 32px;
+  
+  border: none;
+  border-radius: 999px;
+  
+  /* UPDATED: Beautiful gradient using your color palette */
+  background: linear-gradient(
+    135deg,
+    var(--btn-gradient-start) 0%,
+    var(--btn-gradient-mid) 50%,
+    var(--btn-gradient-end) 100%
+  );
+  
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  
+  cursor: pointer;
+  box-shadow: 
+    0 6px 20px var(--unlock-shadow),
+    0 0 0 1px rgba(142, 229, 255, 0.2) inset;
+  
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: buttonFadeIn 0.6s ease 0.5s backwards;
+}
+
+@keyframes buttonFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.cun-image-cta:hover {
+  transform: translateX(-50%) translateY(-4px) scale(1.02);
+  background: linear-gradient(
+    135deg,
+    #507FEC 0%,
+    #6B9FFF 50%,
+    #A0EFFF 100%
+  );
+  box-shadow: 
+    0 10px 32px rgba(57, 89, 229, 0.6),
+    0 0 0 1px rgba(142, 229, 255, 0.3) inset,
+    0 0 20px rgba(142, 229, 255, 0.2);
+}
+
+.cun-image-cta:active {
+  transform: translateX(-50%) translateY(-2px) scale(1);
+  box-shadow: 
+    0 4px 16px rgba(57, 89, 229, 0.5),
+    0 0 0 1px rgba(142, 229, 255, 0.25) inset;
+}
+
+/* ==================
+   HIDE BACKGROUND CONTENT
+   ================== */
+body.cun-modal-open .fqs-card-wrapper,
+body.cun-modal-open .fqs-card,
+body.cun-modal-open .fqs-main-card,
+body.cun-modal-open .fqs-card-background {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ==================
+   RESPONSIVE DESIGN
+   ================== */
+
+@media (max-width: 1100px) {
+  :root {
+    --img-width: 480px;
+    --img-height: 320px;
+  }
+  
+  .cun-image-title { font-size: 36px; }
+  .cun-image-sub { font-size: 15px; }
+  .cun-lock-icon { width: 110px; }
+  .cun-image-cta { min-width: 210px; font-size: 14px; padding: 9px 30px; }
+}
+
+@media (max-width: 800px) {
+  :root {
+    --img-width: 420px;
+    --img-height: 280px;
+  }
+  
+  .cun-image-card { border-radius: 24px; }
+  .cun-image-title { font-size: 32px; }
+  .cun-image-sub { font-size: 14px; }
+  .cun-lock-icon { width: 100px; }
+  .cun-image-cta { min-width: 200px; padding: 9px 28px; font-size: 13px; }
+}
+
+@media (max-width: 550px) {
+  :root {
+    --img-width: 340px;
+    --img-height: 240px;
+    --title-top-pct: 10%;
+    --icon-top-pct: 30%;
+    --sub-top-pct: 62%;
+    --cta-top-pct: 78%;
+  }
+  
+  .cun-image-card { border-radius: 20px; }
+  .cun-image-title { font-size: 28px; }
+  .cun-image-sub { font-size: 13px; }
+  .cun-lock-icon { width: 90px; }
+  .cun-image-cta { min-width: 190px; padding: 8px 26px; font-size: 12px; }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --img-width: 300px;
+    --img-height: 220px;
+  }
+  
+  .cun-image-card { border-radius: 18px; }
+  .cun-image-title { font-size: 24px; }
+  .cun-image-sub { font-size: 12px; }
+  .cun-lock-icon { width: 80px; }
+  .cun-image-cta { min-width: 170px; padding: 7px 24px; font-size: 11px; }
+}
