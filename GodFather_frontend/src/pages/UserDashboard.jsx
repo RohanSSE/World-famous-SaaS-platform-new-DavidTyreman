@@ -48,16 +48,18 @@ const USER_SIDEBAR_ITEMS = [
 ];
 
 // ── User Sidebar ──
-function UserSidebar({ activeTab, onTabChange, sessions, onNewProject }) {
+function UserSidebar({ activeTab, onTabChange, sessions, onNewProject, collapsed, onToggleCollapse }) {
   return (
-    <aside className="ud-sidebar-v2">
+    <aside className={`ud-sidebar-v2 ${collapsed ? "collapsed" : ""}`}>
       <div className="ud-sidebar-v2-inner">
         <div className="ud-sidebar-v2-header">
           <div className="ud-sidebar-v2-label-row">
-            <Menu size={18} className="ud-sidebar-v2-menu-icon" />
-            <span className="ud-sidebar-v2-label">Menu</span>
+            <button className="ud-sidebar-v2-toggle" onClick={onToggleCollapse} title={collapsed ? "Expand menu" : "Collapse menu"}>
+              <Menu size={18} />
+            </button>
+            {!collapsed && <span className="ud-sidebar-v2-label">Menu</span>}
           </div>
-          <h3 className="ud-sidebar-v2-title">Brand Creator</h3>
+          {!collapsed && <h3 className="ud-sidebar-v2-title">Brand Creator</h3>}
         </div>
 
         <nav className="ud-sidebar-v2-nav">
@@ -68,9 +70,10 @@ function UserSidebar({ activeTab, onTabChange, sessions, onNewProject }) {
                 key={item.key}
                 className={`ud-sidebar-v2-item ${activeTab === item.key ? "active" : ""}`}
                 onClick={() => onTabChange(item.key)}
+                title={collapsed ? item.label : ""}
               >
                 <Icon size={18} />
-                <span>{item.label}</span>
+                {!collapsed && <span>{item.label}</span>}
               </button>
             );
           })}
@@ -78,7 +81,7 @@ function UserSidebar({ activeTab, onTabChange, sessions, onNewProject }) {
 
         <div className="ud-sidebar-v2-new">
           <button className="ud-sidebar-v2-new-btn" onClick={onNewProject}>
-            <Plus size={16} /> New Session
+            <Plus size={16} /> {!collapsed && "New Session"}
           </button>
         </div>
       </div>
@@ -395,6 +398,7 @@ function FoundationModal({ show, onClose, onSubmit, loading, error, agencies, ag
 export default function UserDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dashboardData, setDashboardData] = useState(null);
@@ -642,7 +646,7 @@ export default function UserDashboard() {
       <div className="ud-bg-v2"><div className="ud-bg-orb-v2" /></div>
       <ChatNavbar showSaveButton={false} showDownloadButton={false} showLogoutButton={true} />
       <div className="ud-page-v2">
-        <UserSidebar activeTab={activeTab} onTabChange={setActiveTab} sessions={sessions} onNewProject={handleNewSession} />
+        <UserSidebar activeTab={activeTab} onTabChange={setActiveTab} sessions={sessions} onNewProject={handleNewSession} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} />
         <main className="ud-main-v2">
           <div className="ud-main-inner-v2">
             <h1 className="ud-heading-v2">User Dashboard</h1>

@@ -710,21 +710,22 @@ body {
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   height: 100%;
+  transition: width 0.25s ease, min-width 0.25s ease;
 }
 
 .agency-sidebar-inner {
   display: flex;
   flex-direction: column;
-  padding: 24px 16px;
-  gap: 8px;
+  padding: 14px 12px;
+  gap: 4px;
 }
 
 .agency-sidebar-header {
-  padding: 0 8px 16px;
+  padding: 0 8px 10px;
   border-bottom: 1px solid var(--border-color);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .agency-sidebar-label-row {
@@ -747,28 +748,28 @@ body {
 }
 
 .agency-sidebar-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--white);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .agency-sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .agency-sidebar-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
   border: none;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -786,6 +787,52 @@ body {
   background: rgba(57, 89, 229, 0.15);
   color: var(--cyan-accent);
   font-weight: 500;
+}
+
+/* ── Sidebar Toggle Button ── */
+.agency-sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--white-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.agency-sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+}
+
+/* ── Sidebar Collapsed State ── */
+.agency-sidebar.collapsed {
+  width: 64px;
+  min-width: 64px;
+}
+
+.agency-sidebar.collapsed .agency-sidebar-inner {
+  padding: 24px 8px;
+  align-items: center;
+}
+
+.agency-sidebar.collapsed .agency-sidebar-header {
+  padding: 0 0 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.agency-sidebar.collapsed .agency-sidebar-label-row {
+  justify-content: center;
+}
+
+.agency-sidebar.collapsed .agency-sidebar-item {
+  justify-content: center;
+  padding: 10px;
+  gap: 0;
 }
 
 /* ── Stats Grid (6 cards) ── */
