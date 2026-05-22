@@ -139,7 +139,14 @@ import AssistantAvatar from './components/AssistantAvatar.jsx';
 
 // export default App;
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import AdminRoot from "./admin/AdminRoot";
+import {
+  AdminSignInRoute,
+  AdminDashboardLayout,
+  AdminDashboardPage,
+  AdminUserPage,
+} from "./admin/admin-routes";
 import IntroductoryPage from "./pages/IntroductoryPage";
 
 import AgencyDashboard from "./pages/AgencyDashboard";
@@ -159,7 +166,10 @@ import Stepper from "./pages/Stepper";
 import DeepDivePage from "./pages/Deepdivepage";
 // import IdentityCompleteModal from "./pages/IdentityCompleteModal";
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
   return (
     <>
       <Routes>
@@ -289,6 +299,16 @@ function App() {
           element={<ResetPasswordPage />}
         />
 
+        {/* Admin panel — nested routes (relative paths under /admin) */}
+        <Route path="/admin" element={<AdminRoot />}>
+          <Route path="sign-in" element={<AdminSignInRoute />} />
+          <Route element={<AdminDashboardLayout />}>
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="user" element={<AdminUserPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/admin/sign-in" replace />} />
+        </Route>
+
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/intro-ductory" replace />} />
       </Routes>
@@ -305,10 +325,14 @@ function App() {
         pauseOnHover
         theme="dark"
       />
-      {/* Assistant Avatar with bubble popup (visibility and content controlled by Context API) */}
-      <AssistantAvatar />
+      {/* Hide main-app assistant on admin routes */}
+      {!isAdminRoute && <AssistantAvatar />}
     </>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;
