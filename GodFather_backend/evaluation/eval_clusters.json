@@ -1,0 +1,29 @@
+{
+  "highest_failure_cluster": "general_queries",
+  "by_intent": {
+    "general": 6,
+    "trust": 3,
+    "differentiation": 3,
+    "authority": 1,
+    "emotional": 1,
+    "positioning": 1,
+    "manifesto": 1,
+    "premium": 1,
+    "tone": 1
+  },
+  "by_drift_type": {},
+  "by_hallucination_type": {
+    "overclaim": 8,
+    "high_hallucination": 4
+  },
+  "by_context_weakness": {
+    "weak_manifesto_context": 3
+  },
+  "by_repair_outcome": {
+    "repair_success": 12,
+    "repair_failed": 6
+  },
+  "failed_count": 18,
+  "total_count": 24,
+  "failure_rate": 0.75
+}

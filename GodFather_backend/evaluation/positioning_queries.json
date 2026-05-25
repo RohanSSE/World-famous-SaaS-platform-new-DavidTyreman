@@ -1,0 +1,9 @@
+[
+  {
+    "id": "positioning_unique_1",
+    "query": "How do we make competitors irrelevant?",
+    "expected_concepts": ["differentiation", "unique", "audience", "positioning"],
+    "expected_categories": ["positioning", "strategy"],
+    "expected_tone": ["strategic", "bold"]
+  }
+]

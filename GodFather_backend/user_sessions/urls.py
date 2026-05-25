@@ -8,7 +8,16 @@ from .views import (
     answer_ai_suggestion_unified, edit_conversation, session_conversations, session_generate_summary,
     session_generate_social_content,session_generate_foundation_summary,answer_ai_suggestions,
     assistant_suggestion,
-    session_get_foundation_summary, session_update_foundation_summary
+    session_get_foundation_summary, session_update_foundation_summary,
+    rag_query, ai_task_status, rag_query_stream, rag_agents_list,
+    rag_system_health, ai_cost_dashboard,
+    session_brand_brain, session_feedback_learning, session_brand_workflow,
+    session_longitudinal_memory, brand_workflows_catalog,
+    product_observability_dashboard, session_brand_export,
+    admin_cognition_dashboard, admin_cognition_traces, admin_feedback_review,
+    admin_cognition_live, admin_chunk_quality, admin_product_signals,
+    demo_brands_catalog, session_demo_pack, record_pilot_event,
+    session_pilot_kpis, user_pilot_summary, admin_ops_intelligence,
 
 )
 
@@ -79,5 +88,35 @@ urlpatterns = [
     
     # NEW: Document-based suggestion endpoint
     path('sessions/<int:pk>/answer-ai-suggestion-from-documents/', answer_ai_suggestion_from_documents, name='answer-ai-suggestion-from-documents'),
-    
+
+    # RAG query + Celery task polling (Phase 1–13)
+    path('rag-query/', rag_query, name='rag-query-global'),
+    path('<int:pk>/rag-query/', rag_query, name='rag-query'),
+    path('rag-query/stream/', rag_query_stream, name='rag-query-stream-global'),
+    path('<int:pk>/rag-query/stream/', rag_query_stream, name='rag-query-stream'),
+    path('rag-agents/', rag_agents_list, name='rag-agents'),
+    path('rag-system-health/', rag_system_health, name='rag-system-health'),
+    path('ai-cost-dashboard/', ai_cost_dashboard, name='ai-cost-dashboard'),
+    path('ai-tasks/<str:task_id>/', ai_task_status, name='ai-task-status'),
+
+    # Brand operating system (productization — architecture frozen)
+    path('brand-workflows/', brand_workflows_catalog, name='brand-workflows-catalog'),
+    path('product-observability/', product_observability_dashboard, name='product-observability'),
+    path('admin/cognition-dashboard/', admin_cognition_dashboard, name='admin-cognition-dashboard'),
+    path('admin/cognition-traces/', admin_cognition_traces, name='admin-cognition-traces'),
+    path('admin/feedback-review/', admin_feedback_review, name='admin-feedback-review'),
+    path('admin/cognition-live/', admin_cognition_live, name='admin-cognition-live'),
+    path('admin/chunk-quality/', admin_chunk_quality, name='admin-chunk-quality'),
+    path('admin/product-signals/', admin_product_signals, name='admin-product-signals'),
+    path('admin/ops-intelligence/', admin_ops_intelligence, name='admin-ops-intelligence'),
+    path('demo-brands/', demo_brands_catalog, name='demo-brands-catalog'),
+    path('pilot-summary/', user_pilot_summary, name='user-pilot-summary'),
+    path('<int:pk>/brand-brain/', session_brand_brain, name='session-brand-brain'),
+    path('<int:pk>/feedback-learning/', session_feedback_learning, name='session-feedback-learning'),
+    path('<int:pk>/brand-workflow/', session_brand_workflow, name='session-brand-workflow'),
+    path('<int:pk>/longitudinal-memory/', session_longitudinal_memory, name='session-longitudinal-memory'),
+    path('<int:pk>/brand-export/', session_brand_export, name='session-brand-export'),
+    path('<int:pk>/demo-pack/', session_demo_pack, name='session-demo-pack'),
+    path('<int:pk>/pilot-event/', record_pilot_event, name='record-pilot-event'),
+    path('<int:pk>/pilot-kpis/', session_pilot_kpis, name='session-pilot-kpis'),
 ]

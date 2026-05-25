@@ -1,0 +1,177 @@
+[
+  {
+    "id": "golden_trust_premium_1",
+    "query": "How should a premium brand build trust?",
+    "expected_concepts": ["trust", "consistency", "clarity", "authentic"],
+    "expected_categories": ["manifesto", "branding"],
+    "forbidden": ["viral marketing", "growth hacks", "tiktok trends"]
+  },
+  {
+    "id": "golden_differentiation_1",
+    "query": "Our messaging feels generic. How do we differentiate?",
+    "expected_concepts": ["differentiat", "unique", "competitor", "manifesto"],
+    "expected_categories": ["manifesto", "branding"],
+    "forbidden": ["be authentic", "just post more content"]
+  },
+  {
+    "id": "golden_authority_1",
+    "query": "What weakens brand authority?",
+    "expected_concepts": ["authority", "trust", "consistency", "promise"],
+    "expected_categories": ["branding"],
+    "forbidden": ["buy followers", "viral"]
+  },
+  {
+    "id": "golden_competitor_price_1",
+    "query": "Help position us against cheaper competitors.",
+    "expected_concepts": ["differentiat", "value", "premium", "irrelevant"],
+    "expected_categories": ["manifesto", "branding"],
+    "forbidden": ["lower your prices", "race to the bottom"]
+  },
+  {
+    "id": "golden_manifesto_purpose_1",
+    "query": "What should our brand manifesto emphasize?",
+    "expected_concepts": ["manifesto", "promise", "purpose", "values"],
+    "expected_categories": ["manifesto"],
+    "forbidden": ["seo", "algorithm"]
+  },
+  {
+    "id": "golden_emotional_1",
+    "query": "How can a brand create emotional connection?",
+    "expected_concepts": ["emotion", "story", "trust", "authentic"],
+    "expected_categories": ["branding"],
+    "forbidden": ["always go viral"]
+  },
+  {
+    "id": "golden_tone_1",
+    "query": "How should our brand voice sound?",
+    "expected_concepts": ["tone", "voice", "personality"],
+    "expected_categories": ["branding"],
+    "forbidden": ["use ai to write everything"]
+  },
+  {
+    "id": "golden_positioning_1",
+    "query": "How do we position a B2B SaaS as category leader?",
+    "expected_concepts": ["position", "differentiat", "category"],
+    "expected_categories": ["branding", "manifesto"],
+    "forbidden": ["guaranteed revenue"]
+  },
+  {
+    "id": "golden_trust_clarity_1",
+    "query": "Why does unclear messaging destroy trust?",
+    "expected_concepts": ["clarity", "trust", "mean what you say"],
+    "expected_categories": ["branding"],
+    "forbidden": ["growth hacking"]
+  },
+  {
+    "id": "golden_reject_generic_1",
+    "query": "We want to sound innovative like everyone else.",
+    "expected_concepts": ["innovation", "differentiat", "generic"],
+    "expected_categories": ["branding", "manifesto"],
+    "forbidden": ["copy apple", "copy nike"]
+  },
+  {
+    "id": "golden_manifesto_trust_1",
+    "query": "Should our manifesto focus on trust or speed?",
+    "expected_concepts": ["manifesto", "trust", "promise"],
+    "expected_categories": ["manifesto"],
+    "forbidden": ["move fast break things"]
+  },
+  {
+    "id": "golden_dna_1",
+    "query": "What is brand DNA and why does it matter?",
+    "expected_concepts": ["dna", "identity", "values"],
+    "expected_categories": ["branding"],
+    "forbidden": ["logo colors only"]
+  },
+  {
+    "id": "golden_competitor_irrelevant_1",
+    "query": "How do we make competitors irrelevant?",
+    "expected_concepts": ["competitor", "differentiat", "unique"],
+    "expected_categories": ["branding"],
+    "forbidden": ["undercut pricing"]
+  },
+  {
+    "id": "golden_storytelling_1",
+    "query": "How does storytelling build brand trust?",
+    "expected_concepts": ["story", "trust", "emotion"],
+    "expected_categories": ["branding"],
+    "forbidden": ["fake testimonials"]
+  },
+  {
+    "id": "golden_consistency_1",
+    "query": "Why is consistency critical across touchpoints?",
+    "expected_concepts": ["consistency", "touchpoint", "trust"],
+    "expected_categories": ["branding"],
+    "forbidden": ["rebrand every month"]
+  },
+  {
+    "id": "golden_premium_exclusivity_1",
+    "query": "How do luxury brands maintain exclusivity without arrogance?",
+    "expected_concepts": ["premium", "trust", "tone"],
+    "expected_categories": ["branding"],
+    "forbidden": ["luxury brands always prioritize exclusivity"]
+  },
+  {
+    "id": "golden_internal_culture_1",
+    "query": "How should internal culture align with brand voice?",
+    "expected_concepts": ["culture", "voice", "values", "team"],
+    "expected_categories": ["manifesto", "branding"],
+    "forbidden": ["hr software"]
+  },
+  {
+    "id": "golden_rejected_angle_1",
+    "query": "We rejected a playful tone before. Should we revisit?",
+    "expected_concepts": ["tone", "strategy", "decision"],
+    "expected_categories": ["branding"],
+    "forbidden": ["definitely yes without context"]
+  },
+  {
+    "id": "golden_narrative_conflict_1",
+    "query": "Our ads say innovation but manifesto says trust. What now?",
+    "expected_concepts": ["trust", "innovation", "align", "narrative"],
+    "expected_categories": ["manifesto"],
+    "forbidden": ["pick one randomly"]
+  },
+  {
+    "id": "golden_founder_voice_1",
+    "query": "How should founder personality shape the brand?",
+    "expected_concepts": ["founder", "personality", "authentic"],
+    "expected_categories": ["branding"],
+    "forbidden": ["hide the founder"]
+  },
+  {
+    "id": "golden_audience_psychology_1",
+    "query": "How do we understand audience psychology for positioning?",
+    "expected_concepts": ["audience", "psychology", "position"],
+    "expected_categories": ["branding"],
+    "forbidden": ["manipulate customers"]
+  },
+  {
+    "id": "golden_me_too_1",
+    "query": "We sound like every other SaaS company. Fix that.",
+    "expected_concepts": ["differentiat", "me-too", "unique"],
+    "expected_categories": ["branding", "manifesto"],
+    "forbidden": ["best-in-class solution"]
+  },
+  {
+    "id": "golden_post_manifesto_1",
+    "query": "What should we do after writing our manifesto?",
+    "expected_concepts": ["manifesto", "next", "content", "execution"],
+    "expected_categories": ["manifesto"],
+    "forbidden": ["forget the manifesto"]
+  },
+  {
+    "id": "golden_crisis_tone_1",
+    "query": "How should our brand respond in a crisis?",
+    "expected_concepts": ["crisis", "trust", "response", "tone"],
+    "expected_categories": ["manifesto", "branding"],
+    "forbidden": ["deny everything"]
+  },
+  {
+    "id": "golden_value_promise_1",
+    "query": "How do we articulate a brand promise customers believe?",
+    "expected_concepts": ["promise", "trust", "clarity"],
+    "expected_categories": ["manifesto", "branding"],
+    "forbidden": ["world-class synergy"]
+  }
+]

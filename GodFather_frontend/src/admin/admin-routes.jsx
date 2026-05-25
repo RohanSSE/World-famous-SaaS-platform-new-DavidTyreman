@@ -10,6 +10,9 @@ import { DashboardLayout } from '@admin/layouts/dashboard';
 
 const DashboardPage = lazy(() => import('@admin/pages/dashboard'));
 const UserPage = lazy(() => import('@admin/pages/user'));
+const CognitionPage = lazy(() => import('@admin/pages/cognition'));
+const ReviewPage = lazy(() => import('@admin/pages/review'));
+const OpsPage = lazy(() => import('@admin/pages/ops'));
 const SignInPage = lazy(() => import('@admin/pages/sign-in'));
 
 const ADMIN_SIGN_IN = '/admin/sign-in';
@@ -81,4 +84,16 @@ export function AdminDashboardPage() {
 
 export function AdminUserPage() {
   return <UserPage />;
+}
+
+export function AdminCognitionPage() {
+  return <CognitionPage />;
+}
+
+export function AdminReviewPage() {
+  return <ReviewPage />;
+}
+
+export function AdminOpsPage() {
+  return <OpsPage />;
 }

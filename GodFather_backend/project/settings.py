@@ -18,9 +18,30 @@ import platform
 import pytesseract  # Import to configure the cmd path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-env = environ.Env(DEBUG=(bool, False))
+env = environ.Env(
+    DEBUG=(bool, False),
+    POSTGRES_DB=(str, "godfather"),
+    POSTGRES_USER=(str, "postgres"),
+    POSTGRES_PASSWORD=(str, "postgres"),
+    POSTGRES_HOST=(str, "localhost"),
+    POSTGRES_PORT=(str, "5433"),
+)
 BASE_DIR = Path(__file__).resolve().parent.parent
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+# Load .env — override=True so .env wins over stale shell vars (e.g. old POSTGRES_PASSWORD=admin)
+_env_path = os.path.join(BASE_DIR, ".env")
+if os.path.exists(_env_path):
+    # Strip UTF-8 BOM if present (Windows editors often add it)
+    with open(_env_path, encoding="utf-8-sig") as _f:
+        _env_body = _f.read()
+    _env_clean = os.path.join(BASE_DIR, ".env.loaded")
+    with open(_env_clean, "w", encoding="utf-8") as _f:
+        _f.write(_env_body)
+    env.read_env(_env_clean, override=True)
+    try:
+        os.remove(_env_clean)
+    except OSError:
+        pass
 
 
 # Quick-start development settings - unsuitable for production
@@ -53,6 +74,7 @@ INSTALLED_APPS = [
     "accounts",
     "document",
     "user_sessions",
+    "ai_knowledge",
     "channels",
 ]
 
@@ -65,7 +87,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'user_sessions.middleware.rate_limit.RagRateLimitMiddleware',
 ]
+
+# Production reliability (env overrides in deployment)
+RAG_RATE_LIMIT_ENABLED = env.bool("RAG_RATE_LIMIT_ENABLED", default=True)
+RAG_RATE_LIMIT_PER_MINUTE = env.int("RAG_RATE_LIMIT_PER_MINUTE", default=30)
+REDIS_URL = env("REDIS_URL", default="")
 
 ROOT_URLCONF = 'project.urls'
 
@@ -101,17 +129,22 @@ WSGI_APPLICATION = 'project.wsgi.application'
 #}
 
 
-# Direct DB config (local Postgres)
+# Postgres + PGVector
+# Option B (active): Docker on host port 5433 — avoids Windows Postgres on 5432.
+# Option A: use 5432 only after stopping Windows Postgres (scripts/setup-docker-postgres.ps1 as Admin).
 DATABASES = {
-     'default': {
-         'ENGINE': 'django.db.backends.postgresql',
-         'NAME': 'godfather',
-         'USER': 'postgres',
-         'PASSWORD': 'admin',
-         'HOST': 'localhost',
-         'PORT': '5432',
-     }
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("POSTGRES_DB"),
+        "USER": env("POSTGRES_USER"),
+        "PASSWORD": env("POSTGRES_PASSWORD"),
+        "HOST": env("POSTGRES_HOST"),
+        "PORT": env("POSTGRES_PORT"),
+    }
 }
+
+# Phase 14 — PGVector semantic memory (ES remains for keyword/filter)
+PGVECTOR_ENABLED = os.environ.get("PGVECTOR_ENABLED", "true").lower() in ("1", "true", "yes")
 
 
 # Password validation
@@ -340,19 +373,192 @@ PASSWORD_RESET_TIMEOUT = 86400  # 24 hours
 AUTH_USER_MODEL = "accounts.User"
 
 # Azure OpenAI only (no OpenAI.com). Set in env: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY,
-# AZURE_OPENAI_DEPLOYMENT_NAME (chat), AZURE_OPENAI_EMBEDDING_DEPLOYMENT (embeddings).
+# AZURE_OPENAI_DEPLOYMENT_NAME (chat), AZURE_OPENAI_EMBEDDING_DEPLOYMENT (embeddings, default text-embedding-3-small).
+EMBEDDING_MODEL = env("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", default="text-embedding-3-small")
 
-# Elasticsearch Configuration
-ELASTICSEARCH_HOST = 'localhost:9200'
-ELASTICSEARCH_HOSTS = ['http://localhost:9200']
+# Elasticsearch (local: docker compose up -d elasticsearch)
+_es_raw = env("ELASTICSEARCH_HOSTS", default="http://localhost:9200")
+ELASTICSEARCH_HOSTS = [h.strip() for h in _es_raw.split(",") if h.strip()]
+ELASTICSEARCH_HOST = ELASTICSEARCH_HOSTS[0].replace("http://", "").replace("https://", "")
 
-# Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# Django cache (Redis DB 1 — Celery uses DB 0)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_CACHE_URL", default="redis://127.0.0.1:6379/1"),
+        "OPTIONS": {"socket_connect_timeout": 2},
+    }
+}
+
+# RAG pipeline cache TTLs (seconds): embedding 5m, retrieval 5m, GPT 15m
+RAG_CACHE_TTL_EMBEDDING = int(os.environ.get("RAG_CACHE_TTL_EMBEDDING", 300))
+RAG_CACHE_TTL_RETRIEVAL = int(os.environ.get("RAG_CACHE_TTL_RETRIEVAL", 300))
+RAG_CACHE_TTL_GPT = int(os.environ.get("RAG_CACHE_TTL_GPT", 900))
+RAG_MIN_SCORE_THRESHOLD = float(os.environ.get("RAG_MIN_SCORE_THRESHOLD", "0.01"))
+RAG_CROSS_ENCODER_ENABLED = os.environ.get("RAG_CROSS_ENCODER_ENABLED", "false").lower() == "true"
+RAG_CROSS_ENCODER_MODEL = os.environ.get(
+    "RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"
+)
+RAG_CROSS_ENCODER_BLEND = float(os.environ.get("RAG_CROSS_ENCODER_BLEND", "0.15"))
+RAG_CROSS_ENCODER_DEVICE = os.environ.get("RAG_CROSS_ENCODER_DEVICE", "cpu")
+RAG_WEIGHTED_HYBRID_ENABLED = os.environ.get("RAG_WEIGHTED_HYBRID_ENABLED", "true").lower() == "true"
+
+# Production context / rerank limits (Phase 15 quality)
+MAX_CONTEXT_CHARS = int(os.environ.get("MAX_CONTEXT_CHARS", "6000"))
+MAX_RERANK_CHUNKS_BEFORE = int(os.environ.get("MAX_RERANK_CHUNKS_BEFORE", "10"))
+MAX_RERANK_CHUNKS_AFTER = int(os.environ.get("MAX_RERANK_CHUNKS_AFTER", "5"))
+MAX_MEMORY_SNIPPETS = int(os.environ.get("MAX_MEMORY_SNIPPETS", "8"))
+AI_KNOWLEDGE_TOP_K = int(os.environ.get("AI_KNOWLEDGE_TOP_K", str(MAX_RERANK_CHUNKS_AFTER)))
+MEMORY_FRESHNESS_HALF_LIFE_DAYS = int(os.environ.get("MEMORY_FRESHNESS_HALF_LIFE_DAYS", "14"))
+RAG_MANIFESTO_CATEGORY_BOOST = float(os.environ.get("RAG_MANIFESTO_CATEGORY_BOOST", "0.08"))
+RAG_STRATEGIC_MANIFESTO_BOOST = float(os.environ.get("RAG_STRATEGIC_MANIFESTO_BOOST", "0.10"))
+MIN_MANIFESTO_CHUNKS = int(os.environ.get("MIN_MANIFESTO_CHUNKS", "3"))
+CONTEXT_RETRIEVAL_POOL_SIZE = int(os.environ.get("CONTEXT_RETRIEVAL_POOL_SIZE", "18"))
+CONTEXT_MIN_MANIFESTO_DOMINANCE = float(os.environ.get("CONTEXT_MIN_MANIFESTO_DOMINANCE", "0.45"))
+CONTEXT_MIN_STRATEGIC_DENSITY = float(os.environ.get("CONTEXT_MIN_STRATEGIC_DENSITY", "0.60"))
+MANIFESTO_FIRST_HYBRID_WEIGHT = float(os.environ.get("MANIFESTO_FIRST_HYBRID_WEIGHT", "0.65"))
+MANIFESTO_FIRST_ALIGNMENT_WEIGHT = float(os.environ.get("MANIFESTO_FIRST_ALIGNMENT_WEIGHT", "0.35"))
+RAG_SELF_REPAIR_ENABLED = os.environ.get("RAG_SELF_REPAIR_ENABLED", "true").lower() == "true"
+RAG_CONTEXT_REPAIR_ENABLED = os.environ.get("RAG_CONTEXT_REPAIR_ENABLED", "true").lower() == "true"
+RAG_MULTI_PASS_REASONING = os.environ.get("RAG_MULTI_PASS_REASONING", "true").lower() == "true"
+CONTEXT_REPAIR_CONFLICT_THRESHOLD = float(os.environ.get("CONTEXT_REPAIR_CONFLICT_THRESHOLD", "0.30"))
+CONTEXT_REPAIR_MANIFESTO_THRESHOLD = float(os.environ.get("CONTEXT_REPAIR_MANIFESTO_THRESHOLD", "0.50"))
+OVERCLAIM_CONFIDENCE_THRESHOLD = float(os.environ.get("OVERCLAIM_CONFIDENCE_THRESHOLD", "0.55"))
+UNCERTAINTY_EXPLORATORY_TEMPERATURE = float(os.environ.get("UNCERTAINTY_EXPLORATORY_TEMPERATURE", "0.2"))
+# Grounded strategic reasoning (Day 3)
+CLAIM_LEVEL_VERIFICATION_ENABLED = os.environ.get("CLAIM_LEVEL_VERIFICATION_ENABLED", "true").lower() == "true"
+CLAIM_GROUNDING_THRESHOLD = float(os.environ.get("CLAIM_GROUNDING_THRESHOLD", "0.35"))
+HARD_REGEN_UNSUPPORTED_RATE = float(os.environ.get("HARD_REGEN_UNSUPPORTED_RATE", "0.40"))
+HARD_REGEN_MIN_CLAIM_RATIO = float(os.environ.get("HARD_REGEN_MIN_CLAIM_RATIO", "0.55"))
+HARD_REGEN_MIN_UNSUPPORTED_COUNT = int(os.environ.get("HARD_REGEN_MIN_UNSUPPORTED_COUNT", "3"))
+SENTENCE_REWRITE_MAX_STRENGTH = float(os.environ.get("SENTENCE_REWRITE_MAX_STRENGTH", "0.50"))
+MAX_UNSUPPORTED_CLAIMS_BEFORE_REGEN = int(os.environ.get("MAX_UNSUPPORTED_CLAIMS_BEFORE_REGEN", "2"))
+MIN_CLAIM_SUPPORT_STRENGTH = float(os.environ.get("MIN_CLAIM_SUPPORT_STRENGTH", "0.55"))
+DEFINITIVE_ALLOWED_STRENGTH = float(os.environ.get("DEFINITIVE_ALLOWED_STRENGTH", "0.70"))
+MIN_STRATEGIC_SUPPORT_ALIGNMENT = float(os.environ.get("MIN_STRATEGIC_SUPPORT_ALIGNMENT", "0.35"))
+CONSISTENCY_BRAND_BOOK_WEIGHT = float(os.environ.get("CONSISTENCY_BRAND_BOOK_WEIGHT", "0.22"))
+CONSISTENCY_MEMORY_WEIGHT = float(os.environ.get("CONSISTENCY_MEMORY_WEIGHT", "0.18"))
+CONSISTENCY_TONE_WEIGHT = float(os.environ.get("CONSISTENCY_TONE_WEIGHT", "0.36"))
+CONSISTENCY_STRATEGY_WEIGHT = float(os.environ.get("CONSISTENCY_STRATEGY_WEIGHT", "0.28"))
+# Reliable Brand Cognition sprint
+STRICT_EVIDENCE_MODE = os.environ.get("STRICT_EVIDENCE_MODE", "true").lower() == "true"
+MIN_SUPPORTING_CHUNKS = int(os.environ.get("MIN_SUPPORTING_CHUNKS", "2"))
+MAX_INFERENCE_DISTANCE = float(os.environ.get("MAX_INFERENCE_DISTANCE", "0.55"))
+INFERENCE_FORCE_EXPLORATORY_THRESHOLD = float(os.environ.get("INFERENCE_FORCE_EXPLORATORY_THRESHOLD", "0.42"))
+MAX_HIGH_INFERENCE_BEFORE_REGEN = int(os.environ.get("MAX_HIGH_INFERENCE_BEFORE_REGEN", "3"))
+CALIBRATED_HALLUCINATION_METRIC = os.environ.get("CALIBRATED_HALLUCINATION_METRIC", "true").lower() == "true"
+HALLUCINATION_WEIGHT_UNSUPPORTED = float(os.environ.get("HALLUCINATION_WEIGHT_UNSUPPORTED", "0.50"))
+HALLUCINATION_WEIGHT_CONTRADICTION = float(os.environ.get("HALLUCINATION_WEIGHT_CONTRADICTION", "0.30"))
+HALLUCINATION_WEIGHT_OVERCLAIM = float(os.environ.get("HALLUCINATION_WEIGHT_OVERCLAIM", "0.20"))
+PASS_MIN_CLAIM_GROUNDED_RATIO = float(os.environ.get("PASS_MIN_CLAIM_GROUNDED_RATIO", "0.45"))
+PASS_MIN_CONSISTENCY = float(os.environ.get("PASS_MIN_CONSISTENCY", "0.50"))
+PASS_MAX_HALLUCINATION_RISK = float(os.environ.get("PASS_MAX_HALLUCINATION_RISK", "0.50"))
+PASS_MAX_UNSUPPORTED_COUNT = int(os.environ.get("PASS_MAX_UNSUPPORTED_COUNT", "6"))
+PASS_MAX_UNSUPPORTED_RATE = float(os.environ.get("PASS_MAX_UNSUPPORTED_RATE", "0.55"))
+PASS_MAX_OVERCLAIM_RATE = float(os.environ.get("PASS_MAX_OVERCLAIM_RATE", "0.55"))
+MIN_SUPPORTING_CHUNKS_STRATEGIC = int(os.environ.get("MIN_SUPPORTING_CHUNKS_STRATEGIC", "2"))
+WEAK_INTENT_RERANK_BOOST = float(os.environ.get("WEAK_INTENT_RERANK_BOOST", "0.10"))
+WEAK_CLUSTER_EXTRA_BOOST = float(os.environ.get("WEAK_CLUSTER_EXTRA_BOOST", "0.04"))
+RAG_STRATEGIC_CATEGORY_BOOST = float(os.environ.get("RAG_STRATEGIC_CATEGORY_BOOST", "0.06"))
+GENERIC_CHUNK_PENALTY = float(os.environ.get("GENERIC_CHUNK_PENALTY", "0.30"))
+FAILURE_MEMORY_ENABLED = os.environ.get("FAILURE_MEMORY_ENABLED", "true").lower() == "true"
+UNCERTAINTY_EXPLORATORY_THRESHOLD = float(os.environ.get("UNCERTAINTY_EXPLORATORY_THRESHOLD", "0.50"))
+UNCERTAINTY_MODERATE_THRESHOLD = float(os.environ.get("UNCERTAINTY_MODERATE_THRESHOLD", "0.65"))
+SOURCE_EVIDENCE_WEIGHTS = {}  # override via env JSON if needed
+RAG_EMBEDDING_WARMUP = os.environ.get("RAG_EMBEDDING_WARMUP", "true").lower() == "true"
+RAG_DEBUG_PANEL = os.environ.get("RAG_DEBUG_PANEL", "true").lower() == "true"
+RAG_LLM_VERIFY_ENABLED = os.environ.get("RAG_LLM_VERIFY_ENABLED", "true").lower() == "true"
+AI_REQUEST_TRACE_LOGGING = os.environ.get("AI_REQUEST_TRACE_LOGGING", "true").lower() == "true"
+RAG_LOW_CONFIDENCE_THRESHOLD = float(os.environ.get("RAG_LOW_CONFIDENCE_THRESHOLD", "0.45"))
+RAG_MODERATE_CONFIDENCE_THRESHOLD = float(os.environ.get("RAG_MODERATE_CONFIDENCE_THRESHOLD", "0.65"))
+MAX_CHUNKS_PER_DOCUMENT = int(os.environ.get("MAX_CHUNKS_PER_DOCUMENT", "2"))
+MAX_CHUNK_SEMANTIC_SIMILARITY = float(os.environ.get("MAX_CHUNK_SEMANTIC_SIMILARITY", "0.92"))
+RAG_STREAM_VERIFIED = os.environ.get("RAG_STREAM_VERIFIED", "true").lower() == "true"
+ENTERPRISE_CONFIDENCE_HIGH = float(os.environ.get("ENTERPRISE_CONFIDENCE_HIGH", "0.78"))
+ENTERPRISE_CONFIDENCE_MODERATE = float(os.environ.get("ENTERPRISE_CONFIDENCE_MODERATE", "0.55"))
+
+# Index quality gate
+MIN_CHUNK_CHARS = int(os.environ.get("MIN_CHUNK_CHARS", "120"))
+MAX_CHUNK_REPETITIVE_RATIO = float(os.environ.get("MAX_CHUNK_REPETITIVE_RATIO", "0.4"))
+EXCLUDED_CHUNK_CATEGORIES = ["admin", "meta", "logs", "debug"]
+
+SOURCE_RELIABILITY = {
+    "manifesto": 1.0,
+    "strategy": 0.9,
+    "positioning": 0.88,
+    "branding": 0.85,
+    "founder_notes": 0.85,
+    "brand_memory": 0.8,
+    "marketing": 0.65,
+    "generic": 0.4,
+}
+
+# Heavy AI endpoints: enqueue Celery when True (client polls task status)
+AI_HEAVY_ENDPOINTS_ASYNC = os.environ.get("AI_HEAVY_ENDPOINTS_ASYNC", "true").lower() == "true"
+
+# RAG observability & intelligence (Phases 8–13)
+DEBUG_RAG = os.environ.get("DEBUG_RAG", "false").lower() == "true"
+RAG_QUERY_LOGGING = os.environ.get("RAG_QUERY_LOGGING", "true").lower() == "true"
+RAG_QUALITY_PIPELINE = os.environ.get("RAG_QUALITY_PIPELINE", "true").lower() == "true"
+RAG_EVALUATION_ENABLED = os.environ.get("RAG_EVALUATION_ENABLED", "false").lower() == "true"
+RAG_PROMPT_VARIANT = os.environ.get("RAG_PROMPT_VARIANT", "v1")
+PROMPTS_DIR = os.path.join(BASE_DIR, "prompts")
+
+RAG_CATEGORY_WEIGHTS = {
+    "manifesto": 1.0,
+    "branding": 1.0,
+    "psychology": 1.0,
+    "strategy": 1.0,
+    "positioning": 1.0,
+    "sales": 1.0,
+    "marketing": 1.0,
+}
+RAG_RATE_LIMITS = {
+    "default": 120,
+    "rag_query": 60,
+    "rag_stream": 30,
+    "manifesto": 10,
+    "content_generation": 20,
+}
+RAG_DAILY_TOKEN_BUDGET = int(os.environ.get("RAG_DAILY_TOKEN_BUDGET", 500000))
+AI_USAGE_LOGGING = os.environ.get("AI_USAGE_LOGGING", "true").lower() == "true"
+
+# Celery (requires Redis — docker compose up -d redis)
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://127.0.0.1:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=CELERY_BROKER_URL)
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
+# =====================================================
+# AI KNOWLEDGE AUTO-INDEXING (Rag_doc → Elasticsearch)
+# =====================================================
+AI_KNOWLEDGE_AUTO_INDEX = True
+AI_KNOWLEDGE_AUTO_INDEX_ON_STARTUP = True
+AI_KNOWLEDGE_STATE_FILE = os.path.join(BASE_DIR, 'data', 'ai_knowledge_index_state.json')
+
+from celery.schedules import crontab  # noqa: E402
+
+CELERY_BEAT_SCHEDULE = {
+    'ai-knowledge-index-refresh': {
+        'task': 'user_sessions.tasks.rebuild_ai_knowledge_index_task',
+        'schedule': crontab(minute=0, hour='*/6'),
+        'kwargs': {'force': False},
+    },
+    'rag-evaluation-nightly': {
+        'task': 'user_sessions.tasks.run_rag_evaluation_nightly_task',
+        'schedule': crontab(minute=30, hour=2),
+    },
+    'brand-memory-decay': {
+        'task': 'user_sessions.tasks.decay_brand_memory_importance_task',
+        'schedule': crontab(minute=0, hour=3),
+    },
+    'failure-cluster-mining': {
+        'task': 'user_sessions.tasks.analyze_failures_nightly_task',
+        'schedule': crontab(minute=45, hour=2),
+    },
+}
 
 
 
@@ -380,3 +586,28 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     }
 }
+
+# Production: set REDIS_URL + use channels_redis backend
+_redis_url = env("REDIS_URL", default="")
+if _redis_url:
+    try:
+        import channels_redis  # noqa: F401
+
+        CHANNEL_LAYERS = {
+            "default": {
+                "BACKEND": "channels_redis.core.RedisChannelLayer",
+                "CONFIG": {"hosts": [_redis_url]},
+            }
+        }
+    except ImportError:
+        pass
+
+SENTRY_DSN = env("SENTRY_DSN", default="")
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+
+        sentry_sdk.init(dsn=SENTRY_DSN, integrations=[DjangoIntegration()], traces_sample_rate=0.1)
+    except ImportError:
+        pass

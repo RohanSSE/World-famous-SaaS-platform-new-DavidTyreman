@@ -146,6 +146,9 @@ import {
   AdminDashboardLayout,
   AdminDashboardPage,
   AdminUserPage,
+  AdminCognitionPage,
+  AdminReviewPage,
+  AdminOpsPage,
 } from "./admin/admin-routes";
 import IntroductoryPage from "./pages/IntroductoryPage";
 
@@ -164,6 +167,8 @@ import ChatKickOffPage from "./pages/ChatKickOffPage";
 import BrandSummaryPage from "./pages/BrandSummaryPage";
 import Stepper from "./pages/Stepper";
 import DeepDivePage from "./pages/Deepdivepage";
+import BrandOperatingSystem from "./pages/BrandOperatingSystem";
+import BrandOnboarding from "./pages/BrandOnboarding";
 // import IdentityCompleteModal from "./pages/IdentityCompleteModal";
 
 function AppContent() {
@@ -259,6 +264,22 @@ function AppContent() {
           }
         />
         <Route
+          path="/brand-os"
+          element={
+            <ProtectedRoute>
+              <BrandOperatingSystem />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/brand-onboarding"
+          element={
+            <ProtectedRoute>
+              <BrandOnboarding />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/chat-unlock"
           element={
             <ProtectedRoute>
@@ -305,6 +326,9 @@ function AppContent() {
           <Route element={<AdminDashboardLayout />}>
             <Route index element={<AdminDashboardPage />} />
             <Route path="user" element={<AdminUserPage />} />
+            <Route path="cognition" element={<AdminCognitionPage />} />
+            <Route path="review" element={<AdminReviewPage />} />
+            <Route path="ops" element={<AdminOpsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/admin/sign-in" replace />} />
         </Route>

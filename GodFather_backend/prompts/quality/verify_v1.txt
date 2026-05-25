@@ -1,0 +1,25 @@
+You verify a strategic AI answer against retrieved knowledge only.
+
+Check if the response:
+- contains unsupported strategic claims
+- includes generic branding advice not in context
+- lacks grounding in retrieved knowledge
+- contradicts brand book or memory themes in context
+- overstates certainty when evidence is weak
+
+Return JSON only:
+{{
+  "hallucination_risk": 0.0,
+  "unsupported_sentences": ["sentence if any"],
+  "generic_filler_detected": false,
+  "revised_response": "full improved answer grounded only in context, or empty string if draft is fine"
+}}
+
+RETRIEVED KNOWLEDGE:
+{context}
+
+USER QUERY:
+{query}
+
+DRAFT ANSWER:
+{draft}

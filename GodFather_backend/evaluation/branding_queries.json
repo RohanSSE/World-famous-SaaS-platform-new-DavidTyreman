@@ -1,0 +1,26 @@
+[
+  {
+    "id": "brand_emotional_1",
+    "query": "How can a brand create emotional connection?",
+    "expected_concepts": ["storytelling", "emotion", "authenticity", "journey"],
+    "expected_categories": ["branding"],
+    "expected_sources": ["Storytelling", "Emotion", "Authentic"],
+    "expected_tone": ["bold", "direct", "warm"]
+  },
+  {
+    "id": "brand_differentiation_1",
+    "query": "How to differentiate from competitors?",
+    "expected_concepts": ["unique", "me-too", "competitors", "positioning"],
+    "expected_categories": ["branding", "positioning"],
+    "expected_sources": ["Competitors", "Differentiation", "unique"],
+    "expected_tone": ["strategic", "provocative"]
+  },
+  {
+    "id": "brand_trust_1",
+    "query": "What creates brand trust?",
+    "expected_concepts": ["clarity", "consistency", "authenticity", "promise"],
+    "expected_categories": ["branding"],
+    "expected_sources": ["Mean", "Consistency", "clarity"],
+    "expected_tone": ["direct", "honest", "mentor"]
+  }
+]

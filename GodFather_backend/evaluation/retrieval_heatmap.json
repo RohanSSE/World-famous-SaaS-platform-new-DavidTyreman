@@ -1,0 +1,66 @@
+{
+  "source": "golden_results.json",
+  "intents": {
+    "strategic": {
+      "cases": 6,
+      "failure_rate": 0.667,
+      "top1_miss_rate": 0.167,
+      "low_manifesto_rate": 0.0
+    },
+    "trust": {
+      "cases": 3,
+      "failure_rate": 1.0,
+      "top1_miss_rate": 0.333,
+      "low_manifesto_rate": 0.0
+    },
+    "differentiation": {
+      "cases": 3,
+      "failure_rate": 1.0,
+      "top1_miss_rate": 0.333,
+      "low_manifesto_rate": 0.0
+    },
+    "general": {
+      "cases": 4,
+      "failure_rate": 0.5,
+      "top1_miss_rate": 0.25,
+      "low_manifesto_rate": 0.0
+    },
+    "authority": {
+      "cases": 1,
+      "failure_rate": 1.0,
+      "top1_miss_rate": 1.0,
+      "low_manifesto_rate": 0.0
+    },
+    "manifesto": {
+      "cases": 2,
+      "failure_rate": 0.5,
+      "top1_miss_rate": 0.5,
+      "low_manifesto_rate": 0.0
+    },
+    "emotional": {
+      "cases": 1,
+      "failure_rate": 1.0,
+      "top1_miss_rate": 1.0,
+      "low_manifesto_rate": 0.0
+    },
+    "tone": {
+      "cases": 2,
+      "failure_rate": 0.5,
+      "top1_miss_rate": 0.0,
+      "low_manifesto_rate": 0.0
+    },
+    "positioning": {
+      "cases": 1,
+      "failure_rate": 1.0,
+      "top1_miss_rate": 0.0,
+      "low_manifesto_rate": 0.0
+    },
+    "premium": {
+      "cases": 1,
+      "failure_rate": 1.0,
+      "top1_miss_rate": 0.0,
+      "low_manifesto_rate": 0.0
+    }
+  },
+  "weakest_intent": "trust"
+}

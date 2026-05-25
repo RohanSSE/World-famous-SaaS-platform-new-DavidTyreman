@@ -1847,9 +1847,21 @@ import avatar from "../assets/ChatQuestionIcon.png";
 import chatIcon1 from "../assets/chat-icon1.png";
 import chatIcon2 from "../assets/chat-icon2.png";
 import authService from "../services/authService";
+import ThinkingPipeline from "../components/rag/ThinkingPipeline";
+import SourceCards from "../components/rag/SourceCards";
+import TypewriterText from "../components/rag/TypewriterText";
+import useThinkingPipeline from "../hooks/useThinkingPipeline";
+import { useOrbPresence } from "../context/OrbPresenceContext";
 import { IoChevronBack } from "react-icons/io5";
 
 const DEEP_DIVE_STAGE = 4;
+
+const AI_THINKING_STEPS = [
+  "Thinking…",
+  "Analyzing your brand identity…",
+  "Retrieving positioning knowledge…",
+  "Generating strategic response…",
+];
 
 export default function DeepDivePage() {
   const navigate = useNavigate();
@@ -1880,6 +1892,20 @@ export default function DeepDivePage() {
   const suggestionsDebounceRef = useRef(null);
   const suggestionSelectedRef = useRef(false);
   const hoverTimeoutRef = useRef(null);
+
+  const {
+    setOrbIdle,
+    setOrbThinking,
+    setOrbRetrieving,
+    setOrbSpeaking,
+    setOrbMemory,
+    setSources: setOrbSources,
+    setGraphConcepts: setOrbGraphConcepts,
+  } = useOrbPresence();
+
+  const [ragSources, setRagSources] = useState([]);
+  const [graphConcepts, setGraphConcepts] = useState([]);
+  const thinkingMessage = useThinkingPipeline(isLoading, AI_THINKING_STEPS, 1500);
 
   const totalQ = questions.length;
   const answeredCount = finalizedQuestionIds.size;
@@ -2205,6 +2231,8 @@ export default function DeepDivePage() {
     ]);
 
     setIsLoading(true);
+    setOrbThinking("Thinking…");
+    setOrbRetrieving("Retrieving brand knowledge…");
     try {
       const ai = await authService.aiSuggestionDraft(
         sid,
@@ -2212,6 +2240,16 @@ export default function DeepDivePage() {
         trimmed,
         isAiDraft,
       );
+      const sources = ai?.sources || [];
+      const concepts = ai?.graph_concepts || [];
+      setRagSources(sources);
+      setGraphConcepts(concepts);
+      setOrbSources(sources);
+      setOrbGraphConcepts(concepts);
+      if (sources.length) {
+        setOrbMemory("ORB connected concepts");
+      }
+
       const imp = (ai?.improved_answer || trimmed).trim();
       const fu = (ai?.follow_up_question || "").trim();
 
@@ -2245,6 +2283,7 @@ export default function DeepDivePage() {
       setIsAiDraft(false);
 
       if (fu) {
+        setOrbSpeaking();
         if (typewriterRef.current) clearInterval(typewriterRef.current);
         setIsAssistantTyping(true);
         setTypingText("");
@@ -2269,11 +2308,15 @@ export default function DeepDivePage() {
               if (ti !== -1) u[ti] = { role: "assistant", text: fu, qId: q.id };
               return u;
             });
+            setOrbIdle();
           }
         }, 20);
+      } else {
+        setOrbIdle();
       }
     } catch (err) {
       setIsLoading(false);
+      setOrbIdle();
       toast.error(err?.message || "Failed to send.");
       // fallback: still save locally
       setMessages((prev) => {
@@ -2630,16 +2673,18 @@ export default function DeepDivePage() {
 
                         <div className="ddp-bubble-content">
                           {m.isTyping ? (
-                            <>
-                              {typingText}
-                              <span className="ddp-cursor">|</span>
-                            </>
+                            <p>
+                              <TypewriterText
+                                text={typingText}
+                                isTyping={isAssistantTyping}
+                                showCursor
+                              />
+                            </p>
                           ) : m.pending && !isUser ? (
-                            <div className="ddp-thinking">
-                              <span></span>
-                              <span></span>
-                              <span></span>
-                            </div>
+                            <ThinkingPipeline
+                              message={thinkingMessage || "Thinking…"}
+                              visible
+                            />
                           ) : (
                             m.text
                               .split(/\n\s*\n/)
@@ -2686,14 +2731,20 @@ export default function DeepDivePage() {
                         <span className="rotating-star-avatar">⭐</span>
                       </div>
                       <div className="ddp-bubble-content">
-                        <div className="ddp-thinking">
-                          <span></span>
-                          <span></span>
-                          <span></span>
-                        </div>
+                        <ThinkingPipeline
+                          message={thinkingMessage}
+                          visible
+                        />
                       </div>
                     </div>
                   </div>
+                )}
+
+                {!isLoading && ragSources.length > 0 && (
+                  <SourceCards
+                    sources={ragSources}
+                    graphConcepts={graphConcepts}
+                  />
                 )}
 
                 <div ref={chatEndRef} />

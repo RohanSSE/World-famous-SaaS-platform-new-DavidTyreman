@@ -539,6 +539,29 @@ export default function UserDashboard() {
               {statCards.map((s) => <StatsCard key={s.title} {...s} />)}
             </div>
             <ContinueSessionCTA latestSessionId={dashboardData?.latest_session_id} sessions={sessions} onContinue={handleContinueSession} />
+            <div
+              className="ud-redirect-card"
+              style={{ marginTop: "1rem" }}
+              onClick={() => navigate("/brand-os")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && navigate("/brand-os")}
+            >
+              <h3>Brand Operating System</h3>
+              <p>Run DNA, messaging, tone, positioning — with explainability and feedback learning.</p>
+              <span className="ud-redirect-link">Open Brand OS <ArrowRight size={16} /></span>
+            </div>
+            <div
+              className="ud-redirect-card"
+              style={{ marginTop: "0.75rem" }}
+              onClick={() => navigate("/brand-onboarding")}
+              role="button"
+              tabIndex={0}
+            >
+              <h3>Getting started</h3>
+              <p>4-step onboarding: upload → generate → refine → export PDF/PPT.</p>
+              <span className="ud-redirect-link">Start onboarding <ArrowRight size={16} /></span>
+            </div>
             <div className="ud-two-col">
               <JourneyProgress items={dashboardData?.journey_progress} />
               <AISuggestions suggestions={dashboardData?.ai_suggestions} />

@@ -12,6 +12,21 @@ const navData = [
     icon: icon("ic-user")
   },
   {
+    title: "Cognition",
+    path: "/admin/cognition",
+    icon: icon("ic-analytics")
+  },
+  {
+    title: "Review",
+    path: "/admin/review",
+    icon: icon("ic-blog")
+  },
+  {
+    title: "AI Ops",
+    path: "/admin/ops",
+    icon: icon("ic-lock")
+  },
+  {
     title: "Welcome Super Admin",
     path: "/admin/sign-in",
     icon: icon("ic-lock")

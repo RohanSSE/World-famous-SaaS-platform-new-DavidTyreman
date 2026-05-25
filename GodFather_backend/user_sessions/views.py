@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Count, Avg, F, Value, CharField, Case, When
+from django.conf import settings
 from django.db.models.functions import Round
 from django.utils import timezone
 from django.core.mail import send_mail
@@ -32,14 +33,16 @@ def get_openai_client():
     """Return Azure OpenAI client. Raises if Azure is not configured."""
     global _openai_client
     if _openai_client is None:
-        azure_endpoint = os.getenv('AZURE_OPENAI_ENDPOINT')
+        from document.utils.embedding_service import _normalize_azure_endpoint
+
+        azure_endpoint = _normalize_azure_endpoint(os.getenv('AZURE_OPENAI_ENDPOINT', ''))
         azure_key = os.getenv('AZURE_OPENAI_API_KEY')
         if not azure_endpoint or not azure_key:
             raise ValueError(
                 "Set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY to use AI features."
             )
         _openai_client = AzureOpenAI(
-            azure_endpoint=azure_endpoint.rstrip('/'),
+            azure_endpoint=azure_endpoint,
             api_key=azure_key,
             api_version=os.getenv('AZURE_OPENAI_API_VERSION', '2024-02-01'),
         )
@@ -935,19 +938,46 @@ def session_answer_create(request, pk):
         }, status=400)
 
     answer_text = serializer.validated_data['answer_text']
-    
+
+    prior_ai = None
+    try:
+        existing = Answer.objects.get(session=session, question=question)
+        prior_ai = (existing.ai_suggestion or "").strip() or None
+    except Answer.DoesNotExist:
+        pass
+
     answer, created = Answer.objects.update_or_create(
         session=session,
         question=question,
         defaults={'answer_text': answer_text, 'answered_by': request.user}
     )
 
+    feedback_result = None
+    original_ai = (request.data.get("original_ai_text") or prior_ai or "").strip()
+    if original_ai and answer_text.strip() and original_ai != answer_text.strip():
+        try:
+            from user_sessions.services.feedback_learning import learn_from_human_edit
+            feedback_result = learn_from_human_edit(
+                session.id,
+                original_ai,
+                answer_text.strip(),
+                user=request.user,
+                source="answer_save",
+            )
+        except Exception:
+            feedback_result = None
 
-    
     if not created:
         ReviewComment.objects.filter(session=session, answer=answer, is_resolved=False).update(is_resolved=True, resolved_at=timezone.now())
 
-    return Response(AnswerSerializer(answer).data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+    payload = AnswerSerializer(answer).data
+    if feedback_result and feedback_result.get("learned"):
+        payload["feedback_learning"] = {
+            "learned": True,
+            "preferred": (feedback_result.get("feedback_delta") or {}).get("preferred_phrases", [])[:5],
+            "rejected": (feedback_result.get("feedback_delta") or {}).get("rejected_phrases", [])[:5],
+        }
+    return Response(payload, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 @swagger_auto_schema(
@@ -1195,82 +1225,38 @@ def session_generate_manifesto(request, pk):
     
     ai_output.status = 'processing'
     ai_output.save()
-    
-    answers_text = "\n".join([f"{a.question.text}: {a.answer_text}" for a in session.answers.all()])
 
-    # Retrieve AI knowledge for manifesto principles and tone
-    manifesto_knowledge = ""
-    try:
-        chunks = retrieve_ai_knowledge(
-            "brand manifesto principles tone voice structure",
-            embedding_service=embedding_service,
-            es_service=es_service,
-            search_type="hybrid",
-            top_k=6,
+    use_async = request.data.get("async", settings.AI_HEAVY_ENDPOINTS_ASYNC)
+    if use_async:
+        try:
+            from user_sessions.tasks import generate_manifesto_task
+            task = generate_manifesto_task.delay(session.pk, request.user.pk)
+            return Response({
+                "message": "Manifesto generation started",
+                "task_id": task.id,
+                "status": "processing",
+                "ai_output": AIOutputSerializer(ai_output).data,
+                "poll_url": f"/api/sessions/ai-tasks/{task.id}/",
+            })
+        except Exception as e:
+            logger.warning("Celery manifesto enqueue failed, running sync: %s", e)
+
+    from user_sessions.services.ai_generation_service import run_manifesto_generation
+    gen_result = run_manifesto_generation(session.pk, request.user.pk)
+    ai_output.refresh_from_db()
+    if not gen_result.get("success"):
+        return Response(
+            {"detail": gen_result.get("error", "Generation failed"), "ai_output": AIOutputSerializer(ai_output).data},
+            status=500,
         )
-        manifesto_knowledge = format_knowledge_context(chunks, max_chars=4000)
-    except Exception as e:
-        logger.warning("Manifesto knowledge retrieval failed: %s", e)
 
-    print("answers_text ", answers_text)
-    prompt = f"""Generate a brand manifesto in JSON format based on these answers:
-    {answers_text}
-
-    Return a JSON object with this exact structure:
-    {{
-    "brandName": "string",
-    "industryCategory": "string",
-    "assumptions": ["string (80-120 words) - What you infer from the answers that was implied but not explicitly stated"],
-    "strategicConclusions": ["string (80-120 words) - Strategic insights and conclusions you derived from analyzing their answers"],
-    "coreBelief": "string (50-100 words)",
-    "originStory": "string (150-200 words)",
-    "brandDNA": ["trait1", "trait2", "trait3"],
-    "brandPromise": "string (100-150 words)",
-    "emotionalConnectionBefore": "string (80-120 words)",
-    "emotionalConnectionAfter": "string (80-120 words)",
-    "differentiationStatement": "string (80-120 words)",
-    "differentiationHighlight": "string (short highlight)",
-    "toneOfVoice": "string",
-    "visualMood": "string",
-    "designStyle": "string",
-    "taglines": ["tagline1", "tagline2", "tagline3"]
-    }}
-
-    Respond ONLY with valid JSON, no markdown formatting or backticks."""
-
-    system_content = "You are a brand strategist (David's method). Return only valid JSON without any markdown formatting."
-    if manifesto_knowledge:
-        system_content += "\n\nUse these principles and tone when shaping the manifesto:\n" + manifesto_knowledge[:3500]
-
-    try:
-        response = get_openai_client().chat.completions.create(
-            model=get_openai_chat_model(),
-            messages=[
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"}  # This forces JSON response
-        )
-        
-        content = response.choices[0].message.content.strip()
-        
-        # Parse and validate JSON
-        import json
-        json_data = json.loads(content)
-        
-        # Store both formats
-        ai_output.json_output = json_data
-        ai_output.manifesto = json.dumps(json_data, indent=2)  # Keep formatted JSON as text backup
-        ai_output.status = 'completed'
-    except Exception as e:
-        ai_output.status = 'failed'
-        ai_output.error_message = str(e)
-    ai_output.save()
-    
-    response_data = {"message": "Manifesto generated", "ai_output": AIOutputSerializer(ai_output).data}
+    response_data = {
+        "message": "Manifesto generated",
+        "ai_output": AIOutputSerializer(ai_output).data,
+        "sources": gen_result.get("sources", []),
+    }
     if session.has_pending_feedback():
         response_data["warning"] = "Pending agency feedback - consider reviewing."
-    
     return Response(response_data)
 
 
@@ -1809,11 +1795,18 @@ def answer_ai_suggestion(request, pk, answer_id):
 from document.models import Document
 from document.utils.elasticsearch_service import ElasticsearchService
 from document.utils.embedding_service import EmbeddingService
-from django.conf import settings
 from openai import OpenAIError
 import logging
 
 from utils.retrieve_ai_knowledge import retrieve_ai_knowledge, format_knowledge_context
+from user_sessions.services.rag_service import (
+    build_combined_context_for_draft,
+    generate_rag_response,
+    retrieve_context,
+    stream_rag_response,
+)
+from user_sessions.services.rag_observability import should_include_debug
+from user_sessions.services.rag_agents import list_agents
 
 logger = logging.getLogger(__name__)
 es_service = ElasticsearchService()
@@ -2531,90 +2524,27 @@ def answer_ai_suggestion_draft(request, pk):
     question_text = question.text.strip()
     print("question_text ", question_text)
 
-    # 4. Build context from indexed documents
-    context = ""
+    # 4. RAG context (user docs scoped to request.user + ai_knowledge)
+    rag_sources = []
+    rag_graph_concepts = []
     documents_searched = 0
+    context = ""
     try:
-        indexed_docs = Document.objects.filter(is_indexed=True).only('title', 'elastic_index_name')
-        documents_searched = indexed_docs.count()
-
-        if documents_searched > 0:
-            # Search by question + draft for better semantic match
-            search_query = f"{question_text} {draft}"
-            embedding = embedding_service.generate_embedding(search_query)
-            all_hits = []
-
-            for doc in indexed_docs.iterator():
-                try:
-                    hits = es_service.hybrid_search(
-                        index_name=doc.elastic_index_name,
-                        query_text=search_query,
-                        query_embedding=embedding,
-                        top_k=10  # Increased from 5 for more context
-                    )
-                    for hit in hits:
-                        hit["_source_title"] = doc.title
-                    all_hits.extend(hits)
-                except Exception as e:
-                    logger.warning(f"Search failed in {doc.elastic_index_name}: {e}")
-
-            if all_hits:
-                all_hits.sort(key=lambda x: x.get("score", 0), reverse=True)
-                lines = []
-                document_chunks = []  # Store chunks for detailed printing
-                for i, hit in enumerate(all_hits[:12], 1):  # Increased from 8 for richer context
-                    text = (hit.get("text") or hit.get("_source", {}).get("text", "")).strip()
-                    title = hit.get("_source_title", "Unknown")
-                    score = hit.get("score", 0)
-                    if text:
-                        lines.append(f"📖 From '{title}':\n\"{text}\"")
-                        document_chunks.append({
-                            "chunk_number": i,
-                            "document_title": title,
-                            "text": text,
-                            "relevance_score": score
-                        })
-                if lines:
-                    context = """
-💡 DAVID'S WISDOM (You MUST reference these in your response):
-
-""" + "\n\n".join(lines) + """
-
-⚠️ Base your response on the teachings above. Quote or paraphrase where relevant.
-"""
-                    
-                    # Print to indicate context comes from Elasticsearch
-                    print("=" * 50)
-                    print("CONTEXT FROM ELASTICSEARCH:")
-                    print(f"Number of hits: {len(all_hits)}")
-                    print(f"Context chunks used: {len(lines)}")
-                    print(f"Context length: {len(context)} characters")
-                    print("\nDOCUMENT CHUNKS BEING USED:")
-                    for chunk in document_chunks:
-                        print(f"\n--- Chunk {chunk['chunk_number']} ---")
-                        print(f"Document: {chunk['document_title']}")
-                        print(f"Relevance Score: {chunk['relevance_score']:.4f}")
-                        print(f"Text: {chunk['text'][:200]}..." if len(chunk['text']) > 200 else f"Text: {chunk['text']}")
-                    print("=" * 50)
-    except Exception as e:
-        logger.error(f"Context retrieval failed: {e}")
-
-    # 4b. Augment with AI knowledge (training + after-manifesto) for David's voice and method
-    try:
-        knowledge_chunks = retrieve_ai_knowledge(
+        rag_bundle = build_combined_context_for_draft(
             question_text,
+            draft,
+            request.user,
+            session=session,
+            top_k=8,
             embedding_service=embedding_service,
             es_service=es_service,
-            search_type="hybrid",
-            top_k=8,
         )
-        knowledge_context = format_knowledge_context(knowledge_chunks)
-        if knowledge_context:
-            context = (context or "") + "\n\n--- David's method & training (use for tone and content) ---\n" + knowledge_context
+        context = rag_bundle["context"]
+        rag_sources = rag_bundle["sources"]
+        rag_graph_concepts = rag_bundle.get("graph_concepts") or []
+        documents_searched = rag_bundle["documents_searched"]
     except Exception as e:
-        logger.warning("AI knowledge retrieval failed: %s", e)
-
-    print("context ", context)
+        logger.error("Context retrieval failed: %s", e)
     # 5. Conversation history for THIS session + THIS question
     history_qs = Conversation.objects.filter(session=session, question=question).order_by('created_at')
     history_messages = [
@@ -2834,11 +2764,26 @@ Respond only with perfect JSON."""
         Conversation.objects.create(session=session, question=question, role="user", content=improved.strip())
         Conversation.objects.create(session=session, question=question, role="assistant", content=follow_up.strip())
 
+        evaluation = {}
+        if context and improved:
+            from user_sessions.services.rag_evaluation import evaluate_rag_response
+
+            evaluation = evaluate_rag_response(
+                improved,
+                context,
+                rag_sources,
+                [],
+                query=f"{question_text} {draft}".strip(),
+            )
+
         return Response({
             "improved_answer": improved,
             "follow_up_question": follow_up,
             "documents_searched": documents_searched,
             "context_used": bool(context),
+            "sources": rag_sources,
+            "graph_concepts": rag_graph_concepts,
+            "evaluation": evaluation or None,
         }, status=status.HTTP_200_OK)
 
     except json.JSONDecodeError:
@@ -2850,6 +2795,196 @@ Respond only with perfect JSON."""
     except Exception as e:
         logger.exception("Unexpected error in AI suggestion")
         return Response({"detail": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@swagger_auto_schema(
+    method='POST',
+    operation_description="RAG query: retrieve knowledge + GPT answer with source citations",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'query': openapi.Schema(type=openapi.TYPE_STRING),
+            'include_user_docs': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=False),
+        },
+        required=['query'],
+    ),
+    responses={200: openapi.Response(description="answer + sources")},
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, HasRolePermission])
+def rag_query(request, pk=None):
+    """
+    POST /api/sessions/rag-query/  or  /api/sessions/<pk>/rag-query/
+    Phase 1–3: retrieval → GPT with citations.
+    """
+    if not request.user.has_perm_codename('answers.ai_suggest'):
+        return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
+
+    from user_sessions.services.rag_rate_limit import check_rate_limit
+    allowed, remaining = check_rate_limit(request.user.id, "rag_query")
+    if not allowed:
+        return Response(
+            {"detail": "Rate limit exceeded. Try again later."},
+            status=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
+    user_query = (request.data.get("query") or "").strip()
+    if not user_query:
+        return Response({"detail": "query is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    session = None
+    session_id = None
+    conversation_messages = request.data.get("conversation_messages") or []
+    if pk is not None:
+        session = get_object_or_404(Session, pk=pk)
+        session_id = session.pk
+        if not session.has_access(request.user):
+            return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        result = generate_rag_response(
+            user_query,
+            user=request.user,
+            session=session,
+            agent_id=request.data.get("agent_id", "strategist"),
+            include_user_docs=bool(request.data.get("include_user_docs")),
+            conversation_messages=conversation_messages,
+            session_summary=request.data.get("session_summary"),
+            include_debug=should_include_debug(request),
+            include_evaluation=bool(request.data.get("include_evaluation")),
+            embedding_service=embedding_service,
+            es_service=es_service,
+            session_id=session_id,
+        )
+        payload = {
+            "answer": result["answer"],
+            "sources": result["sources"],
+            "context_used": result["context_used"],
+            "chunks_retrieved": result.get("chunks_retrieved", 0),
+            "cached": result.get("cached", False),
+            "agent_id": result.get("agent_id"),
+            "pipeline": result.get("pipeline"),
+            "graph_concepts": result.get("graph_concepts", []),
+            "thinking_messages": result.get("thinking_messages", []),
+            "reasoning_chain": result.get("reasoning_chain", []),
+            "planner": result.get("planner"),
+            "selected_agents": result.get("selected_agents", []),
+            "system_health": result.get("system_health"),
+            "strategic_insights": result.get("strategic_insights", []),
+            "retrieval_confidence": result.get("retrieval_confidence"),
+            "confidence": result.get("confidence"),
+            "reasoning_trace": result.get("reasoning_trace"),
+            "reasoning_path": result.get("reasoning_path"),
+            "strategic_consistency": result.get("strategic_consistency"),
+            "critique_flags": result.get("critique_flags"),
+            "verification": result.get("verification"),
+            "latency_breakdown": result.get("latency_breakdown"),
+            "evaluation": result.get("evaluation"),
+            "retrieval_debug": result.get("retrieval_debug"),
+            "rate_limit_remaining": remaining,
+        }
+        if "debug" in result:
+            payload["debug"] = result["debug"]
+        return Response(payload, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.exception("rag_query failed")
+        return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@swagger_auto_schema(
+    method='POST',
+    operation_description="RAG query with SSE token streaming (Phase 9)",
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, HasRolePermission])
+def rag_query_stream(request, pk=None):
+    """POST — Server-Sent Events stream: sources → tokens → done."""
+    if not request.user.has_perm_codename('answers.ai_suggest'):
+        return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
+
+    user_query = (request.data.get("query") or "").strip()
+    if not user_query:
+        return Response({"detail": "query is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    session = None
+    if pk is not None:
+        session = get_object_or_404(Session, pk=pk)
+        if not session.has_access(request.user):
+            return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    def event_stream():
+        try:
+            for event in stream_rag_response(
+                user_query,
+                user=request.user,
+                session=session,
+                agent_id=request.data.get("agent_id", "strategist"),
+                include_user_docs=bool(request.data.get("include_user_docs")),
+                conversation_messages=request.data.get("conversation_messages"),
+                embedding_service=embedding_service,
+                es_service=es_service,
+            ):
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+    response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+    response["Cache-Control"] = "no-cache"
+    response["X-Accel-Buffering"] = "no"
+    return response
+
+
+@swagger_auto_schema(method='GET', operation_description="List ORB multi-agent definitions")
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def rag_agents_list(request):
+    """GET /api/sessions/rag-agents/"""
+    return Response({"agents": list_agents()})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def rag_system_health(request):
+    """GET /api/sessions/rag-system-health/ — observable RAG stack status."""
+    from user_sessions.services.system_health import get_system_health
+
+    return Response(get_system_health())
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def ai_cost_dashboard(request):
+    """GET /api/sessions/ai-cost-dashboard/?days=1 — production AI cost metrics."""
+    if not (request.user.is_superuser or getattr(request.user, "has_role", lambda r: False)("admin")):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+    from user_sessions.services.ai_cost_dashboard import get_ai_cost_dashboard
+
+    days = int(request.query_params.get("days", 1))
+    return Response(get_ai_cost_dashboard(days=days))
+
+
+@swagger_auto_schema(
+    method='GET',
+    operation_description="Poll Celery AI task status (manifesto, summary, etc.)",
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def ai_task_status(request, task_id):
+    """GET /api/sessions/ai-tasks/<task_id>/"""
+    from celery.result import AsyncResult
+
+    result = AsyncResult(task_id)
+    payload = {
+        "task_id": task_id,
+        "state": result.state,
+        "ready": result.ready(),
+    }
+    if result.ready():
+        if result.successful():
+            payload["result"] = result.result
+        else:
+            payload["error"] = str(result.result)
+    return Response(payload)
 
 
 @swagger_auto_schema(
@@ -2963,71 +3098,32 @@ QUESTIONS & ANSWERS:
 {qa_text}
 """
     
-    # 4b. Optional: enrich with AI knowledge for David's voice
-    summary_knowledge = ""
-    try:
-        chunks = retrieve_ai_knowledge(
-            "brand summary synthesis emotional truth authentic identity",
-            embedding_service=embedding_service,
-            es_service=es_service,
-            search_type="hybrid",
-            top_k=5,
-        )
-        summary_knowledge = format_knowledge_context(chunks, max_chars=3000)
-    except Exception as e:
-        logger.warning("Summary knowledge retrieval failed: %s", e)
+    use_async = request.data.get("async", settings.AI_HEAVY_ENDPOINTS_ASYNC)
+    if use_async:
+        try:
+            from user_sessions.tasks import generate_session_summary_task
+            task = generate_session_summary_task.delay(session.pk, request.user.pk)
+            return Response({
+                "message": "Summary generation started",
+                "task_id": task.id,
+                "status": "processing",
+                "poll_url": f"/api/sessions/ai-tasks/{task.id}/",
+            })
+        except Exception as e:
+            logger.warning("Celery summary enqueue failed, running sync: %s", e)
 
-    # 5. Call OpenAI
-    try:
-        david_system_prompt = """You are THE BRAND GODFATHER — speaking with David's voice and wisdom.
-
-CORE RULES:
-1. Synthesize insights from all provided answers
-2. Speak in bold, direct, no-jargon tone
-3. Look for emotional truths and authentic identity
-4. Never give generic summaries — every insight must reflect real brand essence
-5. Reveal patterns and deeper meanings
-
-DAVID'S PHILOSOPHY:
-• A brand is a promise KEPT, not made
-• Brands must be FELT — emotion beats explanation
-• Behavior proves words — no behavior = wrong word
-• Specific > vague, vivid > generic, bold > safe
-"""
-        david_system_prompt += BRAND_SUMMARY_STRUCTURE_INSTRUCTIONS
-        if summary_knowledge:
-            david_system_prompt += "\n\nReference tone and method:\n" + summary_knowledge
-
-        completion = get_openai_client().chat.completions.create(
-            model=get_openai_chat_model(),
-            messages=[
-                {"role": "system", "content": david_system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=2500,
-        )
-        
-        raw_summary = completion.choices[0].message.content.strip()
-        summary = _parse_structured_summary(raw_summary)
-        
+    from user_sessions.services.ai_generation_service import run_session_summary_generation
+    gen_result = run_session_summary_generation(session.pk, request.user.pk)
+    if gen_result.get("success"):
         return Response({
-            "summary": summary,
-            "total_questions_answered": len(qa_pairs),
+            "summary": gen_result["summary"],
+            "total_questions_answered": gen_result["total_questions_answered"],
+            "sources": gen_result.get("sources", []),
         }, status=status.HTTP_200_OK)
-    
-    except OpenAIError as e:
-        logger.exception("OpenAI error in summary generation")
-        return Response(
-            {"detail": "AI service temporarily unavailable"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-    except Exception as e:
-        logger.exception("Unexpected error in summary generation")
-        return Response(
-            {"detail": "Internal server error"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+    return Response(
+        {"detail": gen_result.get("error", "Generation failed")},
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
 
 
 @swagger_auto_schema(
@@ -3371,51 +3467,28 @@ def edit_conversation(request, pk, conversation_id):
         for c in history_qs
     ]
     
-    # Build context from indexed documents
-    context = ""
+    # RAG context (user-scoped documents + ai_knowledge)
+    rag_sources = []
+    rag_graph_concepts = []
     documents_searched = 0
+    context = ""
     try:
-        indexed_docs = Document.objects.filter(is_indexed=True).only('title', 'elastic_index_name')
-        documents_searched = indexed_docs.count()
-        
-        if documents_searched > 0:
-            search_query = f"{question_text} {draft}"
-            embedding = embedding_service.generate_embedding(search_query)
-            all_hits = []
-            
-            for doc in indexed_docs.iterator():
-                try:
-                    hits = es_service.hybrid_search(
-                        index_name=doc.elastic_index_name,
-                        query_text=search_query,
-                        query_embedding=embedding,
-                        top_k=10
-                    )
-                    for hit in hits:
-                        hit["_source_title"] = doc.title
-                    all_hits.extend(hits)
-                except Exception as e:
-                    logger.warning(f"Search failed in {doc.elastic_index_name}: {e}")
-            
-            if all_hits:
-                all_hits.sort(key=lambda x: x.get("score", 0), reverse=True)
-                lines = []
-                for i, hit in enumerate(all_hits[:12], 1):
-                    text = (hit.get("text") or hit.get("_source", {}).get("text", "")).strip()
-                    title = hit.get("_source_title", "Unknown")
-                    if text:
-                        lines.append(f"📖 From '{title}':\n\"{text}\"")
-                if lines:
-                    context = """
-💡 DAVID'S WISDOM (You MUST reference these in your response):
-
-""" + "\n\n".join(lines) + """
-
-⚠️ Base your response on the teachings above. Quote or paraphrase where relevant.
-"""
+        rag_bundle = build_combined_context_for_draft(
+            question_text,
+            draft,
+            request.user,
+            session=session,
+            top_k=8,
+            embedding_service=embedding_service,
+            es_service=es_service,
+        )
+        context = rag_bundle["context"]
+        rag_sources = rag_bundle["sources"]
+        rag_graph_concepts = rag_bundle.get("graph_concepts") or []
+        documents_searched = rag_bundle["documents_searched"]
     except Exception as e:
-        logger.error(f"Context retrieval failed: {e}")
-    
+        logger.error("Context retrieval failed: %s", e)
+
     # Get foundation answer if exists
     foundation = ""
     try:
@@ -3557,6 +3630,8 @@ Respond only with perfect JSON."""
             "deleted_count": deleted_count,
             "documents_searched": documents_searched,
             "context_used": bool(context),
+            "sources": rag_sources,
+            "graph_concepts": rag_graph_concepts,
         }, status=200)
         
     except json.JSONDecodeError:
@@ -3663,88 +3738,34 @@ def session_generate_foundation_summary(request, pk):
     summary_obj.error_message = None
     summary_obj.save()
 
-    # 5. Build prompt: structured (heading, sub_heading, sections) for UI
-    prompt = f"""
-🎩 ROLE:
-You are THE BRAND GODFATHER — world-class brand strategist.
+    use_async = request.data.get("async", settings.AI_HEAVY_ENDPOINTS_ASYNC)
+    if use_async:
+        try:
+            from user_sessions.tasks import generate_foundation_summary_task
+            task = generate_foundation_summary_task.delay(session.pk, request.user.pk)
+            return Response({
+                "message": "Foundation summary generation started",
+                "task_id": task.id,
+                "status": "processing",
+                "poll_url": f"/api/sessions/ai-tasks/{task.id}/",
+            })
+        except Exception as e:
+            logger.warning("Celery foundation summary enqueue failed, running sync: %s", e)
 
-Analyze all Foundation stage questions and answers below. Write in full sentences and paragraphs (no bullet lists in section content). Provide:
-1. heading: One compelling headline for the brand.
-2. sub_heading: One or two sentences capturing the brand essence.
-3. sections: Five sections, each with "title" and "content" — a detailed paragraph (roughly 80–140 words per section): Core Themes, Brand Identity, Key Insights, Patterns & Truths, The Essence.
-
-WORD COUNT: The total summary (heading + sub_heading + all five section contents) must be between 400 and 700 words. Minimum 400, maximum 700. Make each section rich and detailed.
-
-QUESTIONS & ANSWERS:
-
-{qa_text}
-"""
-
-    david_system_prompt = """You are THE BRAND GODFATHER — speaking with David's voice and wisdom.
-
-CORE RULES:
-1. Synthesize insights from all provided answers
-2. Speak in bold, direct, no-jargon tone
-3. Look for emotional truths and authentic identity
-4. Never give generic summaries — every insight must reflect real brand essence
-5. Reveal patterns and deeper meanings
-"""
-    david_system_prompt += BRAND_SUMMARY_STRUCTURE_INSTRUCTIONS
-
-    # 6. Call OpenAI
-    try:
-        completion = get_openai_client().chat.completions.create(
-            model=get_openai_chat_model(),
-            messages=[
-                {"role": "system", "content": david_system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.4,
-            max_tokens=2500,
-        )
-
-        raw_summary = completion.choices[0].message.content.strip()
-        summary = _parse_structured_summary(raw_summary)
-
-        # ✅ Save success to DB (store JSON string for GET to return same structure)
-        summary_obj.summary_text = json.dumps(summary)
-        summary_obj.status = "completed"
-        summary_obj.error_message = None
-        summary_obj.save()
-
+    from user_sessions.services.ai_generation_service import run_foundation_summary_generation
+    gen_result = run_foundation_summary_generation(session.pk, request.user.pk)
+    if gen_result.get("success"):
         return Response({
-            "summary": summary,
+            "summary": gen_result["summary"],
             "total_questions_answered": len(qa_pairs),
+            "sources": gen_result.get("sources", []),
         }, status=status.HTTP_200_OK)
 
-    except OpenAIError as e:
-        logger.exception("OpenAI error in summary generation")
-
-        # ❌ Save failure
-        summary_obj.status = "failed"
-        summary_obj.error_message = str(e)
-        summary_obj.save()
-
-        return Response(
-            {"detail": "AI service temporarily unavailable"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-    except Exception as e:
-        logger.exception("Unexpected error in summary generation")
-
-        # ❌ Save failure
-        summary_obj.status = "failed"
-        summary_obj.error_message = str(e)
-        summary_obj.save()
-
-        return Response(
-            {"detail": "Internal server error"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
-
+    summary_obj.refresh_from_db()
+    return Response(
+        {"detail": gen_result.get("error", "Generation failed")},
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
 
 
 @swagger_auto_schema(
@@ -3876,6 +3897,8 @@ def session_update_foundation_summary(request, pk):
         summary_to_store = s
         summary_to_return = _parse_structured_summary(s)
 
+    prior_text = (summary_obj.summary_text or "").strip()
+
     # 4. Update DB
     summary_obj.summary_text = summary_to_store
     summary_obj.status = "completed"
@@ -3883,10 +3906,28 @@ def session_update_foundation_summary(request, pk):
     summary_obj.generated_by = request.user
     summary_obj.save()
 
-    return Response({
+    feedback_result = None
+    new_text = summary_to_store if isinstance(summary_to_store, str) else json.dumps(summary_to_store)
+    if prior_text and new_text.strip() and prior_text != new_text.strip():
+        try:
+            from user_sessions.services.feedback_learning import learn_from_human_edit
+            feedback_result = learn_from_human_edit(
+                session.id,
+                prior_text,
+                new_text.strip(),
+                user=request.user,
+                source="foundation_summary_edit",
+            )
+        except Exception:
+            feedback_result = None
+
+    resp = {
         "message": "Foundation summary updated successfully",
-        "summary": summary_to_return
-    }, status=status.HTTP_200_OK)
+        "summary": summary_to_return,
+    }
+    if feedback_result and feedback_result.get("learned"):
+        resp["feedback_learning"] = {"learned": True}
+    return Response(resp, status=status.HTTP_200_OK)
 
 
 
@@ -4043,3 +4084,434 @@ def assistant_suggestion(request, pk):
         return Response({"message": "Keep going — you're doing great!", "cta": None}, status=status.HTTP_200_OK)
     except Exception:
         return Response({"detail": "AI service error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def session_brand_brain(request, pk):
+    """GET/PATCH /api/sessions/<pk>/brand-brain/ — persistent brand operating state."""
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    from user_sessions.services.brand_brain import get_brand_brain, save_brand_brain
+
+    if request.method == 'GET':
+        return Response({"brand_brain": get_brand_brain(session.id)})
+
+    updates = request.data.get("brand_brain") or request.data
+    if not isinstance(updates, dict):
+        return Response({"detail": "brand_brain object required"}, status=status.HTTP_400_BAD_REQUEST)
+    merged = save_brand_brain(session.id, {**get_brand_brain(session.id), **updates}, user=request.user)
+    return Response({"brand_brain": merged})
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def session_feedback_learning(request, pk):
+    """
+    GET  /api/sessions/<pk>/feedback-learning/ — learned preferences profile
+    POST — Body: original_ai_text, edited_text (human feedback loop)
+    """
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    from user_sessions.services.feedback_learning import (
+        get_feedback_learning_profile,
+        learn_from_human_edit,
+    )
+
+    if request.method == 'GET':
+        return Response({"feedback_profile": get_feedback_learning_profile(session.id)})
+
+    original = (request.data.get("original_ai_text") or request.data.get("original") or "").strip()
+    edited = (request.data.get("edited_text") or request.data.get("edited") or "").strip()
+    if not edited:
+        return Response({"detail": "edited_text is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    result = learn_from_human_edit(
+        session.id,
+        original,
+        edited,
+        context=(request.data.get("context") or ""),
+        user=request.user,
+        source=request.data.get("source") or "api",
+    )
+    try:
+        from user_sessions.services.product_signals import record_product_signal
+
+        record_product_signal(session.id, "feedback_edit", {"learned": result.get("learned")})
+    except Exception:
+        pass
+    return Response(result)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def brand_workflows_catalog(request):
+    """GET /api/sessions/brand-workflows/ — product workflow catalog."""
+    from user_sessions.services.brand_workflows import list_product_workflows
+
+    return Response({
+        "architecture_frozen": True,
+        "workflows": list_product_workflows(),
+        "pack": "POST .../brand-workflow/ with workflow=pack or full",
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def session_brand_workflow(request, pk):
+    """
+    POST /api/sessions/<pk>/brand-workflow/
+    Body: workflow (brand_dna|messaging_framework|positioning_engine|pack|full), extra_context
+    """
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    workflow = (request.data.get("workflow") or "brand_dna").strip().lower()
+    from user_sessions.services.brand_workflows import (
+        run_brand_workflow,
+        run_product_pack,
+    )
+
+    if workflow in ("full", "pack"):
+        result = run_product_pack(session_id=session.id, user=request.user, session=session)
+    else:
+        result = run_brand_workflow(
+            workflow,
+            session_id=session.id,
+            user=request.user,
+            session=session,
+            extra_context=request.data.get("extra_context") or "",
+            agent_id=request.data.get("agent_id") or "branding",
+        )
+    if result.get("error"):
+        return Response(result, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        from user_sessions.services.product_signals import record_product_signal
+
+        sig = "workflow_run"
+        events = []
+        try:
+            from user_sessions.models import BrandMemory
+
+            row = BrandMemory.objects.filter(session_id=session.id, key="product_signals").first()
+            events = [e.get("meta", {}).get("workflow") for e in (row.value or {}).get("events", [])]
+        except Exception:
+            pass
+        if workflow in events[-5:]:
+            sig = "workflow_rerun"
+        record_product_signal(session.id, sig, {"workflow": workflow})
+    except Exception:
+        pass
+    return Response(result)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def session_longitudinal_memory(request, pk):
+    """GET /api/sessions/<pk>/longitudinal-memory/ — pinned strategic positions."""
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    from user_sessions.services.longitudinal_memory import get_longitudinal_positions
+    from user_sessions.services.brand_brain import get_brand_brain
+
+    brain = get_brand_brain(session.id)
+    return Response({
+        "positions": get_longitudinal_positions(session.id),
+        "evolution_history": brain.get("evolution_history") or [],
+        "brand_brain": brain,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def product_observability_dashboard(request):
+    """GET /api/sessions/product-observability/ — enterprise cognition KPIs."""
+    from user_sessions.services.product_observability import get_product_observability_dashboard
+
+    return Response(get_product_observability_dashboard())
+
+
+def _run_brand_export_package(session, workflow, user):
+    from user_sessions.services.brand_workflows import run_brand_workflow, run_product_pack
+
+    narrative = ""
+    if workflow in ("pack", "full"):
+        result = run_product_pack(session_id=session.id, user=user, session=session)
+        package = result.get("brand_operating_system") or {}
+    else:
+        result = run_brand_workflow(
+            workflow,
+            session_id=session.id,
+            user=user,
+            session=session,
+        )
+        package = result.get("structured") or {}
+        narrative = result.get("narrative") or ""
+    return result, package, narrative
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def session_brand_export(request, pk):
+    """
+    POST/GET /api/sessions/<pk>/brand-export/
+    Query/body: workflow, format (json|pdf|pptx)
+    """
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    data = request.data if request.method == "POST" else {}
+    workflow = (
+        data.get("workflow")
+        or request.query_params.get("workflow")
+        or "pack"
+    ).strip().lower()
+    fmt = (data.get("format") or request.query_params.get("format") or "json").strip().lower()
+
+    result, package, narrative = _run_brand_export_package(session, workflow, request.user)
+    title = f"{session.title or 'Brand'} — {workflow.replace('_', ' ').title()}"
+
+    from user_sessions.services.brand_export_engine import (
+        record_export_audit,
+        render_brand_pptx,
+        workflow_display_name,
+    )
+
+    styled = (
+        str(data.get("styled") or request.query_params.get("styled") or "").lower()
+        in ("1", "true", "yes", "premium")
+    )
+    client_name = session.title or f"Session {session.id}"
+
+    if fmt == "pdf":
+        if styled:
+            from user_sessions.services.brand_export_premium import render_premium_brand_pdf
+
+            pdf_bytes = render_premium_brand_pdf(
+                workflow_display_name(workflow),
+                package,
+                narrative=narrative,
+                client_name=client_name,
+            )
+        else:
+            from user_sessions.services.brand_export_engine import render_brand_pdf
+
+            pdf_bytes = render_brand_pdf(
+                workflow_display_name(workflow),
+                package,
+                narrative=narrative,
+            )
+        record_export_audit(session.id, workflow, "pdf", request.user)
+        from django.http import HttpResponse
+
+        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+        resp["Content-Disposition"] = f'attachment; filename="brand-{workflow}-{session.id}.pdf"'
+        return resp
+
+    if fmt in ("pptx", "ppt"):
+        try:
+            ppt_bytes = render_brand_pptx(workflow_display_name(workflow), package, narrative=narrative)
+        except ImportError:
+            return Response(
+                {"detail": "PPT export requires python-pptx on server"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        record_export_audit(session.id, workflow, "pptx", request.user)
+        from django.http import HttpResponse
+
+        resp = HttpResponse(
+            ppt_bytes,
+            content_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        )
+        resp["Content-Disposition"] = f'attachment; filename="brand-{workflow}-{session.id}.pptx"'
+        return resp
+
+    export_doc = {
+        "title": title,
+        "session_id": session.id,
+        "workflow": workflow,
+        "brand_operating_system": package,
+        "narrative": narrative[:8000] if narrative else "",
+        "explainability": result.get("explainability")
+        or next(iter((result.get("workflow_results") or {}).values()), {}).get("explainability", {}),
+        "generated_at": timezone.now().isoformat(),
+    }
+    record_export_audit(session.id, workflow, "json", request.user)
+    return Response({"export": export_doc, "formats_available": ["json", "pdf", "pptx"]})
+
+
+def _user_is_admin(user):
+    return user.is_superuser or getattr(user, "has_role", lambda r: False)("admin")
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_cognition_dashboard(request):
+    """GET /api/sessions/admin/cognition-dashboard/ — merged observability + cost."""
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+    from user_sessions.services.product_observability import get_product_observability_dashboard
+    from user_sessions.services.ai_cost_dashboard import get_ai_cost_dashboard
+    from user_sessions.services.admin_cognition_api import get_workflow_usage_stats
+
+    days = int(request.query_params.get("days", 7))
+    from user_sessions.services.admin_cognition_api import get_live_cognition_metrics
+    from user_sessions.services.product_signals import get_product_signals_dashboard
+
+    return Response({
+        "observability": get_product_observability_dashboard(),
+        "cost": get_ai_cost_dashboard(days=days),
+        "workflow_usage": get_workflow_usage_stats(days=days),
+        "live": get_live_cognition_metrics(minutes=60),
+        "product_signals": get_product_signals_dashboard(days=days),
+        "system_health": __import__(
+            "user_sessions.services.system_health", fromlist=["get_system_health"]
+        ).get_system_health(),
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_cognition_live(request):
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+    from user_sessions.services.admin_cognition_api import get_live_cognition_metrics
+
+    minutes = min(int(request.query_params.get("minutes", 30)), 240)
+    return Response(get_live_cognition_metrics(minutes=minutes))
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_chunk_quality(request):
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+    from user_sessions.services.chunk_quality_audit import audit_chunks
+
+    limit = min(int(request.query_params.get("limit", 500)), 2000)
+    return Response(audit_chunks(limit=limit))
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_product_signals(request):
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+    from user_sessions.services.product_signals import get_product_signals_dashboard
+
+    days = int(request.query_params.get("days", 14))
+    return Response(get_product_signals_dashboard(days=days))
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_cognition_traces(request):
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+    from user_sessions.services.admin_cognition_api import get_cognition_traces
+
+    limit = min(int(request.query_params.get("limit", 50)), 200)
+    return Response({"traces": get_cognition_traces(limit=limit)})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_feedback_review(request):
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+    from user_sessions.services.admin_cognition_api import get_feedback_review
+
+    limit = min(int(request.query_params.get("limit", 50)), 200)
+    return Response({"items": get_feedback_review(limit=limit)})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def demo_brands_catalog(request):
+    """GET /api/sessions/demo-brands/ — investor/client demo catalog."""
+    from user_sessions.services.demo_catalog import list_demo_brands
+
+    return Response({"demos": list_demo_brands(), "one_click_label": "Generate Full Brand Intelligence Pack"})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def session_demo_pack(request, pk):
+    """POST /api/sessions/<pk>/demo-pack/ — instant demo pack (no Azure call)."""
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    from user_sessions.services.demo_catalog import get_demo_pack
+    from user_sessions.services.product_signals import record_product_signal
+
+    demo_id = (request.data.get("demo_id") or "luxury").strip().lower()
+    result = get_demo_pack(demo_id)
+    if result.get("error"):
+        return Response(result, status=status.HTTP_400_BAD_REQUEST)
+    record_product_signal(session.id, "demo_pack", {"demo_id": demo_id})
+    result["session_id"] = session.id
+    return Response(result)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def record_pilot_event(request, pk):
+    """POST /api/sessions/<pk>/pilot-event/ — track pilot validation signals."""
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    from user_sessions.services.product_signals import record_product_signal
+
+    signal = (request.data.get("signal") or request.data.get("event") or "").strip()
+    if not signal:
+        return Response({"detail": "signal required"}, status=status.HTTP_400_BAD_REQUEST)
+    meta = request.data.get("meta") or {}
+    if request.data.get("workflow"):
+        meta["workflow"] = request.data["workflow"]
+    record_product_signal(session.id, signal, meta)
+    return Response({"recorded": True, "signal": signal})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def session_pilot_kpis(request, pk):
+    """GET /api/sessions/<pk>/pilot-kpis/ — session pilot validation metrics."""
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    from user_sessions.services.pilot_kpis import get_session_pilot_kpis
+
+    return Response(get_session_pilot_kpis(session.id))
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_pilot_summary(request):
+    """GET /api/sessions/pilot-summary/ — user-level pilot KPIs."""
+    from user_sessions.services.pilot_kpis import get_user_pilot_summary
+
+    days = int(request.query_params.get("days", 30))
+    return Response(get_user_pilot_summary(request.user.id, days=days))
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_ops_intelligence(request):
+    """GET /api/sessions/admin/ops-intelligence/ — AI ops layer."""
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+    from user_sessions.services.admin_ops_intelligence import get_ops_intelligence
+
+    days = int(request.query_params.get("days", 14))
+    return Response(get_ops_intelligence(days=days))

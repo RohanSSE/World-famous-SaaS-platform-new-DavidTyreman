@@ -1,0 +1,16 @@
+Improve the draft answer using the critic's instructions.
+Stay grounded in retrieved knowledge. Keep David's voice: bold, direct, warm.
+
+Return only the final improved answer text (no JSON, no markdown wrapper).
+
+RETRIEVED KNOWLEDGE:
+{context}
+
+USER QUERY:
+{query}
+
+DRAFT:
+{draft}
+
+CRITIC INSTRUCTIONS:
+{critic_instructions}

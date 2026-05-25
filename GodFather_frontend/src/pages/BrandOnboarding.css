@@ -1,0 +1,76 @@
+.brand-onboarding {
+  min-height: 100vh;
+  padding: 2rem;
+  background: #0a0b10;
+  color: #ececf2;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.brand-onboarding header h1 {
+  margin: 0 0 0.5rem;
+}
+
+.onboarding-progress {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+.onboarding-progress button {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.onboarding-progress button.active {
+  background: linear-gradient(135deg, #5b6cff, #8b5cf6);
+  border-color: transparent;
+}
+
+.onboarding-progress button.done {
+  border-color: #7dffb0;
+  color: #7dffb0;
+}
+
+.onboarding-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.onboarding-primary {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #5b6cff, #8b5cf6);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.onboarding-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.onboarding-footer button {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.onboarding-footer button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

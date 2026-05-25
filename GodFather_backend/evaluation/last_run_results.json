@@ -1,0 +1,93 @@
+[
+  {
+    "id": "brand_emotional_1",
+    "concept_score": 1.0,
+    "citation_score": 0.0,
+    "source_title_score": 0.0,
+    "groundedness": 0.39,
+    "grounded_answer_ratio": 0.77,
+    "generic_filler_ratio": 0.0,
+    "hallucination_risk": 0.4,
+    "retrieval_relevance": 0.81,
+    "tone_ok": false,
+    "pass": true
+  },
+  {
+    "id": "brand_differentiation_1",
+    "concept_score": 1.0,
+    "citation_score": 0.5,
+    "source_title_score": 0.33,
+    "groundedness": 0.22,
+    "grounded_answer_ratio": 0.63,
+    "generic_filler_ratio": 0.04,
+    "hallucination_risk": 0.47,
+    "retrieval_relevance": 0.12,
+    "tone_ok": false,
+    "pass": false
+  },
+  {
+    "id": "brand_trust_1",
+    "concept_score": 1.0,
+    "citation_score": 1.0,
+    "source_title_score": 0.33,
+    "groundedness": 0.46,
+    "grounded_answer_ratio": 1.0,
+    "generic_filler_ratio": 0.0,
+    "hallucination_risk": 0.29,
+    "retrieval_relevance": 0.71,
+    "tone_ok": false,
+    "pass": true
+  },
+  {
+    "id": "manifesto_core_1",
+    "concept_score": 1.0,
+    "citation_score": 1.0,
+    "source_title_score": 1.0,
+    "groundedness": 0.43,
+    "grounded_answer_ratio": 1.0,
+    "generic_filler_ratio": 0.04,
+    "hallucination_risk": 0.2,
+    "retrieval_relevance": 0.83,
+    "tone_ok": false,
+    "pass": true
+  },
+  {
+    "id": "manifesto_purpose_1",
+    "concept_score": 0.75,
+    "citation_score": 0.5,
+    "source_title_score": 1.0,
+    "groundedness": 0.34,
+    "grounded_answer_ratio": 0.83,
+    "generic_filler_ratio": 0.0,
+    "hallucination_risk": 0.27,
+    "retrieval_relevance": 0.66,
+    "tone_ok": false,
+    "pass": false
+  },
+  {
+    "id": "positioning_unique_1",
+    "concept_score": 0.75,
+    "citation_score": 0.0,
+    "source_title_score": 1.0,
+    "groundedness": 0.35,
+    "grounded_answer_ratio": 0.77,
+    "generic_filler_ratio": 0.0,
+    "hallucination_risk": 0.39,
+    "retrieval_relevance": 0.12,
+    "tone_ok": false,
+    "pass": true
+  },
+  {
+    "id": "trust_clarity_1",
+    "concept_score": 0.75,
+    "citation_score": 1.0,
+    "source_title_score": 0.67,
+    "groundedness": 0.38,
+    "grounded_answer_ratio": 0.77,
+    "generic_filler_ratio": 0.08,
+    "hallucination_risk": 0.39,
+    "retrieval_relevance": 0.71,
+    "tone_ok": false,
+    "pass": true
+  }
+]

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAssistant } from '../context/AuthProvider';
 import authService from '../services/authService';
 import avatarImg from '../assets/avatar.png';
+import OrbPresence from './orb/OrbPresence';
 import './AssistantAvatar.css';
 
 const SUGGESTION_POLL_MS = 18 * 1000; // Poll for contextual suggestion every 18s
@@ -358,7 +359,9 @@ const AssistantAvatar = () => {
             }}
             aria-label="Click me for help"
           >
-            <img src={avatarImg} alt="Assistant" className="assistant-avatar-img" />
+            <OrbPresence className="assistant-orb-wrap">
+              <img src={avatarImg} alt="Assistant" className="assistant-avatar-img" />
+            </OrbPresence>
             {!helpMenuOpen && (
               <span className="assistant-click-for-help">Click me for help</span>
             )}

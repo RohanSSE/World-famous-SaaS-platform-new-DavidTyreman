@@ -1,0 +1,64 @@
+.cognition-graph {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.cognition-graph-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.cognition-graph-track {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cognition-graph-node-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cognition-graph-edge {
+  width: 2px;
+  height: 12px;
+  margin-left: 14px;
+  background: linear-gradient(180deg, rgba(79, 229, 255, 0.5), rgba(139, 92, 246, 0.4));
+}
+
+.cognition-graph-node {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+  align-items: start;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  border-left: 3px solid;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.82rem;
+}
+
+.cognition-graph-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 4px;
+}
+
+.cognition-graph-claim {
+  line-height: 1.35;
+  opacity: 0.92;
+}
+
+.cognition-graph-risk {
+  font-size: 0.7rem;
+  opacity: 0.65;
+  white-space: nowrap;
+}

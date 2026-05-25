@@ -1,0 +1,64 @@
+.feedback-learning-panel {
+  background: rgba(18, 20, 32, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+  color: #e8e8ef;
+}
+
+.feedback-learning-panel h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.feedback-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+.feedback-learning-panel label {
+  display: block;
+  margin-bottom: 0.65rem;
+  font-size: 0.8rem;
+}
+
+.feedback-learning-panel textarea,
+.feedback-learning-panel input {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.35);
+  color: inherit;
+  font: inherit;
+}
+
+.feedback-save-btn {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #5b6cff, #8b5cf6);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.feedback-save-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.feedback-msg {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #7dffb0;
+}
+
+.feedback-profile pre {
+  font-size: 0.75rem;
+  max-height: 160px;
+  overflow: auto;
+}

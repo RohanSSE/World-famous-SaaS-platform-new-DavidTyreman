@@ -1,0 +1,254 @@
+.brand-os-page {
+  min-height: 100vh;
+  background: #0a0b10;
+  color: #ececf2;
+  padding: 1.5rem 2rem 3rem;
+}
+
+.brand-os-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.brand-os-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.brand-os-sub {
+  margin: 0.35rem 0 0;
+  opacity: 0.75;
+  max-width: 36rem;
+}
+
+.brand-os-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.brand-os-primary,
+.brand-os-ghost {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.brand-os-primary {
+  background: linear-gradient(135deg, #5b6cff, #8b5cf6);
+  color: #fff;
+}
+
+.brand-os-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: inherit;
+}
+
+.brand-os-primary:disabled,
+.brand-os-ghost:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.brand-os-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+}
+
+.kpi-ok {
+  color: #7dffb0;
+}
+
+.kpi-warn {
+  color: #ffb86c;
+}
+
+.brand-os-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 320px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .brand-os-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.brand-os-workflows ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.brand-os-workflows button {
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.35rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.brand-os-workflows button.active,
+.brand-os-workflows button:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.brand-os-session {
+  margin-top: 1rem;
+  font-size: 0.78rem;
+  opacity: 0.6;
+}
+
+.brand-os-main {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 1.25rem;
+  min-height: 320px;
+}
+
+.brand-os-narrative-body p {
+  line-height: 1.55;
+  margin: 0.5rem 0;
+}
+
+.brand-os-structured pre {
+  font-size: 0.78rem;
+  max-height: 400px;
+  overflow: auto;
+}
+
+.brand-os-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.brand-os-loading,
+.brand-os-empty {
+  opacity: 0.7;
+}
+
+.brand-os-main-animate {
+  transition: opacity 0.3s ease;
+}
+
+.brand-os-pilot-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.82rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  background: rgba(91, 108, 255, 0.1);
+  border-radius: 8px;
+}
+
+.brand-os-demo-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(79, 229, 255, 0.5);
+  background: rgba(79, 229, 255, 0.12);
+  color: #4fe5ff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.brand-os-empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.brand-os-empty-state h2 {
+  margin-bottom: 0.5rem;
+}
+
+.brand-os-empty-state p {
+  opacity: 0.75;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.brand-os-demo-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(79, 229, 255, 0.2);
+  color: #4fe5ff;
+  margin-bottom: 0.5rem;
+}
+
+.brand-os-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: brand-os-fade-in 0.25s ease;
+}
+
+.brand-os-modal {
+  background: #12141f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 1.5rem;
+  max-width: 520px;
+  width: 90%;
+}
+
+.brand-os-demo-grid {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+
+.brand-os-demo-card {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  background: rgba(139, 92, 246, 0.08);
+  color: inherit;
+  cursor: pointer;
+}
+
+.brand-os-demo-card strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.brand-os-demo-card span {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.brand-os-demo-card:hover {
+  border-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.15);
+}

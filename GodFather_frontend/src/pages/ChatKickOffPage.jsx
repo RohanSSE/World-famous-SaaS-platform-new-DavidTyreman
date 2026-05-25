@@ -789,6 +789,20 @@ import { downloadManifestoPdf } from "../utils/ManifestoPdfGenerator";
 import { History } from "lucide-react";
 import Confetti from "../components/Confetti";
 import IdentityCompleteModal from "./IdentityCompleteModal";
+import ThinkingPipeline from "../components/rag/ThinkingPipeline";
+import SourceCards from "../components/rag/SourceCards";
+import RetrievalDebugPanel from "../components/rag/RetrievalDebugPanel";
+import StrategyTensionCard from "../components/rag/StrategyTensionCard";
+import TypewriterText from "../components/rag/TypewriterText";
+import useThinkingPipeline from "../hooks/useThinkingPipeline";
+import { useOrbPresence } from "../context/OrbPresenceContext";
+
+const AI_THINKING_STEPS = [
+  "Understanding your positioning…",
+  "Recalling manifesto principles…",
+  "Analyzing differentiation patterns…",
+  "Connecting strategic concepts…",
+];
 
 // Modal component to show chat history for a question
 function ChatHistoryModal({
@@ -930,6 +944,24 @@ export default function ChatKickOffPage() {
   const chatMessagesEndRef = useRef(null);
   const chatMessagesContainerRef = useRef(null);
   const manifestoAutoNavRef = useRef(null);
+
+  const {
+    setOrbIdle,
+    setOrbThinking,
+    setOrbRetrieving,
+    setOrbSpeaking,
+    setOrbMemory,
+    setSources: setOrbSources,
+    setGraphConcepts: setOrbGraphConcepts,
+  } = useOrbPresence();
+
+  const [ragSources, setRagSources] = useState([]);
+  const [graphConcepts, setGraphConcepts] = useState([]);
+  const [retrievalDebug, setRetrievalDebug] = useState(null);
+  const [strategicInsights, setStrategicInsights] = useState([]);
+  const [retrievalConfidence, setRetrievalConfidence] = useState(null);
+  const [ragEvaluation, setRagEvaluation] = useState(null);
+  const thinkingMessage = useThinkingPipeline(isLoading, AI_THINKING_STEPS, 1500);
 
   const [showIdentityCompleteModal, setShowIdentityCompleteModal] =
     useState(false);
@@ -1617,6 +1649,8 @@ export default function ChatKickOffPage() {
     }
 
     setIsLoading(true);
+    setOrbThinking("Thinking…");
+    setOrbRetrieving("Retrieving brand knowledge…");
 
     try {
       const aiResp = await authService.aiSuggestionDraft(
@@ -1625,6 +1659,20 @@ export default function ChatKickOffPage() {
         trimmed,
         isAiDraft, // tell backend if this was already AI-refined
       );
+
+      const sources = aiResp?.sources || [];
+      const concepts = aiResp?.graph_concepts || [];
+      setRagSources(sources);
+      setGraphConcepts(concepts);
+      setRetrievalDebug(aiResp?.retrieval_debug || null);
+      setStrategicInsights(aiResp?.strategic_insights || []);
+      setRetrievalConfidence(aiResp?.retrieval_confidence || null);
+      setRagEvaluation(aiResp?.evaluation || null);
+      setOrbSources(sources);
+      setOrbGraphConcepts(concepts);
+      if (sources.length) {
+        setOrbMemory("ORB connected concepts");
+      }
 
       const improved = (aiResp?.improved_answer || trimmed).trim();
       const followUp = (aiResp?.follow_up_question || "").trim();
@@ -1700,6 +1748,7 @@ export default function ChatKickOffPage() {
         }
 
         setIsAssistantTyping(true);
+        setOrbSpeaking();
         setTypingText("");
 
         // Add placeholder for typing message
@@ -1724,6 +1773,7 @@ export default function ChatKickOffPage() {
             clearInterval(typeInterval);
             typewriterIntervalRef.current = null;
             setIsAssistantTyping(false);
+            setOrbIdle();
             setTypingText("");
             // Replace typing message with final text
             setChatMessages((prev) => {
@@ -1753,6 +1803,7 @@ export default function ChatKickOffPage() {
       }
     } catch (err) {
       setIsLoading(false);
+      setOrbIdle();
       console.error("AI suggestion or send failed", err);
       toast.error(err?.message || "Failed to send answer (AI error).");
 
@@ -2554,6 +2605,9 @@ export default function ChatKickOffPage() {
               ) : (
                 <>
                   <div className="chat-messages" ref={chatMessagesContainerRef}>
+                    {isLoading && (
+                      <ThinkingPipeline message={thinkingMessage} visible />
+                    )}
                     {chatMessages.map((m, i) => {
                       const isUser = m.role === "user";
                       const isLastMessage = i === chatMessages.length - 1;
@@ -2641,15 +2695,17 @@ export default function ChatKickOffPage() {
                             <div className="bubble-content">
                               {m.isTyping ? (
                                 <p>
-                                  {typingText}
-                                  <span className="typing-cursor">|</span>
+                                  <TypewriterText
+                                    text={typingText}
+                                    isTyping={isAssistantTyping}
+                                    showCursor
+                                  />
                                 </p>
                               ) : m.pending && !isUser ? (
-                                <div className="thinking-indicator">
-                                  <span className="thinking-text">
-                                    Thinking...
-                                  </span>
-                                </div>
+                                <ThinkingPipeline
+                                  message={thinkingMessage || "Thinking…"}
+                                  visible
+                                />
                               ) : (
                                 m.text
                                   .split(/\n\s*\n/)
@@ -2730,6 +2786,23 @@ export default function ChatKickOffPage() {
                           </div>
                         </div>
                       )}
+                    {strategicInsights.length > 0 && (
+                      <StrategyTensionCard insights={strategicInsights} />
+                    )}
+                    {!isLoading && ragSources.length > 0 && (
+                      <SourceCards
+                        sources={ragSources}
+                        graphConcepts={graphConcepts}
+                        retrievalConfidence={retrievalConfidence}
+                        evaluation={ragEvaluation}
+                      />
+                    )}
+                    {retrievalDebug && (
+                      <RetrievalDebugPanel
+                        debug={retrievalDebug}
+                        insights={strategicInsights}
+                      />
+                    )}
                     <div ref={chatMessagesEndRef} />
                   </div>
                 </>
