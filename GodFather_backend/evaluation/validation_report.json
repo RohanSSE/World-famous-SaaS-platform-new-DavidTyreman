@@ -1,0 +1,915 @@
+{
+  "health": {
+    "redis": true,
+    "elasticsearch": true,
+    "pgvector": true,
+    "cross_encoder": true,
+    "intelligence_mode": "full",
+    "intelligence_label": "Full Intelligence"
+  },
+  "settings": {
+    "MAX_CONTEXT_CHARS": 6000,
+    "MAX_RERANK_BEFORE": 10,
+    "MAX_RERANK_AFTER": 5,
+    "cross_encoder": true
+  },
+  "retrieval": [
+    {
+      "query": "How can a brand create emotional connection?",
+      "latency_ms": {
+        "embedding": 7868.7,
+        "retrieval_total": 4309.1
+      },
+      "hits": 5,
+      "duplicates": 0,
+      "graph_concepts": [
+        "storytelling",
+        "emotional resonance"
+      ],
+      "manifesto_in_top3": 0,
+      "top3": [
+        {
+          "rank": 1,
+          "hybrid": 0.7863,
+          "vector": 1.0,
+          "keyword": 1.0,
+          "graph": 0.5,
+          "ce": 0.5,
+          "category": "branding",
+          "title": "Storytelling & Emotion Counts",
+          "reasons": []
+        },
+        {
+          "rank": 2,
+          "hybrid": 0.4449,
+          "vector": 0.664,
+          "keyword": 0.5,
+          "graph": 0.0,
+          "ce": 0.5,
+          "category": "branding",
+          "title": "Authentic Light Branding",
+          "reasons": []
+        },
+        {
+          "rank": 3,
+          "hybrid": 0.3949,
+          "vector": 0.6897,
+          "keyword": 0.1,
+          "graph": 0.0,
+          "ce": 0.5,
+          "category": "branding",
+          "title": "Find & Live Your Brand DNA",
+          "reasons": []
+        }
+      ],
+      "sources": [
+        {
+          "category": "branding",
+          "file": "branding/training-AI-tool.txt",
+          "title": "Storytelling & Emotion Counts",
+          "vector_score": 1.0,
+          "keyword_score": 1.0,
+          "graph_score": 0.5,
+          "hybrid_score": 0.7863,
+          "relevance_score": 0.7863,
+          "source_reliability": 0.85,
+          "retrieval_reasons": [
+            "Strong semantic relevance",
+            "Keyword alignment",
+            "Strategic concept relation",
+            "Branding framework match",
+            "Emotional language match"
+          ]
+        },
+        {
+          "category": "branding",
+          "file": "branding/training-AI-tool.txt",
+          "title": "Authentic Light Branding",
+          "vector_score": 0.664,
+          "keyword_score": 0.5,
+          "graph_score": 0.0,
+          "hybrid_score": 0.4449,
+          "relevance_score": 0.4449,
+          "source_reliability": 0.85,
+          "retrieval_reasons": [
+            "Strong semantic relevance",
+            "Keyword alignment",
+            "Branding framework match",
+            "Trust concept match"
+          ]
+        },
+        {
+          "category": "branding",
+          "file": "branding/training-AI-tool.txt",
+          "title": "Find & Live Your Brand DNA",
+          "vector_score": 0.6897,
+          "keyword_score": 0.1,
+          "graph_score": 0.0,
+          "hybrid_score": 0.3949,
+          "relevance_score": 0.3949,
+          "source_reliability": 0.9,
+          "retrieval_reasons": [
+            "Strong semantic relevance",
+            "Branding framework match"
+          ]
+        }
+      ],
+      "total_ms": 12178.1
+    },
+    {
+      "query": "How to differentiate from competitors?",
+      "latency_ms": {
+        "embedding": 2704.9,
+        "retrieval_total": 4262.8
+      },
+      "hits": 5,
+      "duplicates": 0,
+      "graph_concepts": [
+        "positioning"
+      ],
+      "manifesto_in_top3": 2,
+      "top3": [
+        {
+          "rank": 1,
+          "hybrid": 0.085,
+          "vector": 0.0,
+          "keyword": 1.0,
+          "graph": 0.0,
+          "ce": 0.5,
+          "category": "branding",
+          "title": "Beyond the Manifesto the AI",
+          "reasons": []
+        },
+        {
+          "rank": 2,
+          "hybrid": 0.0911,
+          "vector": 0.0,
+          "keyword": 0.1111,
+          "graph": 0.0,
+          "ce": 0.5,
+          "category": "manifesto",
+          "title": "2. Scenario Coaching Chat Ask David how the brand ",
+          "reasons": []
+        },
+        {
+          "rank": 3,
+          "hybrid": 0.09,
+          "vector": 0.0,
+          "keyword": 0.1,
+          "graph": 0.0,
+          "ce": 0.5,
+          "category": "manifesto",
+          "title": "6. Internal Culture Alignment",
+          "reasons": []
+        }
+      ],
+      "sources": [
+        {
+          "category": "branding",
+          "file": "branding/training-AI-tool.txt",
+          "title": "Beyond the Manifesto the AI",
+          "vector_score": 0.0,
+          "keyword_score": 1.0,
+          "graph_score": 0.0,
+          "hybrid_score": 0.085,
+          "relevance_score": 0.085,
+          "source_reliability": 0.85,
+          "retrieval_reasons": [
+            "Keyword alignment",
+            "Manifesto alignment",
+            "Branding framework match"
+          ]
+        },
+        {
+          "category": "manifesto",
+          "file": "manifesto/after-manifesto-ai-tool.txt",
+          "title": "2. Scenario Coaching Chat Ask David how the brand would act in specific cases. - Chat with pre-prompted buttons: \u201cCrisis Response,\u201d \u201cLaunch,\u201d \u201cCustomer Service Tone\u201d - Free text allowed Guiding, mentor-like Replaces Google/agency for brand guidance",
+          "vector_score": 0.0,
+          "keyword_score": 0.1111,
+          "graph_score": 0.0,
+          "hybrid_score": 0.0911,
+          "relevance_score": 0.0911,
+          "source_reliability": 1.0,
+          "retrieval_reasons": [
+            "Manifesto alignment",
+            "Branding framework match",
+            "Emotional language match"
+          ]
+        },
+        {
+          "category": "manifesto",
+          "file": "manifesto/after-manifesto-ai-tool.txt",
+          "title": "6. Internal Culture Alignment",
+          "vector_score": 0.0,
+          "keyword_score": 0.1,
+          "graph_score": 0.0,
+          "hybrid_score": 0.09,
+          "relevance_score": 0.09,
+          "source_reliability": 1.0,
+          "retrieval_reasons": [
+            "Manifesto alignment",
+            "Emotional language match"
+          ]
+        }
+      ],
+      "total_ms": 6967.8
+    },
+    {
+      "query": "What creates brand trust?",
+      "latency_ms": {
+        "embedding": 2543.9,
+        "retrieval_total": 4697.7
+      },
+      "hits": 5,
+      "duplicates": 0,
+      "graph_concepts": [
+        "brand dna",
+        "trust"
+      ],
+      "manifesto_in_top3": 0,
+      "top3": [
+        {
+          "rank": 1,
+          "hybrid": 0.85,
+          "vector": 1.0,
+          "keyword": 1.0,
+          "graph": 1.0,
+          "ce": 0.5,
+          "category": "branding",
+          "title": "Consistency Across All Touchpoints",
+          "reasons": []
+        },
+        {
+          "rank": 2,
+          "hybrid": 0.6937,
+          "vector": 0.9513,
+          "keyword": 0.5,
+          "graph": 0.5,
+          "ce": 0.5,
+          "category": "branding",
+          "title": "Find & Live Your Brand DNA",
+          "reasons": []
+        },
+        {
+          "rank": 3,
+          "hybrid": 0.5225,
+          "vector": 0.7607,
+          "keyword": 0.3333,
+          "graph": 0.5,
+          "ce": 0.5,
+          "category": "branding",
+          "title": "Mean & Mean What You Say",
+          "reasons": []
+        }
+      ],
+      "sources": [
+        {
+          "category": "branding",
+          "file": "branding/training-AI-tool.txt",
+          "title": "Consistency Across All Touchpoints",
+          "vector_score": 1.0,
+          "keyword_score": 1.0,
+          "graph_score": 1.0,
+          "hybrid_score": 0.85,
+          "relevance_score": 0.85,
+          "source_reliability": 0.85,
+          "retrieval_reasons": [
+            "Strong semantic relevance",
+            "Keyword alignment",
+            "Strategic concept relation",
+            "Branding framework match",
+            "Trust concept match"
+          ]
+        },
+        {
+          "category": "branding",
+          "file": "branding/training-AI-tool.txt",
+          "title": "Find & Live Your Brand DNA",
+          "vector_score": 0.9513,
+          "keyword_score": 0.5,
+          "graph_score": 0.5,
+          "hybrid_score": 0.6937,
+          "relevance_score": 0.6937,
+          "source_reliability": 0.9,
+          "retrieval_reasons": [
+            "Strong semantic relevance",
+            "Keyword alignment",
+            "Strategic concept relation",
+            "Branding framework match",
+            "Graph: brand dna"
+          ]
+        },
+        {
+          "category": "branding",
+          "file": "branding/training-AI-tool.txt",
+          "title": "Mean & Mean What You Say",
+          "vector_score": 0.7607,
+          "keyword_score": 0.3333,
+          "graph_score": 0.5,
+          "hybrid_score": 0.5225,
+          "relevance_score": 0.5225,
+          "source_reliability": 0.85,
+          "retrieval_reasons": [
+            "Strong semantic relevance",
+            "Strategic concept relation",
+            "Branding framework match",
+            "Trust concept match",
+            "Graph: trust"
+          ]
+        }
+      ],
+      "total_ms": 7241.8
+    },
+    {
+      "query": "How should manifesto positioning work?",
+      "latency_ms": {
+        "embedding": 2074.7,
+        "retrieval_total": 4282.5
+      },
+      "hits": 5,
+      "duplicates": 0,
+      "graph_concepts": [
+        "brand dna",
+        "positioning",
+        "manifesto",
+        "differentiation"
+      ],
+      "manifesto_in_top3": 3,
+      "top3": [
+        {
+          "rank": 1,
+          "hybrid": 0.8675,
+          "vector": 1.0,
+          "keyword": 0.0,
+          "graph": 0.25,
+          "ce": 0.5,
+          "category": "manifesto",
+          "title": "Post Manifesto Journey 2",
+          "reasons": []
+        },
+        {
+          "rank": 2,
+          "hybrid": 0.8161,
+          "vector": 0.9092,
+          "keyword": 0.1667,
+          "graph": 0.25,
+          "ce": 0.5,
+          "category": "manifesto",
+          "title": "6. Internal Culture Alignment",
+          "reasons": []
+        },
+        {
+          "rank": 3,
+          "hybrid": 0.7359,
+          "vector": 0.8245,
+          "keyword": 0.0,
+          "graph": 0.25,
+          "ce": 0.5,
+          "category": "manifesto",
+          "title": "4. Social Media Content",
+          "reasons": []
+        }
+      ],
+      "sources": [
+        {
+          "category": "manifesto",
+          "file": "manifesto/after-manifesto-ai-tool.txt",
+          "title": "Post Manifesto Journey 2",
+          "vector_score": 1.0,
+          "keyword_score": 0.0,
+          "graph_score": 0.25,
+          "hybrid_score": 0.8675,
+          "relevance_score": 0.8675,
+          "source_reliability": 1.0,
+          "retrieval_reasons": [
+            "Strong semantic relevance",
+            "Strategic concept relation",
+            "Manifesto alignment",
+            "Graph: manifesto"
+          ]
+        },
+        {
+          "category": "manifesto",
+          "file": "manifesto/after-manifesto-ai-tool.txt",
+          "title": "6. Internal Culture Alignment",
+          "vector_score": 0.9092,
+          "keyword_score": 0.1667,
+          "graph_score": 0.25,
+          "hybrid_score": 0.8161,
+          "relevance_score": 0.8161,
+          "source_reliability": 1.0,
+          "retrieval_reasons": [
+            "Strong semantic relevance",
+            "Strategic concept relation",
+            "Manifesto alignment",
+            "Emotional language match",
+            "Graph: manifesto"
+          ]
+        },
+        {
+          "category": "manifesto",
+          "file": "manifesto/after-manifesto-ai-tool.txt",
+          "title": "4. Social Media Content",
+          "vector_score": 0.8245,
+          "keyword_score": 0.0,
+          "graph_score": 0.25,
+          "hybrid_score": 0.7359,
+          "relevance_score": 0.7359,
+          "source_reliability": 1.0,
+          "retrieval_reasons": [
+            "Strong semantic relevance",
+            "Strategic concept relation",
+            "Manifesto alignment",
+            "Graph: manifesto"
+          ]
+        }
+      ],
+      "total_ms": 6357.4
+    }
+  ],
+  "strategic": [
+    {
+      "query": "How should a premium brand build trust?",
+      "planner": {
+        "intent": "trust",
+        "primary_agent": "strategist",
+        "selected_agents": [
+          "strategist",
+          "tone"
+        ]
+      },
+      "retrieval": {
+        "query": "How should a premium brand build trust?",
+        "latency_ms": {
+          "embedding": 2987.4,
+          "retrieval_total": 4272.9
+        },
+        "hits": 5,
+        "duplicates": 0,
+        "graph_concepts": [
+          "brand dna",
+          "trust"
+        ],
+        "manifesto_in_top3": 0,
+        "top3": [
+          {
+            "rank": 1,
+            "hybrid": 0.85,
+            "vector": 1.0,
+            "keyword": 1.0,
+            "graph": 1.0,
+            "ce": 0.5,
+            "category": "branding",
+            "title": "Consistency Across All Touchpoints",
+            "reasons": []
+          },
+          {
+            "rank": 2,
+            "hybrid": 0.6502,
+            "vector": 0.9403,
+            "keyword": 0.3333,
+            "graph": 0.5,
+            "ce": 0.5,
+            "category": "branding",
+            "title": "Find & Live Your Brand DNA",
+            "reasons": []
+          },
+          {
+            "rank": 3,
+            "hybrid": 0.5165,
+            "vector": 0.8182,
+            "keyword": 0.1667,
+            "graph": 0.5,
+            "ce": 0.5,
+            "category": "branding",
+            "title": "Mean & Mean What You Say",
+            "reasons": []
+          }
+        ],
+        "sources": [
+          {
+            "category": "branding",
+            "file": "branding/training-AI-tool.txt",
+            "title": "Consistency Across All Touchpoints",
+            "vector_score": 1.0,
+            "keyword_score": 1.0,
+            "graph_score": 1.0,
+            "hybrid_score": 0.85,
+            "relevance_score": 0.85,
+            "source_reliability": 0.85,
+            "retrieval_reasons": [
+              "Strong semantic relevance",
+              "Keyword alignment",
+              "Strategic concept relation",
+              "Branding framework match",
+              "Trust concept match"
+            ]
+          },
+          {
+            "category": "branding",
+            "file": "branding/training-AI-tool.txt",
+            "title": "Find & Live Your Brand DNA",
+            "vector_score": 0.9403,
+            "keyword_score": 0.3333,
+            "graph_score": 0.5,
+            "hybrid_score": 0.6502,
+            "relevance_score": 0.6502,
+            "source_reliability": 0.9,
+            "retrieval_reasons": [
+              "Strong semantic relevance",
+              "Strategic concept relation",
+              "Branding framework match",
+              "Graph: brand dna"
+            ]
+          },
+          {
+            "category": "branding",
+            "file": "branding/training-AI-tool.txt",
+            "title": "Mean & Mean What You Say",
+            "vector_score": 0.8182,
+            "keyword_score": 0.1667,
+            "graph_score": 0.5,
+            "hybrid_score": 0.5165,
+            "relevance_score": 0.5165,
+            "source_reliability": 0.85,
+            "retrieval_reasons": [
+              "Strong semantic relevance",
+              "Strategic concept relation",
+              "Branding framework match",
+              "Trust concept match",
+              "Graph: trust"
+            ]
+          }
+        ],
+        "total_ms": 7260.6
+      },
+      "strategic_insights": [
+        {
+          "type": "grounding_gap",
+          "priority": "medium",
+          "message": "Premium trust questions usually need manifesto grounding \u2014 retrieval was branding-heavy. Consider a manifesto-aligned pass."
+        }
+      ]
+    },
+    {
+      "query": "Our messaging feels generic. How do we differentiate?",
+      "planner": {
+        "intent": "differentiation",
+        "primary_agent": "positioning",
+        "selected_agents": [
+          "manifesto",
+          "positioning",
+          "tone"
+        ]
+      },
+      "retrieval": {
+        "query": "Our messaging feels generic. How do we differentiate?",
+        "latency_ms": {
+          "embedding": 3387.8,
+          "retrieval_total": 3799.5
+        },
+        "hits": 5,
+        "duplicates": 0,
+        "graph_concepts": [
+          "emotional resonance"
+        ],
+        "manifesto_in_top3": 3,
+        "top3": [
+          {
+            "rank": 1,
+            "hybrid": 0.18,
+            "vector": 0.0,
+            "keyword": 1.0,
+            "graph": 0.0,
+            "ce": 0.5,
+            "category": "manifesto",
+            "title": "6. Internal Culture Alignment",
+            "reasons": []
+          },
+          {
+            "rank": 2,
+            "hybrid": 0.1133,
+            "vector": 0.0,
+            "keyword": 0.3333,
+            "graph": 0.0,
+            "ce": 0.5,
+            "category": "manifesto",
+            "title": "AI Training Notes \u201cWhat",
+            "reasons": []
+          },
+          {
+            "rank": 3,
+            "hybrid": 0.0967,
+            "vector": 0.0,
+            "keyword": 0.1667,
+            "graph": 0.0,
+            "ce": 0.5,
+            "category": "manifesto",
+            "title": "2. New Launch",
+            "reasons": []
+          }
+        ],
+        "sources": [
+          {
+            "category": "manifesto",
+            "file": "manifesto/after-manifesto-ai-tool.txt",
+            "title": "6. Internal Culture Alignment",
+            "vector_score": 0.0,
+            "keyword_score": 1.0,
+            "graph_score": 0.0,
+            "hybrid_score": 0.18,
+            "relevance_score": 0.18,
+            "source_reliability": 1.0,
+            "retrieval_reasons": [
+              "Keyword alignment",
+              "Manifesto alignment",
+              "Emotional language match"
+            ]
+          },
+          {
+            "category": "manifesto",
+            "file": "manifesto/after-manifesto-ai-tool.txt",
+            "title": "AI Training Notes \u201cWhat",
+            "vector_score": 0.0,
+            "keyword_score": 0.3333,
+            "graph_score": 0.0,
+            "hybrid_score": 0.1133,
+            "relevance_score": 0.1133,
+            "source_reliability": 1.0,
+            "retrieval_reasons": [
+              "Manifesto alignment"
+            ]
+          },
+          {
+            "category": "manifesto",
+            "file": "manifesto/after-manifesto-ai-tool.txt",
+            "title": "2. New Launch",
+            "vector_score": 0.0,
+            "keyword_score": 0.1667,
+            "graph_score": 0.0,
+            "hybrid_score": 0.0967,
+            "relevance_score": 0.0967,
+            "source_reliability": 1.0,
+            "retrieval_reasons": [
+              "Manifesto alignment"
+            ]
+          }
+        ],
+        "total_ms": 7187.6
+      },
+      "strategic_insights": [
+        {
+          "type": "differentiation",
+          "priority": "high",
+          "message": "Generic messaging often signals weak differentiation. I can run a manifesto-grounded positioning pass."
+        }
+      ]
+    },
+    {
+      "query": "What weakens brand authority?",
+      "planner": {
+        "intent": "general",
+        "primary_agent": "strategist",
+        "selected_agents": [
+          "strategist",
+          "tone"
+        ]
+      },
+      "retrieval": {
+        "query": "What weakens brand authority?",
+        "latency_ms": {
+          "embedding": 2329.0,
+          "retrieval_total": 1779.4
+        },
+        "hits": 5,
+        "duplicates": 0,
+        "graph_concepts": [],
+        "manifesto_in_top3": 0,
+        "top3": [
+          {
+            "rank": 1,
+            "hybrid": 0.6358,
+            "vector": 0.843,
+            "keyword": 1.0,
+            "graph": 0.0,
+            "ce": 0.5,
+            "category": "branding",
+            "title": "AI Response: Cheeky",
+            "reasons": []
+          },
+          {
+            "rank": 2,
+            "hybrid": 0.585,
+            "vector": 1.0,
+            "keyword": 0.0,
+            "graph": 0.0,
+            "ce": 0.5,
+            "category": "branding",
+            "title": "Brand DNA first. Next question:\" User's answer for",
+            "reasons": []
+          },
+          {
+            "rank": 3,
+            "hybrid": 0.5729,
+            "vector": 0.8831,
+            "keyword": 0.5,
+            "graph": 0.0,
+            "ce": 0.5,
+            "category": "branding",
+            "title": "David\u2019s \u201cRed Lines\u201d What",
+            "reasons": []
+          }
+        ],
+        "sources": [
+          {
+            "category": "branding",
+            "file": "branding/training-AI-tool.txt",
+            "title": "AI Response: Cheeky",
+            "vector_score": 0.843,
+            "keyword_score": 1.0,
+            "graph_score": 0.0,
+            "hybrid_score": 0.6358,
+            "relevance_score": 0.6358,
+            "source_reliability": 0.85,
+            "retrieval_reasons": [
+              "Strong semantic relevance",
+              "Keyword alignment",
+              "Branding framework match"
+            ]
+          },
+          {
+            "category": "branding",
+            "file": "branding/training-AI-tool.txt",
+            "title": "Brand DNA first. Next question:\" User's answer for a",
+            "vector_score": 1.0,
+            "keyword_score": 0.0,
+            "graph_score": 0.0,
+            "hybrid_score": 0.585,
+            "relevance_score": 0.585,
+            "source_reliability": 0.9,
+            "retrieval_reasons": [
+              "Strong semantic relevance",
+              "Branding framework match"
+            ]
+          },
+          {
+            "category": "branding",
+            "file": "branding/training-AI-tool.txt",
+            "title": "David\u2019s \u201cRed Lines\u201d What",
+            "vector_score": 0.8831,
+            "keyword_score": 0.5,
+            "graph_score": 0.0,
+            "hybrid_score": 0.5729,
+            "relevance_score": 0.5729,
+            "source_reliability": 0.85,
+            "retrieval_reasons": [
+              "Strong semantic relevance",
+              "Keyword alignment",
+              "Branding framework match",
+              "Trust concept match"
+            ]
+          }
+        ],
+        "total_ms": 4108.7
+      },
+      "strategic_insights": [
+        {
+          "type": "trust_authority",
+          "priority": "medium",
+          "message": "Brand authority weakens when promises outpace proof. Want to audit manifesto claims against current messaging?"
+        }
+      ]
+    },
+    {
+      "query": "Help position us against cheaper competitors.",
+      "planner": {
+        "intent": "differentiation",
+        "primary_agent": "positioning",
+        "selected_agents": [
+          "manifesto",
+          "positioning",
+          "tone"
+        ]
+      },
+      "retrieval": {
+        "query": "Help position us against cheaper competitors.",
+        "latency_ms": {
+          "embedding": 2324.9,
+          "retrieval_total": 3343.5
+        },
+        "hits": 5,
+        "duplicates": 0,
+        "graph_concepts": [
+          "positioning"
+        ],
+        "manifesto_in_top3": 1,
+        "top3": [
+          {
+            "rank": 1,
+            "hybrid": 0.085,
+            "vector": 0.0,
+            "keyword": 1.0,
+            "graph": 0.0,
+            "ce": 0.5,
+            "category": "branding",
+            "title": "Affirming, Clarifying Why Demand",
+            "reasons": []
+          },
+          {
+            "rank": 2,
+            "hybrid": 0.1,
+            "vector": 0.0,
+            "keyword": 0.2,
+            "graph": 0.0,
+            "ce": 0.5,
+            "category": "manifesto",
+            "title": "4. Social Media Content",
+            "reasons": []
+          },
+          {
+            "rank": 3,
+            "hybrid": 0.0425,
+            "vector": 0.0,
+            "keyword": 0.5,
+            "graph": 0.0,
+            "ce": 0.5,
+            "category": "branding",
+            "title": "Make Competitors Irrelevant",
+            "reasons": []
+          }
+        ],
+        "sources": [
+          {
+            "category": "branding",
+            "file": "branding/training-AI-tool.txt",
+            "title": "Affirming, Clarifying Why Demand",
+            "vector_score": 0.0,
+            "keyword_score": 1.0,
+            "graph_score": 0.0,
+            "hybrid_score": 0.085,
+            "relevance_score": 0.085,
+            "source_reliability": 0.85,
+            "retrieval_reasons": [
+              "Keyword alignment",
+              "Branding framework match",
+              "Differentiation strategy match"
+            ]
+          },
+          {
+            "category": "manifesto",
+            "file": "manifesto/after-manifesto-ai-tool.txt",
+            "title": "4. Social Media Content",
+            "vector_score": 0.0,
+            "keyword_score": 0.2,
+            "graph_score": 0.0,
+            "hybrid_score": 0.1,
+            "relevance_score": 0.1,
+            "source_reliability": 1.0,
+            "retrieval_reasons": [
+              "Manifesto alignment"
+            ]
+          },
+          {
+            "category": "branding",
+            "file": "branding/training-AI-tool.txt",
+            "title": "Make Competitors Irrelevant",
+            "vector_score": 0.0,
+            "keyword_score": 0.5,
+            "graph_score": 0.0,
+            "hybrid_score": 0.0425,
+            "relevance_score": 0.0425,
+            "source_reliability": 0.85,
+            "retrieval_reasons": [
+              "Keyword alignment",
+              "Branding framework match",
+              "Differentiation strategy match"
+            ]
+          }
+        ],
+        "total_ms": 5668.5
+      },
+      "strategic_insights": [
+        {
+          "type": "competitive",
+          "priority": "high",
+          "message": "Competing on price erodes premium positioning. I can map differentiation that makes cheaper alternatives irrelevant."
+        }
+      ]
+    }
+  ],
+  "sse": {
+    "ok": true,
+    "events": [
+      "planner",
+      "system_health",
+      "sources",
+      "token"
+    ],
+    "expected_prefix": [
+      "planner",
+      "system_health",
+      "sources"
+    ]
+  },
+  "baseline": null
+}

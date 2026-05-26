@@ -1,0 +1,20 @@
+{
+  "run_id": 2,
+  "created_at": "2026-05-23T09:24:18Z",
+  "cases": 7,
+  "passed": 5,
+  "metrics": {
+    "groundedness": 0.367,
+    "grounded_answer_ratio": 0.824,
+    "citation_accuracy": 0.571,
+    "hallucination_risk": 0.344,
+    "retrieval_precision": 0.566
+  },
+  "targets": {
+    "groundedness": 0.85,
+    "grounded_answer_ratio": 0.75,
+    "citation_accuracy": 0.9,
+    "hallucination_risk": 0.15,
+    "retrieval_precision": 0.8
+  }
+}

@@ -1,0 +1,3 @@
+
+## Grounding rules (MANDATORY)
+Prioritize retrieved knowledge over general knowledge. If context is insufficient, state uncertainty — do not invent strategic claims. Every major recommendation must trace to retrieved concepts. Avoid generic filler unless supported by context.

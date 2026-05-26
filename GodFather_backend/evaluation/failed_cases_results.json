@@ -1,0 +1,1114 @@
+{
+  "results": [
+    {
+      "id": "golden_trust_premium_1",
+      "scores": {
+        "id": "golden_trust_premium_1",
+        "concept_score": 0.5,
+        "citation_score": 0.5,
+        "source_title_score": 1.0,
+        "groundedness": 0.47,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.025,
+        "claim_grounded_ratio": 0.6,
+        "unsupported_claim_rate": 0.4,
+        "high_inference_rate": 0.4,
+        "retrieval_relevance": 0.8,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 2,
+        "source_coverage": 0.5,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "branding",
+        "top1_title": "consistency across all touchpoints",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (trust)",
+          "intent-weighted boost",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 2,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 1.0,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "premium",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.772,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.3,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.5,
+        "confidence_after": 0.8,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 0.8786,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.7247,
+            "rerank_reason": [
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 1.0,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      }
+    },
+    {
+      "id": "golden_differentiation_1",
+      "scores": {
+        "id": "golden_differentiation_1",
+        "concept_score": 0.75,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.41,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.125,
+        "claim_grounded_ratio": 0.438,
+        "unsupported_claim_rate": 0.6,
+        "high_inference_rate": 0.4,
+        "retrieval_relevance": 0.51,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 9,
+        "source_coverage": 0.5,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "4. social media content",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (emotional_branding, positioning)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.65,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "principle",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.761,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.151,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.247,
+        "confidence_after": 0.398,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 0.6495,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, positioning)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "AI Training Notes \u201cWhat",
+            "category": "manifesto",
+            "hybrid_score": 0.6477,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Celebratory, Inspirational Congratulate",
+            "category": "branding",
+            "hybrid_score": 0.3867,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto, positioning)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.65,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      }
+    },
+    {
+      "id": "golden_positioning_1",
+      "scores": {
+        "id": "golden_positioning_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.3,
+        "grounded_answer_ratio": 0.71,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.676,
+        "claim_grounded_ratio": 0.143,
+        "unsupported_claim_rate": 1.2,
+        "high_inference_rate": 0.4,
+        "retrieval_relevance": 0.47,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 18,
+        "source_coverage": 1.0,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "4. social media content",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (positioning)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 3,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.524,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "authority",
+          "consistency",
+          "manifesto",
+          "premium",
+          "principle",
+          "promise",
+          "restraint",
+          "trust"
+        ],
+        "consistency_score": 0.768,
+        "critique_flags": [
+          "low_strategic_density",
+          "generic_reasoning",
+          "reasoning_drift",
+          "unsupported_claim",
+          "low_confidence_overclaim"
+        ],
+        "repair_gain": 0.0,
+        "drift_before": 0.9,
+        "drift_after": 0.0,
+        "confidence_before": 0.0,
+        "confidence_after": 0.0,
+        "repair_success": true,
+        "drift_improved": true,
+        "repaired": true,
+        "overclaim_suppressed": true,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 1.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 0.6321,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (positioning)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Brand DNA first. Next question:\" User's answer for a",
+            "category": "branding",
+            "hybrid_score": 0.4159,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (brand_book, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.3571,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.524,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      }
+    },
+    {
+      "id": "golden_trust_clarity_1",
+      "scores": {
+        "id": "golden_trust_clarity_1",
+        "concept_score": 0.67,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.39,
+        "grounded_answer_ratio": 0.5,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.287,
+        "claim_grounded_ratio": 0.25,
+        "unsupported_claim_rate": 0.75,
+        "high_inference_rate": 0.75,
+        "retrieval_relevance": 0.79,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 3,
+        "source_coverage": 0.5,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "branding",
+        "top1_title": "consistency across all touchpoints",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (trust)",
+          "intent-weighted boost",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 2,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 1.0,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "principle",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.708,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.2,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.55,
+        "confidence_after": 0.75,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 0.8786,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.7074,
+            "rerank_reason": [
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 1.0,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      }
+    },
+    {
+      "id": "golden_dna_1",
+      "scores": {
+        "id": "golden_dna_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.41,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.04,
+        "claim_grounded_ratio": 0.571,
+        "unsupported_claim_rate": 0.429,
+        "high_inference_rate": 0.429,
+        "retrieval_relevance": 0.84,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 3,
+        "source_coverage": 0.667,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (emotional_branding, manifesto, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 3,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.375,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.715,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.05,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.606,
+        "confidence_after": 0.656,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.9071,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.8355,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Brand DNA first. Next question:\" User's answer for a",
+            "category": "branding",
+            "hybrid_score": 0.7723,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.375,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      }
+    },
+    {
+      "id": "golden_competitor_irrelevant_1",
+      "scores": {
+        "id": "golden_competitor_irrelevant_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.45,
+        "grounded_answer_ratio": 0.85,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.101,
+        "claim_grounded_ratio": 0.5,
+        "unsupported_claim_rate": 0.5,
+        "high_inference_rate": 0.5,
+        "retrieval_relevance": 0.67,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 6,
+        "source_coverage": 1.0,
+        "generic_filler_count": 0,
+        "top1_hit": false,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (manifesto)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 0.333,
+        "manifesto_in_top5": 1,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 0.0,
+        "manifesto_support_density": 0.333,
+        "context_coherence": 1.0,
+        "strategic_density": 0.571,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "consistency_score": 0.653,
+        "critique_flags": [
+          "weak_manifesto_support",
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.05,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.419,
+        "confidence_after": 0.469,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.8753,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Differentiation \u2014 Don\u2019t Be \u201cAnother Me-too\u201d",
+            "category": "branding",
+            "hybrid_score": 0.6126,
+            "rerank_reason": [
+              "strategic tag overlap (differentiation)",
+              "intent-weighted boost",
+              "high source reliability",
+              "negative intent signal penalty",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "strategic_support"
+          },
+          {
+            "title": "Make Competitors Irrelevant",
+            "category": "branding",
+            "hybrid_score": 0.535,
+            "rerank_reason": [
+              "strategic tag overlap (differentiation)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "strategic_support"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 0.333,
+          "strategic_density": 0.571,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      }
+    },
+    {
+      "id": "golden_rejected_angle_1",
+      "scores": {
+        "id": "golden_rejected_angle_1",
+        "concept_score": 0.67,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.27,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.225,
+        "claim_grounded_ratio": 0.2,
+        "unsupported_claim_rate": 0.8,
+        "high_inference_rate": 0.8,
+        "retrieval_relevance": 0.91,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 4,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (manifesto, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.35,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "authority",
+          "manifesto",
+          "premium",
+          "trust"
+        ],
+        "consistency_score": 0.657,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.0,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.603,
+        "confidence_after": 0.603,
+        "repair_success": false,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0644,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "AI Training Notes \u201cWhat",
+            "category": "manifesto",
+            "hybrid_score": 0.8934,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.8747,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.35,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      }
+    },
+    {
+      "id": "golden_narrative_conflict_1",
+      "scores": {
+        "id": "golden_narrative_conflict_1",
+        "concept_score": 0.75,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.43,
+        "grounded_answer_ratio": 0.89,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.178,
+        "claim_grounded_ratio": 0.333,
+        "unsupported_claim_rate": 0.667,
+        "high_inference_rate": 0.556,
+        "retrieval_relevance": 0.74,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 6,
+        "source_coverage": 1.0,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "4. social media content",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (positioning, premium, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 0.75,
+        "manifesto_in_top5": 3,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 0.75,
+        "context_coherence": 1.0,
+        "strategic_density": 0.688,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.77,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.25,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.278,
+        "confidence_after": 0.528,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 1.1437,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (positioning, premium, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0948,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (premium, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 0.4372,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 0.75,
+          "strategic_density": 0.688,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      }
+    },
+    {
+      "id": "golden_audience_psychology_1",
+      "scores": {
+        "id": "golden_audience_psychology_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.41,
+        "grounded_answer_ratio": 0.92,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.112,
+        "claim_grounded_ratio": 0.455,
+        "unsupported_claim_rate": 0.545,
+        "high_inference_rate": 0.455,
+        "retrieval_relevance": 0.87,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 6,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": false,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (emotional_branding, manifesto)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 0.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.381,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.648,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.35,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.157,
+        "confidence_after": 0.507,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0077,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "AI Training Notes \u201cWhat",
+            "category": "manifesto",
+            "hybrid_score": 1.0041,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Brand DNA first. Next question:\" User's answer for a",
+            "category": "branding",
+            "hybrid_score": 0.7458,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.381,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      }
+    }
+  ]
+}

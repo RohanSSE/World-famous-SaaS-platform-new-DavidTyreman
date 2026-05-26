@@ -1,0 +1,80 @@
+.cognition-explain {
+  background: rgba(12, 14, 22, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  color: #e8e8ef;
+  font-size: 0.9rem;
+}
+
+.cognition-explain-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cognition-meter {
+  display: grid;
+  grid-template-columns: 7rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.cognition-meter-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cognition-meter-track.consistency .cognition-meter-fill {
+  background: linear-gradient(90deg, #6b8cff, #9b7bff);
+}
+
+.cognition-meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3dd68c, #5eead4);
+  border-radius: 3px;
+}
+
+.cognition-meter-val {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.cognition-warnings {
+  margin: 0.75rem 0;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255, 120, 80, 0.12);
+  border-radius: 8px;
+  border-left: 3px solid #ff7848;
+}
+
+.cognition-warnings ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.cognition-reasoning ol {
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.cognition-section-label,
+.cognition-warn-label {
+  margin: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.cognition-output-preview pre {
+  white-space: pre-wrap;
+  font-size: 0.82rem;
+  max-height: 200px;
+  overflow: auto;
+}

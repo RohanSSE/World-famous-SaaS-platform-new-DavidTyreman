@@ -1,0 +1,216 @@
+{
+  "patterns": [
+    {
+      "failure_pattern": "unsupported_claim",
+      "flags": [
+        "unsupported_claim"
+      ],
+      "frequency": 111,
+      "severity": 0.922,
+      "recommended_fix": "full_verify_and_hedge",
+      "last_seen": "2026-05-25T09:32:14.485147+00:00",
+      "example_queries": [
+        "Our ads say innovation but manifesto says trust. What now?",
+        "How should founder personality shape the brand?",
+        "We sound like every other SaaS company. Fix that.",
+        "How should our brand respond in a crisis?",
+        "How do we articulate a brand promise customers believe?"
+      ]
+    },
+    {
+      "failure_pattern": "low_strategic_density_unsupported_claim",
+      "flags": [
+        "low_strategic_density",
+        "unsupported_claim"
+      ],
+      "frequency": 40,
+      "severity": 0.949,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-05-25T09:30:30.551051+00:00",
+      "example_queries": [
+        "We rejected a playful tone before. Should we revisit?",
+        "How do we understand audience psychology for positioning?",
+        "Should our manifesto focus on trust or speed?",
+        "What is brand DNA and why does it matter?",
+        "How does storytelling build brand trust?"
+      ]
+    },
+    {
+      "failure_pattern": "low_confidence_overclaim_unsupported_claim",
+      "flags": [
+        "unsupported_claim",
+        "low_confidence_overclaim"
+      ],
+      "frequency": 19,
+      "severity": 1.0,
+      "recommended_fix": "full_verify_and_hedge",
+      "last_seen": "2026-05-25T07:57:35.439534+00:00",
+      "example_queries": [
+        "Our messaging feels generic. How do we differentiate?",
+        "Help position us against cheaper competitors.",
+        "How do we position a B2B SaaS as category leader?",
+        "How do we make competitors irrelevant?",
+        "How do we understand audience psychology for positioning?"
+      ]
+    },
+    {
+      "failure_pattern": "low_confidence_overclaim_low_strategic_density_unsupported_claim",
+      "flags": [
+        "low_strategic_density",
+        "unsupported_claim",
+        "low_confidence_overclaim"
+      ],
+      "frequency": 18,
+      "severity": 0.984,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-05-25T09:25:17.137159+00:00",
+      "example_queries": [
+        "Help position us against cheaper competitors.",
+        "How do we position a B2B SaaS as category leader?",
+        "How do we make competitors irrelevant?",
+        "How do we understand audience psychology for positioning?"
+      ]
+    },
+    {
+      "failure_pattern": "generic_reasoning_unsupported_claim",
+      "flags": [
+        "generic_reasoning",
+        "unsupported_claim"
+      ],
+      "frequency": 11,
+      "severity": 0.788,
+      "recommended_fix": "tighten_strategic_specificity",
+      "last_seen": "2026-05-25T07:51:10.797125+00:00",
+      "example_queries": [
+        "How should a premium brand build trust?",
+        "We sound like every other SaaS company. Fix that.",
+        "How should founder personality shape the brand?",
+        "How should our brand respond in a crisis?",
+        "How should internal culture align with brand voice?"
+      ]
+    },
+    {
+      "failure_pattern": "low_confidence_overclaim",
+      "flags": [
+        "low_confidence_overclaim"
+      ],
+      "frequency": 3,
+      "severity": 0.8,
+      "recommended_fix": "exploratory_mode_overclaim_suppress",
+      "last_seen": "2026-05-25T04:58:56.942924+00:00",
+      "example_queries": [
+        "Should our manifesto focus on trust or speed?",
+        "What is brand DNA and why does it matter?",
+        "How does storytelling build brand trust?"
+      ]
+    },
+    {
+      "failure_pattern": "low_confidence_overclaim_low_strategic_density_reasoning_drift_unsupported_claim",
+      "flags": [
+        "low_strategic_density",
+        "reasoning_drift",
+        "unsupported_claim",
+        "low_confidence_overclaim"
+      ],
+      "frequency": 2,
+      "severity": 0.562,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-05-25T07:47:13.958532+00:00",
+      "example_queries": [
+        "How do we make competitors irrelevant?"
+      ]
+    },
+    {
+      "failure_pattern": "low_strategic_density",
+      "flags": [
+        "low_strategic_density"
+      ],
+      "frequency": 2,
+      "severity": 0.345,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-05-25T08:02:49.746202+00:00",
+      "example_queries": [
+        "We rejected a playful tone before. Should we revisit?",
+        "Should our manifesto focus on trust or speed?"
+      ]
+    },
+    {
+      "failure_pattern": "generic_reasoning_low_strategic_density_unsupported_claim",
+      "flags": [
+        "low_strategic_density",
+        "generic_reasoning",
+        "unsupported_claim"
+      ],
+      "frequency": 2,
+      "severity": 0.182,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-05-25T08:03:13.132078+00:00",
+      "example_queries": [
+        "What is brand DNA and why does it matter?"
+      ]
+    },
+    {
+      "failure_pattern": "generic_reasoning_low_confidence_overclaim_unsupported_claim",
+      "flags": [
+        "generic_reasoning",
+        "unsupported_claim",
+        "low_confidence_overclaim"
+      ],
+      "frequency": 1,
+      "severity": 0.33,
+      "recommended_fix": "tighten_strategic_specificity",
+      "last_seen": "2026-05-25T05:56:35.550225+00:00",
+      "example_queries": [
+        "Help position us against cheaper competitors."
+      ]
+    },
+    {
+      "failure_pattern": "generic_reasoning_low_confidence_overclaim_low_strategic_density_reasoning_drift",
+      "flags": [
+        "low_strategic_density",
+        "generic_reasoning",
+        "reasoning_drift",
+        "unsupported_claim",
+        "low_confidence_overclaim"
+      ],
+      "frequency": 1,
+      "severity": 0.475,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-05-25T08:58:28.036996+00:00",
+      "example_queries": [
+        "How do we position a B2B SaaS as category leader?"
+      ]
+    },
+    {
+      "failure_pattern": "low_strategic_density_unsupported_claim_weak_manifesto_support",
+      "flags": [
+        "weak_manifesto_support",
+        "low_strategic_density",
+        "unsupported_claim"
+      ],
+      "frequency": 1,
+      "severity": 0.102,
+      "recommended_fix": "increase_manifesto_density",
+      "last_seen": "2026-05-25T08:59:27.306470+00:00",
+      "example_queries": [
+        "How do we make competitors irrelevant?"
+      ]
+    },
+    {
+      "failure_pattern": "generic_reasoning_low_strategic_density_unsupported_claim_weak_manifesto_support",
+      "flags": [
+        "weak_manifesto_support",
+        "low_strategic_density",
+        "generic_reasoning",
+        "unsupported_claim"
+      ],
+      "frequency": 1,
+      "severity": 0.292,
+      "recommended_fix": "increase_manifesto_density",
+      "last_seen": "2026-05-25T09:27:20.977404+00:00",
+      "example_queries": [
+        "How do we make competitors irrelevant?"
+      ]
+    }
+  ]
+}

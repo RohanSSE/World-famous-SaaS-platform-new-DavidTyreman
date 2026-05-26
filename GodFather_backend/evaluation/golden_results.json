@@ -1,0 +1,3636 @@
+{
+  "results": [
+    {
+      "case": {
+        "id": "golden_trust_premium_1",
+        "query": "How should a premium brand build trust?",
+        "expected_concepts": [
+          "trust",
+          "consistency",
+          "clarity",
+          "authentic"
+        ],
+        "expected_categories": [
+          "manifesto",
+          "branding"
+        ],
+        "forbidden": [
+          "viral marketing",
+          "growth hacks",
+          "tiktok trends"
+        ]
+      },
+      "scores": {
+        "id": "golden_trust_premium_1",
+        "concept_score": 0.75,
+        "citation_score": 0.5,
+        "source_title_score": 1.0,
+        "groundedness": 0.38,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.138,
+        "claim_grounded_ratio": 0.375,
+        "unsupported_claim_rate": 0.625,
+        "high_inference_rate": 0.5,
+        "retrieval_relevance": 0.8,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 5,
+        "source_coverage": 0.5,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "branding",
+        "top1_title": "consistency across all touchpoints",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (trust)",
+          "intent-weighted boost",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 2,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 1.0,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "premium",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.776,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.05,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.6,
+        "confidence_after": 0.65,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 0.8786,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.7246,
+            "rerank_reason": [
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 1.0,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "A premium brand builds trust by defining its Brand DNA \u2014 the distinct core identity made up of values, personality, and promise \u2014 and ensuring it is consistently expressed across all touchpoints. As the retrieved knowledge emphasizes, this includes everything from product design to marketing, sales, customer service, and even internal culture. The retrieved brand book suggests this alignment foste",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.8016,
+        "prompt_suffix": "",
+        "intent": "trust"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_differentiation_1",
+        "query": "Our messaging feels generic. How do we differentiate?",
+        "expected_concepts": [
+          "differentiat",
+          "unique",
+          "competitor",
+          "manifesto"
+        ],
+        "expected_categories": [
+          "manifesto",
+          "branding"
+        ],
+        "forbidden": [
+          "be authentic",
+          "just post more content"
+        ]
+      },
+      "scores": {
+        "id": "golden_differentiation_1",
+        "concept_score": 0.75,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.47,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.733,
+        "unsupported_claim_rate": 0.267,
+        "high_inference_rate": 0.2,
+        "retrieval_relevance": 0.51,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 4,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "4. social media content",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (emotional_branding, positioning)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.65,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "principle",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.779,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.549,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.098,
+        "confidence_after": 0.647,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 0.6495,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, positioning)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "AI Training Notes \u201cWhat",
+            "category": "manifesto",
+            "hybrid_score": 0.6477,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Celebratory, Inspirational Congratulate",
+            "category": "branding",
+            "hybrid_score": 0.3867,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto, positioning)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.65,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "The current strategic direction suggests that the retrieved brand book suggests your messaging feels generic because it\u2019s missing the sharp connection to your brand\u2019s DNA\u2014the unique blend of values, personality, and promise that defines you, aligned with manifesto. The retrieved brand book suggests let\u2019s ground this in the retrieved principles to refine your approach:\n\n1, aligned with manifesto. *",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.5078,
+        "prompt_suffix": "",
+        "intent": "differentiation"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_authority_1",
+        "query": "What weakens brand authority?",
+        "expected_concepts": [
+          "authority",
+          "trust",
+          "consistency",
+          "promise"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "buy followers",
+          "viral"
+        ]
+      },
+      "scores": {
+        "id": "golden_authority_1",
+        "concept_score": 0.75,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.47,
+        "grounded_answer_ratio": 0.83,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.188,
+        "claim_grounded_ratio": 0.333,
+        "unsupported_claim_rate": 0.667,
+        "high_inference_rate": 0.667,
+        "retrieval_relevance": 0.78,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 4,
+        "source_coverage": 0.667,
+        "generic_filler_count": 0,
+        "top1_hit": false,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 3,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 0.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.75,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "authority",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.748,
+        "critique_flags": [],
+        "repair_gain": -0.05,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.712,
+        "confidence_after": 0.662,
+        "repair_success": false,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.9223,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.7529,
+            "rerank_reason": [
+              "strategic tag overlap (differentiation)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Celebratory, Inspirational Congratulate",
+            "category": "branding",
+            "hybrid_score": 0.676,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (positioning)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.75,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "The retrieved brand book suggests brand authority weakens when there\u2019s a gap between what you promise and what you deliver\u2014internally and externally, aligned with manifesto. If your team isn\u2019t living the brand\u2019s DNA\u2014its core identity of values, personality, and promise\u2014you risk eroding trust. Every interaction, whether with customers or colleagues, should reflect the same three defining words you ",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.7837,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_competitor_price_1",
+        "query": "Help position us against cheaper competitors.",
+        "expected_concepts": [
+          "differentiat",
+          "value",
+          "premium",
+          "irrelevant"
+        ],
+        "expected_categories": [
+          "manifesto",
+          "branding"
+        ],
+        "forbidden": [
+          "lower your prices",
+          "race to the bottom"
+        ]
+      },
+      "scores": {
+        "id": "golden_competitor_price_1",
+        "concept_score": 0.75,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.29,
+        "grounded_answer_ratio": 0.8,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.21,
+        "claim_grounded_ratio": 0.3,
+        "unsupported_claim_rate": 0.7,
+        "high_inference_rate": 0.6,
+        "retrieval_relevance": 0.72,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 7,
+        "source_coverage": 1.0,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (manifesto)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 0.667,
+        "manifesto_in_top5": 2,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 0.667,
+        "context_coherence": 1.0,
+        "strategic_density": 0.5,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.725,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.0,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.442,
+        "confidence_after": 0.442,
+        "repair_success": false,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.9318,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.6804,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Make Competitors Irrelevant",
+            "category": "branding",
+            "hybrid_score": 0.535,
+            "rerank_reason": [
+              "strategic tag overlap (differentiation)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "strategic_support"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 0.667,
+          "strategic_density": 0.5,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "The retrieved brand book suggests cheaper competitors can pull focus from what truly defines you: your brand DNA, aligned with manifesto. The retrieved knowledge emphasizes that your core identity\u2014values, personality, and promise\u2014is your strongest differentiator. The retrieved brand book suggests when every decision reflects this foundation, the conversation naturally shifts away from price and to",
+      "retrieval_critique": {
+        "flags": [
+          "low_strategic_density"
+        ],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 0.667,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.7157,
+        "prompt_suffix": "",
+        "intent": "competitor"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_manifesto_purpose_1",
+        "query": "What should our brand manifesto emphasize?",
+        "expected_concepts": [
+          "manifesto",
+          "promise",
+          "purpose",
+          "values"
+        ],
+        "expected_categories": [
+          "manifesto"
+        ],
+        "forbidden": [
+          "seo",
+          "algorithm"
+        ]
+      },
+      "scores": {
+        "id": "golden_manifesto_purpose_1",
+        "concept_score": 0.75,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.57,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.714,
+        "unsupported_claim_rate": 0.286,
+        "high_inference_rate": 0.286,
+        "retrieval_relevance": 0.73,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 2,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "post manifesto journey 2",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (brand_book, manifesto)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 0.75,
+        "manifesto_in_top5": 3,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 0.75,
+        "context_coherence": 1.0,
+        "strategic_density": 0.625,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.773,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.3,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.419,
+        "confidence_after": 0.719,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Post Manifesto Journey 2",
+            "category": "manifesto",
+            "hybrid_score": 1.0637,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (brand_book, manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.9755,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.5385,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 0.75,
+          "strategic_density": 0.625,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Your brand manifesto should emphasize alignment with your **brand DNA**\u2014the distinct values, personality, and promise that define your identity and inform everything your company does. This foundation should make your beliefs and offerings crystal clear, as clarity helps people understand and trust your brand faster.\n\nIt appears your manifesto should also guide internal culture, ensuring your team",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 0.75,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.7338,
+        "prompt_suffix": "",
+        "intent": "manifesto"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_emotional_1",
+        "query": "How can a brand create emotional connection?",
+        "expected_concepts": [
+          "emotion",
+          "story",
+          "trust",
+          "authentic"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "always go viral"
+        ]
+      },
+      "scores": {
+        "id": "golden_emotional_1",
+        "concept_score": 0.75,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.51,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.75,
+        "unsupported_claim_rate": 0.25,
+        "high_inference_rate": 0.25,
+        "retrieval_relevance": 0.8,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 3,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": false,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (emotional_branding, manifesto, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 0.75,
+        "manifesto_in_top5": 3,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 0.0,
+        "manifesto_support_density": 0.75,
+        "context_coherence": 1.0,
+        "strategic_density": 0.667,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.774,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.1,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.575,
+        "confidence_after": 0.675,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.3075,
+            "rerank_reason": [
+              "strategic tag overlap (emotional_branding, manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Storytelling & Emotion Counts",
+            "category": "branding",
+            "hybrid_score": 0.3336,
+            "rerank_reason": [
+              "strategic tag overlap (emotional_branding)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "strategic_support"
+          },
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 1.2401,
+            "rerank_reason": [
+              "strategic tag overlap (emotional_branding, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 0.75,
+          "strategic_density": 0.667,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Emotional connection begins with storytelling rooted in your brand\u2019s manifesto. As the retrieved knowledge states, \"people are drawn to stories more than data.\" Sharing your journey, values, mission, or even struggles creates emotional resonance that facts alone can\u2019t achieve. The key is to let your audience experience the essence of your brand in a way that feels bold, caring, and reliable\u2014your t",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 0.75,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.8007,
+        "prompt_suffix": "",
+        "intent": "emotional"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_tone_1",
+        "query": "How should our brand voice sound?",
+        "expected_concepts": [
+          "tone",
+          "voice",
+          "personality"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "use ai to write everything"
+        ]
+      },
+      "scores": {
+        "id": "golden_tone_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.49,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.8,
+        "unsupported_claim_rate": 0.2,
+        "high_inference_rate": 0.0,
+        "retrieval_relevance": 0.95,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 2,
+        "source_coverage": 0.333,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "branding",
+        "top1_title": "find & live your brand dna",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (brand_book, differentiation, manifesto)",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 3,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.667,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "consistency_score": 0.653,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.05,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.7,
+        "confidence_after": 0.75,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 1.049,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0213,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          },
+          {
+            "title": "Celebratory, Inspirational Congratulate",
+            "category": "branding",
+            "hybrid_score": 0.7812,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, manifesto)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.667,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Your brand voice should sound like your **brand DNA** brought to life. As the retrieved context highlights, your voice must stem from your **core identity**\u2014a unique blend of **values, personality, and promise** that defines everything your brand stands for. This isn\u2019t just about communication; it\u2019s about ensuring every interaction\u2014whether internal or external\u2014feels like an authentic expression of",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.9505,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_positioning_1",
+        "query": "How do we position a B2B SaaS as category leader?",
+        "expected_concepts": [
+          "position",
+          "differentiat",
+          "category"
+        ],
+        "expected_categories": [
+          "branding",
+          "manifesto"
+        ],
+        "forbidden": [
+          "guaranteed revenue"
+        ]
+      },
+      "scores": {
+        "id": "golden_positioning_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.32,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.492,
+        "claim_grounded_ratio": 0.067,
+        "unsupported_claim_rate": 0.933,
+        "high_inference_rate": 0.4,
+        "retrieval_relevance": 0.47,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 14,
+        "source_coverage": 1.0,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "4. social media content",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (positioning)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 3,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.524,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "authority",
+          "craftsmanship",
+          "manifesto",
+          "principle",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.733,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim",
+          "low_confidence_overclaim"
+        ],
+        "repair_gain": 0.129,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.0,
+        "confidence_after": 0.129,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": true,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 1.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 0.6321,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (positioning)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Brand DNA first. Next question:\" User's answer for a",
+            "category": "branding",
+            "hybrid_score": 0.4159,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (brand_book, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.3571,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.524,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Based on the retrieved brand book and strategic context, based on limited supporting context, the retrieved brand book suggests positioning a B2B SaaS as a category leader starts by aligning deeply with your brand DNA\u2014your values, personality, and promise, aligned with manifesto. The retrieved brand book emphasizes that leadership is built on trust, craftsmanship, and delivering transformation at ",
+      "retrieval_critique": {
+        "flags": [
+          "low_strategic_density"
+        ],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.4684,
+        "prompt_suffix": "",
+        "intent": "positioning"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_trust_clarity_1",
+        "query": "Why does unclear messaging destroy trust?",
+        "expected_concepts": [
+          "clarity",
+          "trust",
+          "mean what you say"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "growth hacking"
+        ]
+      },
+      "scores": {
+        "id": "golden_trust_clarity_1",
+        "concept_score": 0.33,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.32,
+        "grounded_answer_ratio": 0.5,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.287,
+        "claim_grounded_ratio": 0.25,
+        "unsupported_claim_rate": 0.75,
+        "high_inference_rate": 0.75,
+        "retrieval_relevance": 0.79,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 3,
+        "source_coverage": 0.5,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "branding",
+        "top1_title": "consistency across all touchpoints",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (trust)",
+          "intent-weighted boost",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 2,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 1.0,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.645,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.05,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.7,
+        "confidence_after": 0.75,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 0.8786,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.7074,
+            "rerank_reason": [
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 1.0,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "The retrieved brand book suggests unclear messaging destroys trust because it fractures the consistency that should tie every aspect of a brand together. A brand\u2019s DNA\u2014its core identity of values, personality, and promise\u2014must be consistently expressed across all touchpoints, from product to marketing to customer service and culture. The retrieved brand book suggests when messaging becomes ambiguo",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.793,
+        "prompt_suffix": "",
+        "intent": "trust"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_reject_generic_1",
+        "query": "We want to sound innovative like everyone else.",
+        "expected_concepts": [
+          "innovation",
+          "differentiat",
+          "generic"
+        ],
+        "expected_categories": [
+          "branding",
+          "manifesto"
+        ],
+        "forbidden": [
+          "copy apple",
+          "copy nike"
+        ]
+      },
+      "scores": {
+        "id": "golden_reject_generic_1",
+        "concept_score": 0.67,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.52,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.75,
+        "unsupported_claim_rate": 0.25,
+        "high_inference_rate": 0.125,
+        "retrieval_relevance": 0.86,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 2,
+        "source_coverage": 0.5,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "branding",
+        "top1_title": "find & live your brand dna",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (differentiation, manifesto)",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.7,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "consistency_score": 0.667,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.2,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.555,
+        "confidence_after": 0.755,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 1.049,
+            "rerank_reason": [
+              "strategic tag overlap (differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.9684,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          },
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 0.72,
+            "rerank_reason": [
+              "strategic tag overlap (positioning, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.7,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Brands need a distinct DNA \u2014 values, personality, and promise that inform everything they do. The retrieved brand book suggests if innovation is part of your identity, it must be crafted into your DNA, not used as a generic buzzword, aligned with manifesto. What does innovation mean for your brand? The retrieved brand book suggests is it about cutting-edge solutions, rethinking old problems, or em",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.8632,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_manifesto_trust_1",
+        "query": "Should our manifesto focus on trust or speed?",
+        "expected_concepts": [
+          "manifesto",
+          "trust",
+          "promise"
+        ],
+        "expected_categories": [
+          "manifesto"
+        ],
+        "forbidden": [
+          "move fast break things"
+        ]
+      },
+      "scores": {
+        "id": "golden_manifesto_trust_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.35,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.159,
+        "claim_grounded_ratio": 0.333,
+        "unsupported_claim_rate": 0.667,
+        "high_inference_rate": 0.556,
+        "retrieval_relevance": 0.77,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 6,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "4. social media content",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (positioning, premium, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.414,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "craftsmanship",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.728,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.0,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.512,
+        "confidence_after": 0.512,
+        "repair_success": false,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 1.161,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (positioning, premium, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.1221,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (premium, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 0.4631,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.414,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Trust should be the foundation of your manifesto. The retrieved context emphasizes that consistency, quality, and delivering on promises are essential for building trust. The retrieved brand book suggests as noted in the brand positioning, \u201cBecause we often never compromise on quality,\u201d this approach reflects reliability and craftsmanship \u2014 values that foster long-term credibility and meaningful c",
+      "retrieval_critique": {
+        "flags": [
+          "low_strategic_density"
+        ],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.7682,
+        "prompt_suffix": "",
+        "intent": "manifesto"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_dna_1",
+        "query": "What is brand DNA and why does it matter?",
+        "expected_concepts": [
+          "dna",
+          "identity",
+          "values"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "logo colors only"
+        ]
+      },
+      "scores": {
+        "id": "golden_dna_1",
+        "concept_score": 0.67,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.46,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.025,
+        "claim_grounded_ratio": 0.6,
+        "unsupported_claim_rate": 0.4,
+        "high_inference_rate": 0.4,
+        "retrieval_relevance": 0.84,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 2,
+        "source_coverage": 1.0,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (emotional_branding, manifesto, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 3,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.375,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "consistency_score": 0.686,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.1,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.606,
+        "confidence_after": 0.706,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.9071,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.8355,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Brand DNA first. Next question:\" User's answer for a",
+            "category": "branding",
+            "hybrid_score": 0.7723,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.375,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Brand DNA is the unchanging foundation of a brand \u2014 its values, personality, and promise \u2014 that shapes everything the company does, from internal culture to external communication. As the retrieved positioning highlights, brands need to \u201cfind and live\u201d this DNA. It\u2019s not just about defining it; it\u2019s about ensuring every interaction reflects it. The retrieved brand book suggests think of it as the ",
+      "retrieval_critique": {
+        "flags": [
+          "low_strategic_density"
+        ],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.8383,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_competitor_irrelevant_1",
+        "query": "How do we make competitors irrelevant?",
+        "expected_concepts": [
+          "competitor",
+          "differentiat",
+          "unique"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "undercut pricing"
+        ]
+      },
+      "scores": {
+        "id": "golden_competitor_irrelevant_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.3,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.292,
+        "claim_grounded_ratio": 0.125,
+        "unsupported_claim_rate": 0.933,
+        "high_inference_rate": 0.4,
+        "retrieval_relevance": 0.67,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 14,
+        "source_coverage": 1.0,
+        "generic_filler_count": 0,
+        "top1_hit": false,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (manifesto)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 0.333,
+        "manifesto_in_top5": 1,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 0.0,
+        "manifesto_support_density": 0.333,
+        "context_coherence": 1.0,
+        "strategic_density": 0.571,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.686,
+        "critique_flags": [
+          "weak_manifesto_support",
+          "low_strategic_density",
+          "generic_reasoning",
+          "unsupported_claim"
+        ],
+        "repair_gain": -0.2,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.269,
+        "confidence_after": 0.069,
+        "repair_success": false,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.8753,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Differentiation \u2014 Don\u2019t Be \u201cAnother Me-too\u201d",
+            "category": "branding",
+            "hybrid_score": 0.6126,
+            "rerank_reason": [
+              "strategic tag overlap (differentiation)",
+              "intent-weighted boost",
+              "high source reliability",
+              "negative intent signal penalty",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "strategic_support"
+          },
+          {
+            "title": "Make Competitors Irrelevant",
+            "category": "branding",
+            "hybrid_score": 0.535,
+            "rerank_reason": [
+              "strategic tag overlap (differentiation)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "strategic_support"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 0.333,
+          "strategic_density": 0.571,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "The current strategic direction suggests that the retrieved brand book suggests to make competitors irrelevant, the retrieved insights suggest focusing on meaningful differentiation rooted in what your brand uniquely offers. The retrieved brand book suggests many brands fail by trying to appeal to everyone or by mimicking competitors\u2014this approach dilutes identity and blends them into the crowd, a",
+      "retrieval_critique": {
+        "flags": [
+          "low_strategic_density"
+        ],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 0.333,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.6743,
+        "prompt_suffix": "",
+        "intent": "competitor"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_storytelling_1",
+        "query": "How does storytelling build brand trust?",
+        "expected_concepts": [
+          "story",
+          "trust",
+          "emotion"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "fake testimonials"
+        ]
+      },
+      "scores": {
+        "id": "golden_storytelling_1",
+        "concept_score": 0.67,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.52,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.7,
+        "unsupported_claim_rate": 0.3,
+        "high_inference_rate": 0.2,
+        "retrieval_relevance": 0.76,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 3,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "4. social media content",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (positioning, premium, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.414,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "manifesto",
+          "principle",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.795,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.15,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.512,
+        "confidence_after": 0.662,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 1.1377,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (positioning, premium, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.1299,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (premium, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 0.4502,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.414,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Storytelling builds brand trust by grounding your message in the principles and values that define your brand DNA. The retrieved positioning suggests that trust grows from consistency across all touchpoints\u2014product, marketing, sales, customer service, and internal culture. The retrieved positioning suggests storytelling isn\u2019t about flashy claims; it\u2019s about demonstrating your promise in action, li",
+      "retrieval_critique": {
+        "flags": [
+          "low_strategic_density"
+        ],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.7598,
+        "prompt_suffix": "",
+        "intent": "emotional"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_consistency_1",
+        "query": "Why is consistency critical across touchpoints?",
+        "expected_concepts": [
+          "consistency",
+          "touchpoint",
+          "trust"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "rebrand every month"
+        ]
+      },
+      "scores": {
+        "id": "golden_consistency_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.62,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.75,
+        "unsupported_claim_rate": 0.25,
+        "high_inference_rate": 0.25,
+        "retrieval_relevance": 0.83,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 1,
+        "source_coverage": 0.5,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "branding",
+        "top1_title": "consistency across all touchpoints",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (brand_book, manifesto, trust)",
+          "intent-weighted boost",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.692,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.7,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.05,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.754,
+        "confidence_after": 0.804,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 1.0707,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, manifesto, trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.8822,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.7316,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.692,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Consistency across all touchpoints is critical because it builds trust and recognition. When you define your brand DNA\u2014your values, personality, and promise\u2014it must be consistently expressed everywhere: your product, marketing, sales, customer service, and internal culture. This alignment ensures every interaction reflects your core identity, reinforcing the bold, reliable, and caring persona your",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.8311,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_premium_exclusivity_1",
+        "query": "How do luxury brands maintain exclusivity without arrogance?",
+        "expected_concepts": [
+          "premium",
+          "trust",
+          "tone"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "luxury brands always prioritize exclusivity"
+        ]
+      },
+      "scores": {
+        "id": "golden_premium_exclusivity_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.35,
+        "grounded_answer_ratio": 0.5,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.246,
+        "claim_grounded_ratio": 0.333,
+        "unsupported_claim_rate": 0.667,
+        "high_inference_rate": 0.667,
+        "retrieval_relevance": 0.76,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 4,
+        "source_coverage": 0.5,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "branding",
+        "top1_title": "consistency across all touchpoints",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (manifesto, trust)",
+          "intent-weighted boost",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 2,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 1.0,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "craftsmanship",
+          "exclusivity",
+          "premium",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.762,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.2,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.5,
+        "confidence_after": 0.7,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 0.7736,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (manifesto, trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.7529,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 1.0,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Luxury brands maintain exclusivity by defining and consistently expressing their \"brand DNA\" \u2014 a distinct core identity made up of values, personality, and promise \u2014 across all touchpoints. As the retrieved brand book emphasizes, this DNA must inform everything the brand does, from product design to marketing, customer service, and culture. The retrieved brand book suggests this consistency builds",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.7632,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_internal_culture_1",
+        "query": "How should internal culture align with brand voice?",
+        "expected_concepts": [
+          "culture",
+          "voice",
+          "values",
+          "team"
+        ],
+        "expected_categories": [
+          "manifesto",
+          "branding"
+        ],
+        "forbidden": [
+          "hr software"
+        ]
+      },
+      "scores": {
+        "id": "golden_internal_culture_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.49,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.667,
+        "unsupported_claim_rate": 0.333,
+        "high_inference_rate": 0.333,
+        "retrieval_relevance": 0.97,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 2,
+        "source_coverage": 0.667,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (manifesto, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 3,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.75,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "premium"
+        ],
+        "consistency_score": 0.718,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.1,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.662,
+        "confidence_after": 0.762,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.1533,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 1.0247,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          },
+          {
+            "title": "Celebratory, Inspirational Congratulate",
+            "category": "branding",
+            "hybrid_score": 0.7435,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, manifesto)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.75,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Internal culture should be a living embodiment of your brand voice. As the retrieved positioning states: \"Your team should embody the same 3 words you tell customers.\" If your brand voice is bold, caring, and reliable, then every internal interaction, decision, and process must reflect those same values.\n\nThis alignment isn\u2019t just a concept\u2014it\u2019s your DNA in action. The retrieved brand book suggest",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.9738,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_rejected_angle_1",
+        "query": "We rejected a playful tone before. Should we revisit?",
+        "expected_concepts": [
+          "tone",
+          "strategy",
+          "decision"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "definitely yes without context"
+        ]
+      },
+      "scores": {
+        "id": "golden_rejected_angle_1",
+        "concept_score": 0.33,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.4,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.159,
+        "claim_grounded_ratio": 0.333,
+        "unsupported_claim_rate": 0.667,
+        "high_inference_rate": 0.667,
+        "retrieval_relevance": 0.91,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 2,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (manifesto, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.35,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "authority",
+          "manifesto",
+          "premium",
+          "trust"
+        ],
+        "consistency_score": 0.719,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.201,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.502,
+        "confidence_after": 0.703,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0644,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "AI Training Notes \u201cWhat",
+            "category": "manifesto",
+            "hybrid_score": 0.8934,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.8747,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.35,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Revisiting a playful tone appears to contradict your brand\u2019s DNA and manifesto. The retrieved positioning emphasizes premium authority, restrained emotion, and enduring trust\u2014values that guide both internal culture and external communication, aligned with manifesto. The retrieved brand book suggests unless your manifesto explicitly calls for a tonal shift, staying consistent ensures alignment with",
+      "retrieval_critique": {
+        "flags": [
+          "low_strategic_density"
+        ],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.9136,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_narrative_conflict_1",
+        "query": "Our ads say innovation but manifesto says trust. What now?",
+        "expected_concepts": [
+          "trust",
+          "innovation",
+          "align",
+          "narrative"
+        ],
+        "expected_categories": [
+          "manifesto"
+        ],
+        "forbidden": [
+          "pick one randomly"
+        ]
+      },
+      "scores": {
+        "id": "golden_narrative_conflict_1",
+        "concept_score": 0.75,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.38,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.182,
+        "claim_grounded_ratio": 0.286,
+        "unsupported_claim_rate": 0.714,
+        "high_inference_rate": 0.714,
+        "retrieval_relevance": 0.74,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 5,
+        "source_coverage": 1.0,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "4. social media content",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (positioning, premium, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 0.75,
+        "manifesto_in_top5": 3,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 0.75,
+        "context_coherence": 1.0,
+        "strategic_density": 0.688,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "consistency",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "manifesto",
+          "principle",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.734,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.3,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.278,
+        "confidence_after": 0.578,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 1.1437,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (positioning, premium, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0946,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (premium, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Consistency Across All Touchpoints",
+            "category": "branding",
+            "hybrid_score": 0.4372,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 0.75,
+          "strategic_density": 0.688,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Your manifesto emphasizes trust as the cornerstone of your brand DNA, and consistency across all touchpoints is essential for building that trust. The retrieved brand book suggests misalignment between your ads and manifesto risks confusing your audience and weakening your promise.\n\nThe principle \"Mean & Mean What You Say\" provides clarity: your messaging must be crystal clear and directly tied to",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 0.75,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.7453,
+        "prompt_suffix": "",
+        "intent": "manifesto"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_founder_voice_1",
+        "query": "How should founder personality shape the brand?",
+        "expected_concepts": [
+          "founder",
+          "personality",
+          "authentic"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "hide the founder"
+        ]
+      },
+      "scores": {
+        "id": "golden_founder_voice_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.59,
+        "grounded_answer_ratio": 0.83,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.833,
+        "unsupported_claim_rate": 0.167,
+        "high_inference_rate": 0.167,
+        "retrieval_relevance": 0.84,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 2,
+        "source_coverage": 0.5,
+        "generic_filler_count": 0,
+        "top1_hit": false,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (emotional_branding, trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 0.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.737,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "premium",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.833,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.1,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.661,
+        "confidence_after": 0.761,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0129,
+            "rerank_reason": [
+              "strategic tag overlap (emotional_branding, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.9983,
+            "rerank_reason": [
+              "strategic tag overlap (differentiation)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          },
+          {
+            "title": "Celebratory, Inspirational Congratulate",
+            "category": "branding",
+            "hybrid_score": 0.7561,
+            "rerank_reason": [
+              "strategic tag overlap (emotional_branding, positioning)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.737,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "The founder\u2019s personality should shape the brand through its DNA \u2014 values, personality, and promise. This isn\u2019t about ego or personal quirks; it\u2019s about extracting the essence of what the founder stands for and embedding it into the brand\u2019s identity.\n\nStart with the manifesto. Is this your brand truth, or just the easy answer? The founder\u2019s personality must align with the three-word persona the br",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.8418,
+        "prompt_suffix": "",
+        "intent": "audience_psychology"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_audience_psychology_1",
+        "query": "How do we understand audience psychology for positioning?",
+        "expected_concepts": [
+          "audience",
+          "psychology",
+          "position"
+        ],
+        "expected_categories": [
+          "branding"
+        ],
+        "forbidden": [
+          "manipulate customers"
+        ]
+      },
+      "scores": {
+        "id": "golden_audience_psychology_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.34,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.192,
+        "claim_grounded_ratio": 0.267,
+        "unsupported_claim_rate": 0.733,
+        "high_inference_rate": 0.4,
+        "retrieval_relevance": 0.87,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 11,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": false,
+        "top1_category": "manifesto",
+        "top1_title": "6. internal culture alignment",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (emotional_branding, manifesto)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": false,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 0.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.381,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.627,
+        "critique_flags": [
+          "low_strategic_density",
+          "unsupported_claim"
+        ],
+        "repair_gain": -0.15,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.407,
+        "confidence_after": 0.257,
+        "repair_success": false,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [
+          "low_strategic_density"
+        ],
+        "top_chunks": [
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0077,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "AI Training Notes \u201cWhat",
+            "category": "manifesto",
+            "hybrid_score": 1.0041,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Brand DNA first. Next question:\" User's answer for a",
+            "category": "branding",
+            "hybrid_score": 0.7458,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (emotional_branding, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.381,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Understanding audience psychology for positioning begins with grounding in your **brand DNA**\u2014your values, personality, and promise. The retrieved brand book suggests this foundation ensures alignment between internal culture and external communication, fostering trust and authenticity, aligned with manifesto. Positioning isn\u2019t about chasing trends; it\u2019s about building differentiation rooted in wh",
+      "retrieval_critique": {
+        "flags": [
+          "low_strategic_density"
+        ],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.8699,
+        "prompt_suffix": "",
+        "intent": "audience_psychology"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_me_too_1",
+        "query": "We sound like every other SaaS company. Fix that.",
+        "expected_concepts": [
+          "differentiat",
+          "me-too",
+          "unique"
+        ],
+        "expected_categories": [
+          "branding",
+          "manifesto"
+        ],
+        "forbidden": [
+          "best-in-class solution"
+        ]
+      },
+      "scores": {
+        "id": "golden_me_too_1",
+        "concept_score": 0.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.43,
+        "grounded_answer_ratio": 0.78,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.0,
+        "claim_grounded_ratio": 0.733,
+        "unsupported_claim_rate": 0.267,
+        "high_inference_rate": 0.267,
+        "retrieval_relevance": 0.94,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 4,
+        "source_coverage": 0.333,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "branding",
+        "top1_title": "find & live your brand dna",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (brand_book, differentiation, manifesto)",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 3,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.667,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "consistency_score": 0.634,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.05,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.6,
+        "confidence_after": 0.65,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 1.049,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0104,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          },
+          {
+            "title": "Celebratory, Inspirational Congratulate",
+            "category": "branding",
+            "hybrid_score": 0.7564,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, manifesto)",
+              "intent-weighted boost",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.667,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "You sound like every other SaaS company because your identity isn\u2019t distinct. Let\u2019s fix that by grounding everything in your **brand DNA**\u2014your core identity made up of values, personality, and promise. The retrieved brand book suggests without it, you\u2019re just another voice in the crowd shouting \u201cinnovation\u201d into the void, aligned with manifesto. What\u2019s your DNA? Does it feel bold, direct, and und",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.9386,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_post_manifesto_1",
+        "query": "What should we do after writing our manifesto?",
+        "expected_concepts": [
+          "manifesto",
+          "next",
+          "content",
+          "execution"
+        ],
+        "expected_categories": [
+          "manifesto"
+        ],
+        "forbidden": [
+          "forget the manifesto"
+        ]
+      },
+      "error": "Error code: 400 - {'error': {'message': \"The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766\", 'type': None, 'param': 'prompt', 'code': 'content_filter', 'status': 400, 'innererror': {'code': 'ResponsibleAIPolicyViolation', 'content_filter_result': {'hate': {'filtered': False, 'severity': 'safe'}, 'jailbreak': {'detected': False, 'filtered': False}, 'self_harm': {'filtered': False, 'severity': 'safe'}, 'sexual': {'filtered': False, 'severity': 'safe'}, 'violence': {'filtered': True, 'severity': 'high'}}}}}"
+    },
+    {
+      "case": {
+        "id": "golden_crisis_tone_1",
+        "query": "How should our brand respond in a crisis?",
+        "expected_concepts": [
+          "crisis",
+          "trust",
+          "response",
+          "tone"
+        ],
+        "expected_categories": [
+          "manifesto",
+          "branding"
+        ],
+        "forbidden": [
+          "deny everything"
+        ]
+      },
+      "scores": {
+        "id": "golden_crisis_tone_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.29,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.125,
+        "claim_grounded_ratio": 0.4,
+        "unsupported_claim_rate": 0.6,
+        "high_inference_rate": 0.4,
+        "retrieval_relevance": 0.96,
+        "tone_ok": true,
+        "pass": false,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 9,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "2. scenario coaching chat ask david how the brand would act in specific cases. -",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "strategic tag overlap (brand_book, manifesto)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.714,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.705,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.407,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.0,
+        "confidence_after": 0.407,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "2. Scenario Coaching Chat Ask David how the brand would act in specific cases. - Chat with pre-prompted buttons: \u201cCrisis Response,\u201d \u201cLaunch,\u201d \u201cCustomer Service Tone\u201d - Free text allowed Guiding, mentor-like Replaces Google/agency for brand guidance",
+            "category": "manifesto",
+            "hybrid_score": 1.0515,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, manifesto)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 1.049,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 0.9512,
+            "rerank_reason": [
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "supporting"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.714,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "Your brand\u2019s response in a crisis should embody the values and personality defined in your manifesto. It\u2019s about living your brand DNA\u2014bold, caring, reliable\u2014in every action and communication.\n\n**Anchor in Your Brand DNA**: Ground every decision and message in the core values that define your brand. The retrieved brand book suggests if reliability is central to your manifesto, focus on delivering ",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.9587,
+        "prompt_suffix": "",
+        "intent": "general"
+      }
+    },
+    {
+      "case": {
+        "id": "golden_value_promise_1",
+        "query": "How do we articulate a brand promise customers believe?",
+        "expected_concepts": [
+          "promise",
+          "trust",
+          "clarity"
+        ],
+        "expected_categories": [
+          "manifesto",
+          "branding"
+        ],
+        "forbidden": [
+          "world-class synergy"
+        ]
+      },
+      "scores": {
+        "id": "golden_value_promise_1",
+        "concept_score": 1.0,
+        "citation_score": 1.0,
+        "source_title_score": 1.0,
+        "groundedness": 0.5,
+        "grounded_answer_ratio": 1.0,
+        "generic_filler_ratio": 0.0,
+        "hallucination_risk": 0.04,
+        "claim_grounded_ratio": 0.571,
+        "unsupported_claim_rate": 0.429,
+        "high_inference_rate": 0.286,
+        "retrieval_relevance": 0.76,
+        "tone_ok": true,
+        "pass": true,
+        "forbidden_hits": [],
+        "forbidden_clean": true,
+        "unsupported_count": 6,
+        "source_coverage": 0.75,
+        "generic_filler_count": 0,
+        "top1_hit": true,
+        "top1_category": "manifesto",
+        "top1_title": "4. social media content",
+        "top1_generic_penalty": false,
+        "top1_rerank_reason": [
+          "manifesto-first scoring",
+          "strategic tag overlap (trust)",
+          "manifesto alignment",
+          "intent-weighted boost",
+          "high source reliability",
+          "cross-encoder relevance"
+        ],
+        "manifesto_dominance": 1.0,
+        "manifesto_in_top5": 4,
+        "strategic_query": true,
+        "manifesto_ok": true,
+        "top1_anchor_accuracy": 1.0,
+        "manifesto_support_density": 1.0,
+        "context_coherence": 1.0,
+        "strategic_density": 0.75,
+        "context_conflict_score": 0.0,
+        "reasoning_drift_score": 0.0,
+        "drift_detected": false,
+        "drift_pairs": [],
+        "context_concepts": [
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "answer_concepts": [
+          "consistency",
+          "manifesto",
+          "promise",
+          "trust"
+        ],
+        "consistency_score": 0.791,
+        "critique_flags": [
+          "unsupported_claim"
+        ],
+        "repair_gain": 0.05,
+        "drift_before": 0.0,
+        "drift_after": 0.0,
+        "confidence_before": 0.512,
+        "confidence_after": 0.562,
+        "repair_success": true,
+        "drift_improved": false,
+        "repaired": true,
+        "overclaim_suppressed": false,
+        "contradiction_rate": 0.0,
+        "overclaim_rate": 0.0,
+        "retrieval_flags": [],
+        "top_chunks": [
+          {
+            "title": "4. Social Media Content",
+            "category": "manifesto",
+            "hybrid_score": 1.0146,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "6. Internal Culture Alignment",
+            "category": "manifesto",
+            "hybrid_score": 1.0015,
+            "rerank_reason": [
+              "manifesto-first scoring",
+              "strategic tag overlap (manifesto, trust)",
+              "manifesto alignment",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          },
+          {
+            "title": "Find & Live Your Brand DNA",
+            "category": "branding",
+            "hybrid_score": 0.5385,
+            "rerank_reason": [
+              "strategic tag overlap (brand_book, differentiation, manifesto)",
+              "intent-weighted boost",
+              "high source reliability",
+              "cross-encoder relevance"
+            ],
+            "generic_penalty": false,
+            "context_role": "anchor_manifesto"
+          }
+        ],
+        "context_quality": {
+          "manifesto_dominance": 1.0,
+          "strategic_density": 0.75,
+          "context_coherence": 1.0,
+          "context_conflicts": []
+        },
+        "expected_categories": true
+      },
+      "answer_preview": "To articulate a brand promise customers believe, ground it firmly in your brand\u2019s DNA\u2014its values, personality, and promise. The retrieved brand book suggests this alignment ensures the promise reflects both emotional truth and practical impact, making it resonate deeply, aligned with manifesto.\n\n**Anchor in Values and Purpose**  \n   A promise rooted in your core identity feels authentic and powerf",
+      "retrieval_critique": {
+        "flags": [],
+        "needs_reretrieve": false,
+        "top1_hit": false,
+        "manifesto_dominance": 1.0,
+        "manifesto_ok": true,
+        "avg_hybrid_score": 0.7603,
+        "prompt_suffix": "",
+        "intent": "manifesto"
+      }
+    }
+  ],
+  "metrics": {
+    "groundedness": 0.432,
+    "grounded_answer_ratio": 0.927,
+    "hallucination_risk": 0.114,
+    "unsupported_claim_rate": 0.502,
+    "high_inference_rate": 0.395,
+    "contradiction_rate": 0.0,
+    "retrieval_precision": 0.793,
+    "citation_accuracy": 0.979,
+    "forbidden_clean_rate": 1.0,
+    "source_coverage": 0.698,
+    "avg_unsupported_count": 4.88,
+    "top1_hit_rate": 0.792,
+    "top1_anchor_accuracy": 0.792,
+    "manifesto_dominance_avg": 0.927,
+    "manifesto_support_density": 0.927,
+    "manifesto_dominance_strategic_avg": 0.936,
+    "manifesto_ok_rate": 1.0,
+    "context_coherence_avg": 1.0,
+    "strategic_density_avg": 0.649,
+    "reasoning_drift_avg": 0.0,
+    "overclaim_rate": 0.042,
+    "context_conflict_rate": 0.0,
+    "consistency_score_avg": 0.725,
+    "self_repair_success_rate": 0.792,
+    "repair_gain_avg": 0.114
+  }
+}

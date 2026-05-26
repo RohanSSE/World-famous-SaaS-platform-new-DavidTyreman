@@ -1,0 +1,76 @@
+.retrieval-debug {
+  margin: 8px 0;
+  font-size: 0.75rem;
+}
+
+.retrieval-debug-toggle {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px dashed rgba(99, 102, 241, 0.4);
+  color: #4f46e5;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.retrieval-debug-body {
+  margin-top: 8px;
+  padding: 10px;
+  background: rgba(15, 23, 42, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.retrieval-debug-body h4 {
+  margin: 8px 0 4px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.debug-line {
+  margin: 0;
+  color: #334155;
+}
+
+.debug-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.65rem;
+}
+
+.debug-table th,
+.debug-table td {
+  padding: 3px 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  text-align: left;
+}
+
+.debug-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.debug-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.12);
+  color: #7c3aed;
+}
+
+.debug-insights,
+.debug-memory {
+  margin: 0;
+  padding-left: 16px;
+  color: #475569;
+  line-height: 1.35;
+}
+
+.debug-reasons,
+.debug-latency {
+  margin: 6px 0 0;
+  color: #64748b;
+}

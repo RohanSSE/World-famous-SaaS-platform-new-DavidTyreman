@@ -68,6 +68,8 @@ Flow:
 3. Document marked `is_indexed=True`.
 4. Search API: vector, keyword, or hybrid search over that document’s index.
 
+**Static RAG library (`Rag_doc/`):** Categorized knowledge under `branding/`, `manifesto`, `psychology/`, `strategy/`, `positioning/`, `sales/`, `marketing/` is indexed via `python manage.py build_ai_knowledge` into the shared `ai_knowledge` Elasticsearch index (see `utils/rag_doc_loader.py`).
+
 Utilities under `document/utils/`:
 
 - **PDFProcessor** — Extract text, chunking.

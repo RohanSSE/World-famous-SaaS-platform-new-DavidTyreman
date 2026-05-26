@@ -1,0 +1,191 @@
+.orb-presence {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orb-presence-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  pointer-events: none;
+  transition: all 0.4s ease;
+}
+
+.orb-presence-core {
+  position: relative;
+  z-index: 1;
+}
+
+.orb-presence-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e2e8f0;
+  z-index: 2;
+  animation: orb-tooltip-in 0.25s ease;
+}
+
+.orb-idle .orb-presence-ring {
+  opacity: 0.35;
+  border-color: rgba(148, 163, 184, 0.25);
+  animation: orb-breathe 4s ease-in-out infinite;
+}
+
+.orb-idle .orb-presence-core {
+  animation: orb-breathe-core 4s ease-in-out infinite;
+}
+
+.orb-thinking .orb-presence-ring {
+  border-color: rgba(99, 102, 241, 0.5);
+  animation: orb-pulse 1.5s ease-in-out infinite;
+}
+
+.orb-retrieving .orb-presence-ring {
+  border-color: rgba(59, 130, 246, 0.6);
+  animation: orb-retrieval-pulse 1.2s ease-in-out infinite;
+}
+
+.orb-speaking .orb-presence-ring {
+  border-color: rgba(16, 185, 129, 0.6);
+  animation: orb-speak 0.6s ease-in-out infinite;
+}
+
+.orb-memory .orb-presence-ring {
+  border-color: rgba(168, 85, 247, 0.6);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
+  animation: orb-memory-flash 1.2s ease infinite;
+}
+
+.orb-connecting .orb-presence-ring {
+  border-color: rgba(245, 158, 11, 0.6);
+  animation: orb-pulse 1s ease infinite;
+}
+
+.orb-speaking .orb-presence-core {
+  animation: orb-speak-rhythm 0.85s ease-in-out infinite;
+}
+
+@keyframes orb-breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.45;
+  }
+}
+
+@keyframes orb-breathe-core {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.92;
+  }
+}
+
+@keyframes orb-retrieval-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(59, 130, 246, 0.55);
+  }
+}
+
+@keyframes orb-memory-flash {
+  0%, 100% {
+    opacity: 0.45;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 28px rgba(168, 85, 247, 0.55);
+  }
+}
+
+@keyframes orb-speak-rhythm {
+  0%, 100% {
+    transform: scale(1);
+  }
+  33% {
+    transform: scale(1.03);
+  }
+  66% {
+    transform: scale(0.98);
+  }
+}
+
+@keyframes orb-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orb-speak {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes orb-memory {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes orb-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.orb-intelligence-badge {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #4f46e5;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 2;
+}

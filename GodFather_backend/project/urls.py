@@ -19,7 +19,10 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+from user_sessions.views_health import api_health
+
 urlpatterns = [
+    path('api/health/', api_health, name='api-health'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/sessions/', include('user_sessions.urls')),

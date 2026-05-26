@@ -1,0 +1,25 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - "GodFather_backend/**"
+  pull_request:
+    paths:
+      - "GodFather_backend/**"
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: GodFather_backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python scripts/ci_golden_gate.py
+      - run: python -m compileall -q user_sessions project utils scripts

@@ -1,0 +1,46 @@
+{
+  "generated_from": "analyze_failures",
+  "top_failure_cluster": "low_confidence_overclaim",
+  "cluster_counts": {
+    "low_confidence_overclaim": 11,
+    "weak_manifesto_grounding": 9,
+    "retrieval_precision_low": 7,
+    "citation_mismatch": 4,
+    "generic_reasoning": 3
+  },
+  "current_metrics": {
+    "groundedness": 0.343,
+    "grounded_answer_ratio": 0.803,
+    "hallucination_risk": 0.36,
+    "retrieval_precision": 0.516,
+    "citation_accuracy": 0.854,
+    "forbidden_clean_rate": 0.958,
+    "source_coverage": 0.556,
+    "avg_unsupported_count": 2.79,
+    "top1_hit_rate": 0.708,
+    "top1_anchor_accuracy": 0.708,
+    "manifesto_dominance_avg": 0.844,
+    "manifesto_support_density": 0.844,
+    "manifesto_dominance_strategic_avg": 0.9,
+    "manifesto_ok_rate": 0.933,
+    "context_coherence_avg": 1.0,
+    "strategic_density_avg": 0.648,
+    "reasoning_drift_avg": 0.0,
+    "overclaim_rate": 0.333,
+    "context_conflict_rate": 0.0,
+    "consistency_score_avg": 0.559,
+    "self_repair_success_rate": 0.727,
+    "repair_gain_avg": 0.104
+  },
+  "recommendations": [
+    "Enable overclaim suppression + full verify on low confidence",
+    "Lower OVERCLAIM_CONFIDENCE_THRESHOLD to 0.55"
+  ],
+  "priority_order": [
+    "manifesto_support_density",
+    "reasoning_drift_avg",
+    "low_confidence_overclaim",
+    "strategic_density_avg",
+    "context_coherence_avg"
+  ]
+}

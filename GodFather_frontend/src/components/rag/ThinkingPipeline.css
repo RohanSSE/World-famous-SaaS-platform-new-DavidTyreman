@@ -1,0 +1,57 @@
+.thinking-pipeline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.06));
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  animation: thinking-fade-in 0.3s ease;
+}
+
+.thinking-pipeline-label {
+  font-size: 0.875rem;
+  color: #6366f1;
+  font-weight: 500;
+}
+
+.thinking-pipeline-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6366f1;
+  animation: thinking-bounce 1.2s ease-in-out infinite;
+}
+
+.thinking-pipeline-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.thinking-pipeline-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes thinking-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes thinking-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

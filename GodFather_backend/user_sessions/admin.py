@@ -179,5 +179,50 @@ class AIOutputAdmin(admin.ModelAdmin):
     
 admin.site.register(FoundationSummary)
 
-from .models import Conversation 
+from .models import Conversation, RAGQueryLog, AIUsageLog, EvaluationRun, EvaluationResult
 admin.site.register(Conversation)
+
+
+@admin.register(AIUsageLog)
+class AIUsageLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "id", "agent_id", "endpoint", "total_tokens", "estimated_cost_usd",
+        "latency_ms", "cache_hit", "degraded", "user", "created_at",
+    )
+    list_filter = ("agent_id", "cache_hit", "degraded", "created_at")
+    readonly_fields = ("created_at",)
+
+    def changelist_view(self, request, extra_context=None):
+        from user_sessions.services.ai_cost_dashboard import get_ai_cost_dashboard
+
+        extra_context = extra_context or {}
+        extra_context["cost_dashboard"] = get_ai_cost_dashboard(days=7)
+        return super().changelist_view(request, extra_context=extra_context)
+
+
+@admin.register(EvaluationRun)
+class EvaluationRunAdmin(admin.ModelAdmin):
+    list_display = (
+        "id", "run_type", "status", "passed_cases", "total_cases",
+        "avg_groundedness", "avg_hallucination_risk", "created_at",
+    )
+    list_filter = ("run_type", "status", "created_at")
+    readonly_fields = ("summary",)
+
+
+@admin.register(EvaluationResult)
+class EvaluationResultAdmin(admin.ModelAdmin):
+    list_display = ("case_id", "run", "passed", "groundedness", "hallucination_risk", "citation_accuracy")
+    list_filter = ("passed", "run")
+
+
+@admin.register(RAGQueryLog)
+class RAGQueryLogAdmin(admin.ModelAdmin):
+    list_display = ("id", "agent_id", "query_preview", "latency_ms", "cache_hit", "user", "created_at")
+    list_filter = ("agent_id", "cache_hit", "created_at")
+    search_fields = ("query",)
+    readonly_fields = ("top_chunks", "debug_payload", "token_usage")
+
+    def query_preview(self, obj):
+        return obj.query[:80]
+    query_preview.short_description = "Query"

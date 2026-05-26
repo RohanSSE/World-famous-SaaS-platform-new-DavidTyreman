@@ -29,13 +29,16 @@ class ElasticsearchService:
         #     max_retries=5,  # More retries on transient errors
         #     retry_on_timeout=True,
         # )
-        # Simple HTTP client — NO TLS OPTIONS
-        self.es = Elasticsearch(
-            hosts=hosts,
-            timeout=30,
-            max_retries=5,
-            retry_on_timeout=True,
-        )
+        # Compatible with elasticsearch-py 8.x and 9.x
+        try:
+            self.es = Elasticsearch(
+                hosts=hosts,
+                request_timeout=30,
+                max_retries=5,
+                retry_on_timeout=True,
+            )
+        except TypeError:
+            self.es = Elasticsearch(hosts=hosts)
 
         
     
@@ -72,14 +75,29 @@ class ElasticsearchService:
         }
         
         try:
-            if not self.es.indices.exists(index=index_name):
-                self.es.indices.create(index=index_name, body=mapping)
-                logger.info(f"Created index: {index_name}")
-                return True
-            return False
+            if self._index_exists(index_name):
+                return False
+            self.es.indices.create(
+                index=index_name,
+                mappings=mapping["mappings"],
+                settings=mapping["settings"],
+            )
+            logger.info(f"Created index: {index_name}")
+            return True
         except Exception as e:
             logger.error(f"Error creating index {index_name}: {str(e)}")
             raise
+
+    def _index_exists(self, index_name):
+        """Compatible with elasticsearch-py 8.x against ES 8.x servers."""
+        try:
+            return self.es.indices.exists(index=index_name)
+        except Exception:
+            try:
+                self.es.indices.get(index=index_name)
+                return True
+            except NotFoundError:
+                return False
     
     def index_chunks(self, index_name, chunks):
         """Bulk index document chunks with embeddings"""
@@ -103,7 +121,7 @@ class ElasticsearchService:
     def delete_index(self, index_name):
         """Delete Elasticsearch index"""
         try:
-            if self.es.indices.exists(index=index_name):
+            if self._index_exists(index_name):
                 self.es.indices.delete(index=index_name)
                 logger.info(f"Deleted index: {index_name}")
                 return True

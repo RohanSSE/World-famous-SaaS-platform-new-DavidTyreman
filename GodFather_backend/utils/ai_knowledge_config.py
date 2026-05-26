@@ -1,31 +1,52 @@
 """
 AI knowledge base configuration.
-All AI-related knowledge files and vector index settings live here.
+Primary sources: GodFather_backend/Rag_doc/<category>/
+Legacy fallback: utils/*.txt (optional)
 """
 import os
 from pathlib import Path
 
-# Base dir for utils (this file lives in utils/)
+# Base dirs
 UTILS_DIR = Path(__file__).resolve().parent
+BACKEND_DIR = UTILS_DIR.parent
 
-# Elasticsearch index name for AI knowledge (training + after-manifesto content)
+# Rag_doc — categorized knowledge library (primary source)
+RAG_DOC_DIR = BACKEND_DIR / "Rag_doc"
+RAG_DOC_CATEGORIES = [
+    "branding",
+    "manifesto",
+    "psychology",
+    "strategy",
+    "positioning",
+    "sales",
+    "marketing",
+]
+RAG_DOC_SUPPORTED_EXTENSIONS = frozenset({".txt", ".md", ".markdown", ".pdf"})
+
+# Elasticsearch index name for AI knowledge
 AI_KNOWLEDGE_INDEX_NAME = "ai_knowledge"
 
-# Knowledge source files (relative to UTILS_DIR)
+# Legacy utils/*.txt (set True only if you keep masters only under utils/, not Rag_doc/)
+INCLUDE_LEGACY_UTILS_TXT = False
 AI_KNOWLEDGE_FILES = [
-    ("training-AI-tool.txt", "training"),   # (filename, source tag)
-    ("after-manifesto-ai-tool.txt", "after_manifesto"),
+    ("training-AI-tool.txt", "branding"),
+    ("after-manifesto-ai-tool.txt", "manifesto"),
 ]
 
-# Chunking for better retrieval: ~400 words per chunk, 80 word overlap
+# Semantic chunking: split by headings/sections; only split further if section exceeds max words
+AI_KNOWLEDGE_SEMANTIC_MAX_WORDS = 350
+AI_KNOWLEDGE_SEMANTIC_OVERLAP = 40
+
+# Legacy flat chunking (deprecated — kept for reference)
 AI_KNOWLEDGE_CHUNK_SIZE = 400
 AI_KNOWLEDGE_CHUNK_OVERLAP = 80
 
 # Default retrieval: top-k chunks to inject into prompts
 AI_KNOWLEDGE_TOP_K = 8
 
-# Embedding dimension (OpenAI text-embedding-ada-002)
+# Embedding: text-embedding-3-small (1536 dimensions)
 EMBEDDING_DIMS = 1536
+EMBEDDING_MODEL = "text-embedding-3-small"
 
 
 def get_knowledge_file_path(filename: str) -> Path:

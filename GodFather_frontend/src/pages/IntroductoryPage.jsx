@@ -10,6 +10,8 @@ import logo from "../assets/mask-group.png";
 import videoBg from "../assets/GettyImages.mov";
 import ChatNavbar from "./ChatNavbar";
 import SignupLoginModal from "./SignupLoginModal";
+const INTRO_CORNER_VIDEO =
+  "/magnific_i-want-to-remove-the-background-of-this-video-and-_auto_720p_24fps_96756.mp4";
 
 
 
@@ -39,8 +41,8 @@ const handleCtaClick = () => {
     if (isAgency) {
       navigate("/agency-dashboard");
     } else {
-      // Default to user dashboard
-      navigate("/user-dashboard");
+      // Post-login welcome (was: /user-dashboard)
+      navigate("/welcome");
     }
   } else {
     setModalMode("signup");
@@ -165,10 +167,25 @@ const handleCtaClick = () => {
           initialMode={modalMode}
         />
 
-        {/* Video Popup - Small popup with video preview */}
+        {/* Bottom-right — magnific video only (no ring combo) */}
+        <div className="intro-corner-video" aria-hidden="true">
+          <div className="intro-corner-video__clip">
+            <video
+              className="intro-corner-video__el"
+              src={INTRO_CORNER_VIDEO}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+            />
+          </div>
+        </div>
+
+        {/* Video Popup - bottom-left (compact) */}
         {showVideoPopup && (
-          <div className="video-popup-overlay" onClick={closeVideoPopup}>
-            <div className="video-popup" onClick={(e) => e.stopPropagation()}>
+          <div className="video-popup-overlay video-popup-overlay--left" onClick={closeVideoPopup}>
+            <div className="video-popup video-popup--compact" onClick={(e) => e.stopPropagation()}>
               <button className="video-popup-close" onClick={closeVideoPopup}>
                 ×
               </button>
@@ -182,8 +199,8 @@ const handleCtaClick = () => {
                   />
                   <div className="video-play-button">
                     <svg
-                      width="80"
-                      height="80"
+                      width="56"
+                      height="56"
                       viewBox="0 0 80 80"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"

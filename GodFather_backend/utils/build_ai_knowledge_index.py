@@ -20,7 +20,10 @@ def run_build():
     # 1. Chunk
     chunks = load_and_chunk_all()
     if not chunks:
-        return False, "No chunks produced. Check that knowledge files exist under utils/."
+        return False, (
+            "No chunks produced. Add .txt/.md/.pdf files under Rag_doc/<category>/ "
+            "(branding, manifesto, psychology, strategy, positioning, sales, marketing)."
+        )
 
     # 2. Embeddings
     embedding_service = EmbeddingService()
@@ -55,9 +58,13 @@ def run_build():
         "settings": {"number_of_shards": 1, "number_of_replicas": 0},
     }
     try:
-        if es.es.indices.exists(index=AI_KNOWLEDGE_INDEX_NAME):
+        if es._index_exists(AI_KNOWLEDGE_INDEX_NAME):
             es.es.indices.delete(index=AI_KNOWLEDGE_INDEX_NAME)
-        es.es.indices.create(index=AI_KNOWLEDGE_INDEX_NAME, body=mapping)
+        es.es.indices.create(
+            index=AI_KNOWLEDGE_INDEX_NAME,
+            mappings=mapping["mappings"],
+            settings=mapping["settings"],
+        )
     except Exception as e:
         logger.exception("Index create failed")
         return False, f"Index create failed: {e}"
@@ -75,4 +82,19 @@ def run_build():
         logger.exception("Bulk index failed")
         return False, f"Bulk index failed: {e}"
 
-    return True, f"Indexed {len(chunks)} AI knowledge chunks into {AI_KNOWLEDGE_INDEX_NAME}."
+    chunk_count = len(chunks)
+    pg_msg = ""
+    if getattr(settings, "PGVECTOR_ENABLED", True):
+        try:
+            from .pgvector_store import bulk_upsert_knowledge_chunks
+
+            pg_count, pg_msg = bulk_upsert_knowledge_chunks(chunks)
+            logger.info("PGVector dual-write: %s", pg_msg)
+        except Exception as e:
+            logger.exception("PGVector dual-write failed (ES index still built): %s", e)
+            pg_msg = f" PGVector write failed: {e}"
+
+    return True, (
+        f"Indexed {chunk_count} AI knowledge chunks into {AI_KNOWLEDGE_INDEX_NAME}."
+        + (f" {pg_msg}" if pg_msg else "")
+    )

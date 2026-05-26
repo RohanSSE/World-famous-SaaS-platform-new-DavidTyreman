@@ -139,7 +139,17 @@ import AssistantAvatar from './components/AssistantAvatar.jsx';
 
 // export default App;
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import AdminRoot from "./admin/AdminRoot";
+import {
+  AdminSignInRoute,
+  AdminDashboardLayout,
+  AdminDashboardPage,
+  AdminUserPage,
+  AdminCognitionPage,
+  AdminReviewPage,
+  AdminOpsPage,
+} from "./admin/admin-routes";
 import IntroductoryPage from "./pages/IntroductoryPage";
 
 import AgencyDashboard from "./pages/AgencyDashboard";
@@ -157,9 +167,24 @@ import ChatKickOffPage from "./pages/ChatKickOffPage";
 import BrandSummaryPage from "./pages/BrandSummaryPage";
 import Stepper from "./pages/Stepper";
 import DeepDivePage from "./pages/Deepdivepage";
+import BrandOperatingSystem from "./pages/BrandOperatingSystem";
+import BrandOnboarding from "./pages/BrandOnboarding";
+import WelcomePage from "./pages/WelcomePage";
+import BrandIntroPage from "./pages/BrandIntroPage";
+import BeforeContinuePage from "./pages/BeforeContinuePage";
+import JourneyPhasesPage from "./pages/JourneyPhasesPage";
 // import IdentityCompleteModal from "./pages/IdentityCompleteModal";
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const hideAssistant = [
+    "/welcome",
+    "/brand-intro",
+    "/before-continue",
+    "/journey-phases",
+  ].includes(location.pathname);
+
   return (
     <>
       <Routes>
@@ -187,6 +212,38 @@ function App() {
         />
 
         {/* Protected Routes - Require authentication */}
+        <Route
+          path="/welcome"
+          element={
+            <ProtectedRoute>
+              <WelcomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/brand-intro"
+          element={
+            <ProtectedRoute>
+              <BrandIntroPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/before-continue"
+          element={
+            <ProtectedRoute>
+              <BeforeContinuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/journey-phases"
+          element={
+            <ProtectedRoute>
+              <JourneyPhasesPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/ChatKickoffPage"
           element={
@@ -249,6 +306,22 @@ function App() {
           }
         />
         <Route
+          path="/brand-os"
+          element={
+            <ProtectedRoute>
+              <BrandOperatingSystem />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/brand-onboarding"
+          element={
+            <ProtectedRoute>
+              <BrandOnboarding />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/chat-unlock"
           element={
             <ProtectedRoute>
@@ -289,6 +362,19 @@ function App() {
           element={<ResetPasswordPage />}
         />
 
+        {/* Admin panel — nested routes (relative paths under /admin) */}
+        <Route path="/admin" element={<AdminRoot />}>
+          <Route path="sign-in" element={<AdminSignInRoute />} />
+          <Route element={<AdminDashboardLayout />}>
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="user" element={<AdminUserPage />} />
+            <Route path="cognition" element={<AdminCognitionPage />} />
+            <Route path="review" element={<AdminReviewPage />} />
+            <Route path="ops" element={<AdminOpsPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/admin/sign-in" replace />} />
+        </Route>
+
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/intro-ductory" replace />} />
       </Routes>
@@ -305,10 +391,14 @@ function App() {
         pauseOnHover
         theme="dark"
       />
-      {/* Assistant Avatar with bubble popup (visibility and content controlled by Context API) */}
-      <AssistantAvatar />
+      {/* Hide main-app assistant on admin routes */}
+      {!isAdminRoute && !hideAssistant && <AssistantAvatar />}
     </>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;

@@ -1,0 +1,10 @@
+[
+  {
+    "id": "trust_clarity_1",
+    "query": "How should a brand build trust?",
+    "expected_concepts": ["clarity", "consistency", "authenticity", "promise"],
+    "expected_categories": ["branding"],
+    "expected_sources": ["Mean", "Consistency", "authentic"],
+    "expected_tone": ["direct", "honest", "mentor"]
+  }
+]

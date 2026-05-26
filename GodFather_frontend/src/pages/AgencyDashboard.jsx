@@ -40,16 +40,18 @@ const SIDEBAR_ITEMS = [
 ];
 
 // ── Sidebar ──
-function Sidebar({ activeTab, onTabChange }) {
+function Sidebar({ activeTab, onTabChange, collapsed, onToggleCollapse }) {
   return (
-    <aside className="agency-sidebar">
+    <aside className={`agency-sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="agency-sidebar-inner">
         <div className="agency-sidebar-header">
           <div className="agency-sidebar-label-row">
-            <Menu size={18} className="agency-sidebar-menu-icon" />
-            <span className="agency-sidebar-label">Menu</span>
+            <button className="agency-sidebar-toggle" onClick={onToggleCollapse} title={collapsed ? "Expand menu" : "Collapse menu"}>
+              <Menu size={18} />
+            </button>
+            {!collapsed && <span className="agency-sidebar-label">Menu</span>}
           </div>
-          <h3 className="agency-sidebar-title">Agency Panel</h3>
+          {!collapsed && <h3 className="agency-sidebar-title">Agency Panel</h3>}
         </div>
 
         <nav className="agency-sidebar-nav">
@@ -60,9 +62,10 @@ function Sidebar({ activeTab, onTabChange }) {
                 key={item.key}
                 className={`agency-sidebar-item ${activeTab === item.key ? "active" : ""}`}
                 onClick={() => onTabChange(item.key)}
+                title={collapsed ? item.label : ""}
               >
                 <Icon size={18} />
-                <span>{item.label}</span>
+                {!collapsed && <span>{item.label}</span>}
               </button>
             );
           })}
@@ -313,6 +316,7 @@ function SessionsTable({ sessions, onOpenSession }) {
 export default function AgencyDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dashboardData, setDashboardData] = useState(null);
@@ -464,13 +468,13 @@ export default function AgencyDashboard() {
 
   return (
     <div className="adb-root" style={{ overflow: "hidden", height: "100vh" }}>
-      <ChatNavbar showDownloadButton={false} />
+      <ChatNavbar showSaveButton={false} showDownloadButton={false} showLogoutButton={true} />
       <div className="adb-background">
         <div className="adb-glow-left" />
         <div className="adb-glow-right" />
       </div>
       <div className="adb-layout" style={{ height: "calc(100vh - 60px)" }}>
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} />
         <main className="adb-main-content">
           <div className="adb-content-wrapper">
             <h1 className="adb-page-title">Agency Dashboard</h1>

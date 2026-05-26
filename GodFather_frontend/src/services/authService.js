@@ -1,5 +1,7 @@
 import api from "./api";
 
+const API_BASE_URL = api.defaults.baseURL;
+
 const authService = {
   // Sign up new user
   signup: async (email, password, confirmPassword, userType) => {
@@ -996,6 +998,226 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
         "Failed to approve session";
       throw new Error(msg);
     }
+  },
+
+  // RAG query (non-streaming)
+  ragQuery: async (query, options = {}) => {
+    const {
+      sessionId = null,
+      agentId = "strategist",
+      includeUserDocs = false,
+      conversationMessages = [],
+      sessionSummary = null,
+      includeEvaluation = false,
+    } = options;
+
+    if (!query || !query.trim()) {
+      throw new Error("Missing query for ragQuery");
+    }
+
+    const path = sessionId
+      ? `/sessions/${encodeURIComponent(sessionId)}/rag-query/`
+      : "/sessions/rag-query/";
+
+    try {
+      const response = await api.post(path, {
+        query: query.trim(),
+        agent_id: agentId,
+        include_user_docs: includeUserDocs,
+        conversation_messages: conversationMessages,
+        session_summary: sessionSummary,
+        include_evaluation: includeEvaluation,
+      });
+      return response.data;
+    } catch (error) {
+      const msg =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "RAG query failed";
+      throw new Error(msg);
+    }
+  },
+
+  // RAG query SSE stream URL + helper (use with useRagStream or fetch)
+  ragQueryStreamUrl: (sessionId = null) =>
+    sessionId
+      ? `${API_BASE_URL}/sessions/${encodeURIComponent(sessionId)}/rag-query/stream/`
+      : `${API_BASE_URL}/sessions/rag-query/stream/`,
+
+  ragQueryStream: async (query, options = {}, callbacks = {}) => {
+    const {
+      sessionId = null,
+      agentId = "strategist",
+      includeUserDocs = false,
+      conversationMessages = [],
+      sessionSummary = null,
+      signal = null,
+    } = options;
+
+    if (!query || !query.trim()) {
+      throw new Error("Missing query for ragQueryStream");
+    }
+
+    const token = localStorage.getItem("accessToken");
+    const url = authService.ragQueryStreamUrl(sessionId);
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+      body: JSON.stringify({
+        query: query.trim(),
+        agent_id: agentId,
+        include_user_docs: includeUserDocs,
+        conversation_messages: conversationMessages,
+        session_summary: sessionSummary,
+      }),
+      signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`RAG stream failed: ${res.status}`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let accumulated = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const event = JSON.parse(line.slice(6));
+          if (event.type === "system_health") {
+            callbacks.onSystemHealth?.(event.system_health);
+          } else if (event.type === "sources") {
+            callbacks.onSources?.(event);
+          } else if (event.type === "token") {
+            accumulated += event.content || "";
+            callbacks.onToken?.(event.content, accumulated);
+          } else if (event.type === "done") {
+            callbacks.onDone?.(accumulated, event);
+          } else if (event.type === "error") {
+            throw new Error(event.message || "Stream error");
+          }
+        } catch (parseErr) {
+          if (parseErr.message?.includes("Stream")) throw parseErr;
+        }
+      }
+    }
+
+    return accumulated;
+  },
+
+  // ========== BRAND OPERATING SYSTEM ==========
+  listBrandWorkflows: async () => {
+    const response = await api.get("/sessions/brand-workflows/");
+    return response.data;
+  },
+
+  runBrandWorkflow: async (sessionId, workflow, extraContext = "") => {
+    const response = await api.post(
+      `/sessions/${encodeURIComponent(sessionId)}/brand-workflow/`,
+      { workflow, extra_context: extraContext }
+    );
+    return response.data;
+  },
+
+  getFeedbackLearningProfile: async (sessionId) => {
+    const response = await api.get(
+      `/sessions/${encodeURIComponent(sessionId)}/feedback-learning/`
+    );
+    return response.data;
+  },
+
+  submitFeedbackLearning: async (sessionId, payload) => {
+    const response = await api.post(
+      `/sessions/${encodeURIComponent(sessionId)}/feedback-learning/`,
+      payload
+    );
+    return response.data;
+  },
+
+  getBrandBrain: async (sessionId) => {
+    const response = await api.get(
+      `/sessions/${encodeURIComponent(sessionId)}/brand-brain/`
+    );
+    return response.data;
+  },
+
+  exportBrandPack: async (sessionId, workflow = "pack") => {
+    const response = await api.post(
+      `/sessions/${encodeURIComponent(sessionId)}/brand-export/`,
+      { workflow, format: "json" }
+    );
+    return response.data;
+  },
+
+  downloadBrandExport: async (sessionId, workflow = "pack", format = "pdf", styled = false) => {
+    const response = await api.get(
+      `/sessions/${encodeURIComponent(sessionId)}/brand-export/`,
+      {
+        params: { workflow, format, ...(styled ? { styled: "premium" } : {}) },
+        responseType: "blob",
+      }
+    );
+    const ext = format === "pptx" ? "pptx" : format === "pdf" ? "pdf" : "json";
+    const blob = new Blob([response.data], {
+      type: response.headers["content-type"] || "application/octet-stream",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `brand-${workflow}-${sessionId}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    return true;
+  },
+
+  getProductObservability: async () => {
+    const response = await api.get("/sessions/product-observability/");
+    return response.data;
+  },
+
+  listDemoBrands: async () => {
+    const response = await api.get("/sessions/demo-brands/");
+    return response.data;
+  },
+
+  runDemoPack: async (sessionId, demoId = "luxury") => {
+    const response = await api.post(`/sessions/${encodeURIComponent(sessionId)}/demo-pack/`, {
+      demo_id: demoId,
+    });
+    return response.data;
+  },
+
+  recordPilotEvent: async (sessionId, signal, meta = {}) => {
+    const response = await api.post(`/sessions/${encodeURIComponent(sessionId)}/pilot-event/`, {
+      signal,
+      meta,
+    });
+    return response.data;
+  },
+
+  getSessionPilotKpis: async (sessionId) => {
+    const response = await api.get(`/sessions/${encodeURIComponent(sessionId)}/pilot-kpis/`);
+    return response.data;
+  },
+
+  getUserPilotSummary: async (days = 30) => {
+    const response = await api.get("/sessions/pilot-summary/", { params: { days } });
+    return response.data;
   },
 
   // ========== USER / CLIENT DASHBOARD ==========

@@ -1118,6 +1118,7 @@ tr.ud-row-divider:last-child td {
   flex-direction: column;
   height: 100%;
   overflow-y: auto;
+  transition: width 0.25s ease, min-width 0.25s ease;
 }
 
 .ud-sidebar-v2-inner {
@@ -1215,6 +1216,56 @@ tr.ud-row-divider:last-child td {
 .ud-sidebar-v2-new-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(91,127,255,0.35);
+}
+
+/* ── Sidebar Toggle Button ── */
+.ud-sidebar-v2-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.ud-sidebar-v2-toggle:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+/* ── Sidebar Collapsed State ── */
+.ud-sidebar-v2.collapsed {
+  width: 64px;
+  min-width: 64px;
+}
+
+.ud-sidebar-v2.collapsed .ud-sidebar-v2-inner {
+  padding: 18px 8px 24px;
+  align-items: center;
+}
+
+.ud-sidebar-v2.collapsed .ud-sidebar-v2-header {
+  display: flex;
+  justify-content: center;
+}
+
+.ud-sidebar-v2.collapsed .ud-sidebar-v2-label-row {
+  justify-content: center;
+}
+
+.ud-sidebar-v2.collapsed .ud-sidebar-v2-item {
+  justify-content: center;
+  padding: 10px;
+  gap: 0;
+}
+
+.ud-sidebar-v2.collapsed .ud-sidebar-v2-new-btn {
+  padding: 12px;
+  justify-content: center;
 }
 
 /* ── Main Area ── */

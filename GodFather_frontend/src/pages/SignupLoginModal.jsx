@@ -82,16 +82,16 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
     return true;
   };
 
-  // ✅ Helper function to determine redirect route (clients see stepper first, then Continue → user-dashboard)
+  // Post-login: Welcome first, then stepper journey (old: direct /stepper or /user-dashboard)
   const getRedirectRoute = (userData) => {
     const roleName = userData?.role_name;
     if (roleName === "agency") return "/agency-dashboard";
-    if (roleName === "client") return "/stepper";
-    // Fallback: check role id for backwards compat
+    if (roleName === "client") return "/welcome";
     const roleId = userData?.role;
     if (roleId === 3) return "/agency-dashboard";
-    if (roleId === 2) return "/stepper";
-    return "/stepper"; // default: show stepper then user continues to dashboard
+    // if (roleId === 2) return "/stepper";
+    // return "/user-dashboard";
+    return "/welcome";
   };
 
   const handleSubmit = async (e) => {

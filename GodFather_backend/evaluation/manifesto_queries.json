@@ -1,0 +1,17 @@
+[
+  {
+    "id": "manifesto_core_1",
+    "query": "How should manifesto positioning work?",
+    "expected_concepts": ["core belief", "brand promise", "differentiation", "manifesto"],
+    "expected_categories": ["manifesto"],
+    "expected_citations": ["manifesto"],
+    "expected_tone": ["philosophical", "bold"]
+  },
+  {
+    "id": "manifesto_purpose_1",
+    "query": "What should a brand manifesto include about purpose?",
+    "expected_concepts": ["purpose", "cause", "stand for something", "belief"],
+    "expected_categories": ["manifesto", "branding"],
+    "expected_tone": ["inspirational"]
+  }
+]
