@@ -169,11 +169,21 @@ import Stepper from "./pages/Stepper";
 import DeepDivePage from "./pages/Deepdivepage";
 import BrandOperatingSystem from "./pages/BrandOperatingSystem";
 import BrandOnboarding from "./pages/BrandOnboarding";
+import WelcomePage from "./pages/WelcomePage";
+import BrandIntroPage from "./pages/BrandIntroPage";
+import BeforeContinuePage from "./pages/BeforeContinuePage";
+import JourneyPhasesPage from "./pages/JourneyPhasesPage";
 // import IdentityCompleteModal from "./pages/IdentityCompleteModal";
 
 function AppContent() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const hideAssistant = [
+    "/welcome",
+    "/brand-intro",
+    "/before-continue",
+    "/journey-phases",
+  ].includes(location.pathname);
 
   return (
     <>
@@ -202,6 +212,38 @@ function AppContent() {
         />
 
         {/* Protected Routes - Require authentication */}
+        <Route
+          path="/welcome"
+          element={
+            <ProtectedRoute>
+              <WelcomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/brand-intro"
+          element={
+            <ProtectedRoute>
+              <BrandIntroPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/before-continue"
+          element={
+            <ProtectedRoute>
+              <BeforeContinuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/journey-phases"
+          element={
+            <ProtectedRoute>
+              <JourneyPhasesPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/ChatKickoffPage"
           element={
@@ -350,7 +392,7 @@ function AppContent() {
         theme="dark"
       />
       {/* Hide main-app assistant on admin routes */}
-      {!isAdminRoute && <AssistantAvatar />}
+      {!isAdminRoute && !hideAssistant && <AssistantAvatar />}
     </>
   );
 }

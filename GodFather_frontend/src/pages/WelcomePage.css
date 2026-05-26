@@ -1,0 +1,113 @@
+/* Haas Grot Text R Trial = NeueHaasGrotTextRound in /src/assets/fonts */
+.welcome-page {
+  min-height: 100vh;
+  background: #030508;
+  background-image: radial-gradient(ellipse 90% 70% at 50% 15%, #0f2858 0%, #061018 50%, #020408 100%);
+  color: #fff;
+  font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.welcome-page-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 25%, transparent 0%, rgba(3, 5, 8, 0.4) 55%, rgba(3, 5, 8, 0.85) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.welcome-main {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+  margin: -2.5rem auto 0;
+  padding: 0 1.5rem 4rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-brand-orb {
+  margin-bottom: 1.25rem;
+}
+
+.welcome-title {
+  font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 42px;
+  line-height: 50px;
+  letter-spacing: 0;
+  text-align: center;
+  margin: 0 0 24px;
+  color: #fff;
+}
+
+.welcome-lead,
+.welcome-body {
+  font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 22px;
+  letter-spacing: 0;
+  text-align: center;
+  color: #c0f9ff;
+  margin: 0 0 16px;
+  max-width: 100%;
+}
+
+.welcome-body {
+  margin-bottom: 0;
+}
+
+.welcome-body strong {
+  font-weight: 500;
+  color: #fff;
+}
+
+.welcome-cta {
+  margin-top: 2rem;
+  padding: 0.85rem 2.5rem;
+  min-width: 220px;
+  border: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(90deg, #3959e5 0%, #507fec 45%, #8ee5ff 100%);
+  box-shadow: 0 8px 28px rgba(57, 89, 229, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.welcome-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(57, 89, 229, 0.55);
+}
+
+@media (max-width: 768px) {
+  .welcome-main {
+    margin-top: -1.5rem;
+  }
+
+  .welcome-title {
+    font-size: clamp(32px, 8vw, 42px);
+    line-height: 1.2;
+  }
+
+  .welcome-lead,
+  .welcome-body {
+    font-size: clamp(14px, 3.5vw, 16px);
+    line-height: 1.4;
+  }
+
+}
+
+@media (max-width: 600px) {
+  .welcome-brand-orb.brand-orb--welcome {
+    width: min(180px, 48vw);
+    height: min(180px, 48vw);
+  }
+}

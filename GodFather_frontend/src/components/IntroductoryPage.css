@@ -310,12 +310,55 @@
 /* ==================
    VIDEO POPUP
    ================== */
+/* Bottom-right — magnific video, circular crop (no black box on black page) */
+.intro-corner-video {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: min(200px, 26vw);
+  height: min(200px, 26vw);
+  min-width: 140px;
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.intro-corner-video__clip {
+  width: 88%;
+  height: 88%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.intro-corner-video__el {
+  width: 118%;
+  height: 118%;
+  object-fit: cover;
+  object-position: center;
+  mix-blend-mode: lighten;
+  transform: translateZ(0);
+}
+
 .video-popup-overlay {
   position: fixed;
   bottom: 20px;
   right: 20px;
   z-index: 1000;
   animation: slideInUp 0.4s ease-out;
+}
+
+.video-popup-overlay--left {
+  left: 20px;
+  right: auto;
 }
 
 @keyframes slideInUp {
@@ -338,6 +381,32 @@
   max-width: 360px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   position: relative;
+}
+
+.video-popup--compact {
+  max-width: 240px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.video-popup--compact .video-popup-content {
+  gap: 8px;
+}
+
+.video-popup--compact .video-popup-title {
+  font-size: 14px;
+}
+
+.video-popup--compact .video-popup-description {
+  font-size: 11px;
+}
+
+.video-popup--compact .video-popup-close {
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  font-size: 18px;
 }
 
 .video-popup-close {
@@ -499,10 +568,29 @@
 
 /* Responsive adjustments for video popup */
 @media (max-width: 768px) {
-  .video-popup-overlay {
+  .intro-corner-video {
+    bottom: 12px;
+    right: 12px;
+    width: min(160px, 32vw);
+    height: min(160px, 32vw);
+    min-width: 120px;
+    min-height: 120px;
+  }
+
+  .intro-corner-video__clip {
+    width: 90%;
+    height: 90%;
+  }
+
+  .video-popup-overlay--left {
     bottom: 16px;
-    right: 16px;
     left: 16px;
+    right: auto;
+  }
+
+  .video-popup--compact {
+    max-width: 200px;
+    padding: 10px 12px;
   }
 
   .video-popup {

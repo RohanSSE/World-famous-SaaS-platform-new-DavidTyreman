@@ -1,0 +1,214 @@
+.journey-phases-page {
+  min-height: 100vh;
+  background: #030508;
+  background-image: radial-gradient(ellipse 100% 80% at 50% 0%, #0c2248 0%, #050a18 45%, #020408 100%);
+  color: #fff;
+  font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: 3rem;
+}
+
+.journey-phases-bg-orb {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(91, 108, 255, 0.25) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.journey-phases-page .onboarding-header {
+  padding: 0.5rem 2.5rem 0.2rem;
+}
+
+.journey-phases-page .onboarding-nav-row {
+  padding: 0 2.5rem 0.1rem;
+}
+
+.journey-phases-main {
+  position: relative;
+  z-index: 1;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0.75rem 2.5rem 2rem;
+}
+
+.journey-phases-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.journey-phases-orb-wrap {
+  position: relative;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Figma: left-aligned, smaller, medium weight */
+.journey-phases-title {
+  width: 100%;
+  font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
+  font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-align: left;
+  color: #fff;
+}
+
+.journey-phases-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+  text-align: left;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .journey-phases-cards {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.journey-phase-card {
+  padding: 1.15rem 1.15rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 14, 28, 0.55);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.journey-phase-card:hover {
+  border-color: rgba(100, 140, 255, 0.35);
+}
+
+.journey-phase-card.active {
+  border-color: rgba(59, 130, 246, 0.9);
+  background: rgba(12, 24, 52, 0.7);
+  box-shadow: 0 0 24px rgba(37, 99, 235, 0.2);
+}
+
+.journey-phase-card.locked {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(6, 10, 22, 0.65);
+}
+
+.journey-phase-card.locked.active {
+  border-color: rgba(100, 140, 255, 0.45);
+  box-shadow: none;
+}
+
+.journey-phase-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.journey-phase-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.journey-phase-card.active .journey-phase-num {
+  border-color: rgba(142, 229, 255, 0.55);
+  background: rgba(57, 89, 229, 0.3);
+}
+
+.journey-phase-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.journey-phase-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #fff;
+}
+
+.journey-phase-card p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.journey-phases-cta {
+  display: block;
+  margin: 0 auto;
+  padding: 0.9rem 2.75rem;
+  min-width: 280px;
+  max-width: 100%;
+  border: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(
+    90deg,
+    #3959e5 0%,
+    #3d64e8 7.14%,
+    #416fea 14.29%,
+    #457aec 21.43%,
+    #4b84ef 28.57%,
+    #508ef1 35.71%,
+    #5698f3 42.86%,
+    #5ca2f5 50%,
+    #63acf7 57.14%,
+    #6ab5f8 64.29%,
+    #70bffa 71.43%,
+    #78c8fb 78.57%,
+    #7fd2fd 85.71%,
+    #86dbfe 92.86%,
+    #8ee5ff 100%
+  );
+  box-shadow: 0 10px 40px rgba(57, 89, 229, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.journey-phases-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 48px rgba(142, 229, 255, 0.35);
+}
+
+@media (max-width: 600px) {
+  .journey-phases-main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .journey-phases-cta {
+    width: 100%;
+    min-width: 0;
+  }
+}
