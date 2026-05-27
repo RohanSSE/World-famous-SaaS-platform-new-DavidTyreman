@@ -10,7 +10,15 @@ const GROUP_139_IMAGE = "/Group_139.svg";
 export default function BrandIntroPage() {
   const navigate = useNavigate();
 
-  const handleReady = () => navigate("/before-continue");
+  const handleReady = () => {
+    // Fallback hard navigation to avoid occasional client-side route freeze.
+    navigate("/before-continue");
+    window.setTimeout(() => {
+      if (window.location.pathname === "/brand-intro") {
+        window.location.assign("/before-continue");
+      }
+    }, 120);
+  };
   const handleBack = () => navigate("/welcome");
   const handleNext = () => handleReady();
 
@@ -20,6 +28,9 @@ export default function BrandIntroPage() {
         onLogoClick={() => navigate("/welcome")}
         onBack={handleBack}
         onNext={handleNext}
+        logoPath="/welcome"
+        backPath="/welcome"
+        nextPath="/before-continue"
       />
 
       <main className="brand-intro-main">

@@ -18,15 +18,75 @@ class HasRolePermission(BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
         
-        # Superusers always have permission
-        if request.user.is_superuser:
+        # Superusers / Django staff always have permission
+        if request.user.is_superuser or getattr(request.user, 'is_staff', False):
             return True
-        
+
         # User must have an active role
         if not request.user.role or not request.user.role.is_active:
             return False
-        
+
         return True
+
+
+def _role_name(user):
+    if not getattr(user, 'role', None):
+        return ''
+    return (user.role.name or '').lower()
+
+
+def can_view_user_directory(user):
+    """List all users — admin panel directory (read)."""
+    if not user or not user.is_authenticated or not user.is_active:
+        return False
+    if user.is_superuser or getattr(user, 'is_staff', False):
+        return True
+    if _role_name(user) == 'admin':
+        return True
+    if user.has_perm_codename('users.view'):
+        return True
+    # Logged-in app users (client/agency) may open admin user list
+    if _role_name(user) in ('client', 'agency'):
+        return True
+    return False
+
+
+def can_view_agency_directory(user):
+    """List all agencies — admin panel directory (read)."""
+    if not user or not user.is_authenticated or not user.is_active:
+        return False
+    if user.is_superuser or getattr(user, 'is_staff', False):
+        return True
+    if _role_name(user) == 'admin':
+        return True
+    if user.has_perm_codename('agencies.view'):
+        return True
+    if _role_name(user) in ('client', 'agency', 'admin'):
+        return True
+    return False
+
+
+def can_update_user_record(user):
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser or getattr(user, 'is_staff', False):
+        return True
+    role_name = _role_name(user)
+    if role_name and 'admin' in role_name:
+        return True
+    return user.has_perm_codename('users.update')
+
+
+def can_update_agency_record(user):
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser or getattr(user, 'is_staff', False):
+        return True
+    role_name = _role_name(user)
+    # Be tolerant to naming variants (e.g. "superadmin", "super admin")
+    if role_name and 'admin' in role_name:
+        return True
+    return user.has_perm_codename('agencies.update')
 
 
 class IsAdminUser(BasePermission):

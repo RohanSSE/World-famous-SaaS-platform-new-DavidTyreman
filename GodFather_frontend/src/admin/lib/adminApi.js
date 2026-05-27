@@ -22,6 +22,40 @@ export const adminApi = {
     adminGet("/sessions/admin/product-signals/", { days }),
   opsIntelligence: (days = 14) =>
     adminGet("/sessions/admin/ops-intelligence/", { days }),
+
+  listUsers: () => adminGet("/auth/users/"),
+  listAgencies: () => adminGet("/auth/agencies/"),
+  listSessions: () => adminGet("/sessions/"),
+  // Admin: question CRUD (bulk stage replace)
+  listQuestions: () => adminGet("/sessions/questions/"),
+  bulkSetQuestions: async (payload) => {
+    const response = await api.post("/sessions/admin/questions/bulk-set/", payload);
+    return response.data;
+  },
+  updateUser: async (userId, data) => {
+    try {
+      const response = await api.patch(`/auth/users/${userId}/`, data);
+      return response.data;
+    } catch (error) {
+      const msg =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        "Failed to update user";
+      throw new Error(typeof msg === "string" ? msg : "Failed to update user");
+    }
+  },
+  updateAgency: async (agencyId, data) => {
+    try {
+      const response = await api.patch(`/auth/agencies/${agencyId}/`, data);
+      return response.data;
+    } catch (error) {
+      const msg =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        "Failed to update agency";
+      throw new Error(typeof msg === "string" ? msg : "Failed to update agency");
+    }
+  },
 };
 
 export default adminApi;

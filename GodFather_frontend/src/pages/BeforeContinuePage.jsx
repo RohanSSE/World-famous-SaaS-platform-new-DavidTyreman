@@ -25,7 +25,14 @@ const GUIDE_CARDS = [
 export default function BeforeContinuePage() {
   const navigate = useNavigate();
 
-  const handleDiscover = () => navigate("/journey-phases");
+  const handleDiscover = () => {
+    navigate("/journey-phases");
+    window.setTimeout(() => {
+      if (window.location.pathname === "/before-continue") {
+        window.location.assign("/journey-phases");
+      }
+    }, 120);
+  };
   const handleBack = () => navigate("/brand-intro");
   const handleNext = () => handleDiscover();
 
@@ -38,6 +45,9 @@ export default function BeforeContinuePage() {
         onLogoClick={() => navigate("/welcome")}
         onBack={handleBack}
         onNext={handleNext}
+        logoPath="/welcome"
+        backPath="/brand-intro"
+        nextPath="/journey-phases"
       />
 
       <main className="before-continue-main">

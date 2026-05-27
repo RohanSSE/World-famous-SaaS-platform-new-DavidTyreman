@@ -1,8 +1,19 @@
 import { varAlpha } from "minimal-shared/utils";
-import { grey, info, error, common, primary, success, warning, secondary } from "./palette";
+import {
+  grey,
+  info,
+  error,
+  common,
+  primary,
+  success,
+  warning,
+  secondary,
+} from "./palette";
+
 function createShadowColor(colorChannel) {
   return `0 8px 16px 0 ${varAlpha(colorChannel, 0.24)}`;
 }
+
 function createCustomShadows(colorChannel) {
   return {
     z1: `0 1px 2px 0 ${varAlpha(colorChannel, 0.16)}`,
@@ -12,23 +23,21 @@ function createCustomShadows(colorChannel) {
     z16: `0 16px 32px -4px ${varAlpha(colorChannel, 0.16)}`,
     z20: `0 20px 40px -4px ${varAlpha(colorChannel, 0.16)}`,
     z24: `0 24px 48px 0 ${varAlpha(colorChannel, 0.16)}`,
-    /********/
-    dialog: `-40px 40px 80px -8px ${varAlpha(common.blackChannel, 0.24)}`,
-    card: `0 0 2px 0 ${varAlpha(colorChannel, 0.2)}, 0 12px 24px -4px ${varAlpha(colorChannel, 0.12)}`,
-    dropdown: `0 0 2px 0 ${varAlpha(colorChannel, 0.24)}, -20px 20px 40px -4px ${varAlpha(colorChannel, 0.24)}`,
-    /********/
+    dialog: `-40px 40px 80px -8px ${varAlpha(common.blackChannel, 0.5)}`,
+    card: `0 0 0 1px ${varAlpha(primary.mainChannel, 0.12)}, 0 12px 40px -8px ${varAlpha(common.blackChannel, 0.45)}`,
+    dropdown: `0 0 0 1px ${varAlpha(primary.mainChannel, 0.15)}, 0 16px 40px ${varAlpha(common.blackChannel, 0.4)}`,
     primary: createShadowColor(primary.mainChannel),
     secondary: createShadowColor(secondary.mainChannel),
     info: createShadowColor(info.mainChannel),
     success: createShadowColor(success.mainChannel),
     warning: createShadowColor(warning.mainChannel),
-    error: createShadowColor(error.mainChannel)
+    error: createShadowColor(error.mainChannel),
   };
 }
+
 const customShadows = {
-  light: createCustomShadows(grey["500Channel"])
+  light: createCustomShadows(grey["500Channel"]),
+  dark: createCustomShadows(primary.mainChannel),
 };
-export {
-  createShadowColor,
-  customShadows
-};
+
+export { createShadowColor, customShadows };

@@ -12,21 +12,27 @@ const MuiBackdrop = {
 };
 const MuiButton = {
   defaultProps: {
-    disableElevation: true
+    disableElevation: true,
   },
   styleOverrides: {
+    containedPrimary: ({ theme }) => ({
+      background: `linear-gradient(90deg, ${theme.vars.palette.primary.main} 0%, ${theme.vars.palette.primary.light} 100%)`,
+      "&:hover": {
+        background: `linear-gradient(90deg, ${theme.vars.palette.primary.dark} 0%, ${theme.vars.palette.primary.main} 100%)`,
+      },
+    }),
     containedInherit: ({ theme }) => ({
       color: theme.vars.palette.common.white,
       backgroundColor: theme.vars.palette.grey[800],
       "&:hover": {
         color: theme.vars.palette.common.white,
-        backgroundColor: theme.vars.palette.grey[800]
-      }
+        backgroundColor: theme.vars.palette.grey[700],
+      },
     }),
     sizeLarge: {
-      minHeight: 48
-    }
-  }
+      minHeight: 48,
+    },
+  },
 };
 const MuiCard = {
   styleOverrides: {
@@ -34,9 +40,21 @@ const MuiCard = {
       zIndex: 0,
       position: "relative",
       boxShadow: theme.vars.customShadows.card,
-      borderRadius: theme.shape.borderRadius * 2
-    })
-  }
+      borderRadius: theme.shape.borderRadius * 2,
+      backgroundColor: theme.vars.palette.background.paper,
+      border: `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.14)}`,
+      backdropFilter: "blur(12px)",
+    }),
+  },
+};
+const MuiTabs = {
+  styleOverrides: {
+    indicator: ({ theme }) => ({
+      background: `linear-gradient(90deg, ${theme.vars.palette.primary.main}, ${theme.vars.palette.primary.light})`,
+      height: 3,
+      borderRadius: 3,
+    }),
+  },
 };
 const MuiCardHeader = {
   defaultProps: {
@@ -51,10 +69,13 @@ const MuiCardHeader = {
 };
 const MuiOutlinedInput = {
   styleOverrides: {
+    root: ({ theme }) => ({
+      backgroundColor: varAlpha(theme.vars.palette.common.blackChannel, 0.25),
+    }),
     notchedOutline: ({ theme }) => ({
-      borderColor: varAlpha(theme.vars.palette.grey["500Channel"], 0.2)
-    })
-  }
+      borderColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.22),
+    }),
+  },
 };
 const MuiPaper = {
   defaultProps: { elevation: 0 },
@@ -128,6 +149,7 @@ const MuiRadio = {
 const components = {
   MuiCard,
   MuiLink,
+  MuiTabs,
   MuiPaper,
   MuiRadio,
   MuiButton,
@@ -137,7 +159,7 @@ const components = {
   MuiTableCell,
   MuiCardHeader,
   MuiOutlinedInput,
-  MuiFormControlLabel
+  MuiFormControlLabel,
 };
 export {
   components

@@ -9,6 +9,7 @@ from .views import (
     session_generate_social_content,session_generate_foundation_summary,answer_ai_suggestions,
     assistant_suggestion,
     session_get_foundation_summary, session_update_foundation_summary,
+    admin_questions_bulk_set,
     rag_query, ai_task_status, rag_query_stream, rag_agents_list,
     rag_system_health, ai_cost_dashboard,
     session_brand_brain, session_feedback_learning, session_brand_workflow,
@@ -59,6 +60,9 @@ urlpatterns = [
     path('<int:pk>/conversations/<int:conversation_id>/edit/', edit_conversation, name='edit_conversation'),
     # Questions
     path('questions/', question_list, name='question_list'),
+
+    # Admin: bulk replace questions for stage counts
+    path('admin/questions/bulk-set/', admin_questions_bulk_set, name='admin_questions_bulk_set'),
 
 
     # AI Manifesto

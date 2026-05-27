@@ -13,6 +13,7 @@ const UserPage = lazy(() => import('@admin/pages/user'));
 const CognitionPage = lazy(() => import('@admin/pages/cognition'));
 const ReviewPage = lazy(() => import('@admin/pages/review'));
 const OpsPage = lazy(() => import('@admin/pages/ops'));
+const QuestionsPage = lazy(() => import('@admin/pages/questions'));
 const SignInPage = lazy(() => import('@admin/pages/sign-in'));
 
 const ADMIN_SIGN_IN = '/admin/sign-in';
@@ -96,4 +97,8 @@ export function AdminReviewPage() {
 
 export function AdminOpsPage() {
   return <OpsPage />;
+}
+
+export function AdminQuestionsPage() {
+  return <QuestionsPage />;
 }

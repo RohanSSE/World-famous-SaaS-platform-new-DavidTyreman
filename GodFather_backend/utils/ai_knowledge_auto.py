@@ -242,7 +242,10 @@ def enqueue_rebuild(force: bool = False) -> bool:
         logger.info("Enqueued AI knowledge index rebuild (reason=%s, force=%s)", reason, force)
         return True
     except Exception as e:
-        logger.warning("Celery enqueue failed (%s); trying synchronous build", e)
+        logger.warning("Celery enqueue failed (%s)", e)
+        # Avoid blocking runserver when Redis/Celery is not running (local dev)
+        if getattr(settings, "DEBUG", False) or os.environ.get("DJANGO_SKIP_KNOWLEDGE_AUTO") == "1":
+            return False
         success, msg = run_build_with_state(force=force)
         return success
 

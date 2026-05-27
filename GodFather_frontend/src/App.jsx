@@ -149,13 +149,13 @@ import {
   AdminCognitionPage,
   AdminReviewPage,
   AdminOpsPage,
+  AdminQuestionsPage,
 } from "./admin/admin-routes";
 import IntroductoryPage from "./pages/IntroductoryPage";
 
 import AgencyDashboard from "./pages/AgencyDashboard";
 import ChatUnlockPopUp from "./pages/ChatUnlockPopUp";
 import UserDashboard from "./pages/UserDashboard";
-import FoundationQuestionScreen from "./pages/FoundationQuestionScreen";
 import ManifestoPage from "./pages/ManifestoPage";
 import ManifestoPage1 from "./pages/ManifestoPage1";
 import ResetPasswordPage from "./pages/ResetPassword";
@@ -170,9 +170,13 @@ import DeepDivePage from "./pages/Deepdivepage";
 import BrandOperatingSystem from "./pages/BrandOperatingSystem";
 import BrandOnboarding from "./pages/BrandOnboarding";
 import WelcomePage from "./pages/WelcomePage";
+import AgencyPendingPage from "./pages/AgencyPendingPage";
 import BrandIntroPage from "./pages/BrandIntroPage";
 import BeforeContinuePage from "./pages/BeforeContinuePage";
 import JourneyPhasesPage from "./pages/JourneyPhasesPage";
+import PhaseIntroPage from "./pages/PhaseIntroPage";
+import PhaseQuestionPage from "./pages/PhaseQuestionPage";
+import PhaseCompletePage from "./pages/PhaseCompletePage";
 // import IdentityCompleteModal from "./pages/IdentityCompleteModal";
 
 function AppContent() {
@@ -183,7 +187,10 @@ function AppContent() {
     "/brand-intro",
     "/before-continue",
     "/journey-phases",
-  ].includes(location.pathname);
+  ].includes(location.pathname) ||
+    location.pathname.startsWith("/phase-intro") ||
+    location.pathname.startsWith("/phase-questions") ||
+    location.pathname.startsWith("/phase-complete");
 
   return (
     <>
@@ -193,6 +200,7 @@ function AppContent() {
 
         {/* Public Routes - Accessible to everyone */}
         <Route path="/intro-ductory" element={<IntroductoryPage />} />
+        <Route path="/agency-pending" element={<AgencyPendingPage />} />
 
         <Route
           path="/signup"
@@ -241,6 +249,30 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <JourneyPhasesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/phase-intro/:phaseId"
+          element={
+            <ProtectedRoute>
+              <PhaseIntroPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/phase-questions/:phaseId"
+          element={
+            <ProtectedRoute>
+              <PhaseQuestionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/phase-complete/:phaseId"
+          element={
+            <ProtectedRoute>
+              <PhaseCompletePage />
             </ProtectedRoute>
           }
         />
@@ -332,11 +364,11 @@ function AppContent() {
 
         <Route
           path="/foundation-questions"
-          element={
-            <ProtectedRoute>
-              <FoundationQuestionScreen />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/phase-questions/1" replace />}
+        />
+        <Route
+          path="/foundation-questions/*"
+          element={<Navigate to="/phase-questions/1" replace />}
         />
 
         <Route
@@ -371,6 +403,7 @@ function AppContent() {
             <Route path="cognition" element={<AdminCognitionPage />} />
             <Route path="review" element={<AdminReviewPage />} />
             <Route path="ops" element={<AdminOpsPage />} />
+            <Route path="questions" element={<AdminQuestionsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/admin/sign-in" replace />} />
         </Route>

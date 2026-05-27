@@ -110,6 +110,7 @@ class Command(BaseCommand):
                     'roles.view', 'roles.create', 'roles.update', 'roles.delete',
                     'permissions.view', 'permissions.create', 'permissions.update', 'permissions.delete',
                     'users.view', 'users.create', 'users.update', 'users.delete',
+                    'agencies.view', 'agencies.create', 'agencies.update', 'agencies.delete',
                 ],
                 'dashboards': ['tasks', 'reviews']  # admin sees all dashboards
             },
@@ -128,7 +129,10 @@ class Command(BaseCommand):
                 'name': 'agency',
                 'description': 'Agency role with review dashboard access',
                 'permissions': [
-                    'users.view'
+                    'users.view',
+                    'sessions.view', 'sessions.create', 'sessions.update',
+                    'agencies.view',
+                    'answers.view', 'answers.create', 'answers.update', 'answers.delete', 'answers.ai_suggest',
                 ],
                 'dashboards': ['reviews']  # reviewer sees only reviews
             },

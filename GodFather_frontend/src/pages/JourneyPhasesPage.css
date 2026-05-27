@@ -106,6 +106,12 @@
 .journey-phase-card.locked {
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(6, 10, 22, 0.65);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.journey-phase-card.locked:hover {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .journey-phase-card.locked.active {
@@ -196,9 +202,16 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.journey-phases-cta:hover {
+.journey-phases-cta:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 14px 48px rgba(142, 229, 255, 0.35);
+}
+
+.journey-phases-cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+  box-shadow: none;
+  background: linear-gradient(90deg, #2a3d6e 0%, #3a4f7a 50%, #4a6086 100%);
 }
 
 @media (max-width: 600px) {

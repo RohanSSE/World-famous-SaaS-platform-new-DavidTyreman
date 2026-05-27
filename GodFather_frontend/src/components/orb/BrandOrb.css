@@ -5,9 +5,12 @@
   justify-content: center;
   margin: 0 auto;
   background: transparent;
-  overflow: visible;
+  overflow: hidden;
+  border-radius: 50%;
   flex-shrink: 0;
   aspect-ratio: 1;
+  -webkit-mask-image: radial-gradient(circle, #000 56%, transparent 64%);
+  mask-image: radial-gradient(circle, #000 56%, transparent 64%);
 }
 
 .brand-orb--lg {
@@ -45,29 +48,31 @@
   height: 88px;
 }
 
-/* Particle ring — cover + circle crop (no side letterbox bars) + screen keys black */
+/* Particle ring — zoom + tight crop to hide black matte */
 .brand-orb__ring {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: unset;
+  left: 50%;
+  top: 50%;
+  width: 138%;
+  height: 138%;
   object-fit: cover;
   object-position: center;
   z-index: 1;
   pointer-events: none;
   border-radius: 50%;
-  clip-path: circle(50% at 50% 50%);
+  clip-path: circle(36% at 50% 50%);
   mix-blend-mode: screen;
-  transform: translateZ(0);
+  transform: translate(-50%, -50%) translateZ(0);
 }
 
-/* Glowing core */
+/* Glowing core — larger vs default particle shell */
 .brand-orb__core {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 40%;
-  height: 40%;
+  width: 52%;
+  height: 52%;
   transform: translate(-50%, -50%);
   z-index: 2;
   border-radius: 50%;

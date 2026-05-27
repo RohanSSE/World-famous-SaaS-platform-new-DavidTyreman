@@ -2,6 +2,27 @@ import api from "./api";
 
 const API_BASE_URL = api.defaults.baseURL;
 
+/** Parse DRF / axios errors into a single user-facing string */
+export function formatApiError(error, fallback = "Request failed") {
+  if (!error) return fallback;
+  const data = error.response?.data;
+  if (typeof data === "string") return data;
+  if (data?.detail) {
+    return typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+  }
+  if (data?.message) return data.message;
+  if (data && typeof data === "object") {
+    const parts = [];
+    for (const [key, val] of Object.entries(data)) {
+      if (Array.isArray(val)) parts.push(`${key}: ${val.join(" ")}`);
+      else if (typeof val === "string") parts.push(`${key}: ${val}`);
+    }
+    if (parts.length) return parts.join(" · ");
+  }
+  if (error.message) return error.message;
+  return fallback;
+}
+
 const authService = {
   // Sign up new user
   signup: async (email, password, confirmPassword, userType) => {
@@ -40,7 +61,12 @@ const authService = {
 
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: "Login failed" };
+      const data = error.response?.data || {};
+      throw {
+        ...data,
+        message: data.detail || data.message || "Login failed",
+        status: error.response?.status,
+      };
     }
   },
 
@@ -390,14 +416,15 @@ const authService = {
   // Create a new session
   createSession: async (payload) => {
     try {
-      const response = await api.post("/sessions/create/", payload);
+      const body = { title: String(payload?.title || "").trim() };
+      const agencyId = payload?.agency != null ? Number(payload.agency) : NaN;
+      if (Number.isFinite(agencyId) && agencyId > 0) {
+        body.agency = agencyId;
+      }
+      const response = await api.post("/sessions/create/", body);
       return response.data;
     } catch (error) {
-      const msg =
-        error.response?.data?.message ||
-        error.response?.data?.detail ||
-        "Failed to create session";
-      throw { message: msg };
+      throw { message: formatApiError(error, "Failed to create session") };
     }
   },
 
@@ -979,7 +1006,7 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
         error?.response?.data?.message ||
         error?.message ||
         "Failed to load agency dashboard";
-      throw new Error(msg);
+      throw { message: msg, status: error.response?.status, detail: msg };
     }
   },
 

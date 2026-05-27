@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // const API_BASE_URL = 'http://20.197.2.65:4000/api';
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+// Default 8001 — port 8000 is often used by Cursor IDE on Windows; override in .env.development
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api';
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,

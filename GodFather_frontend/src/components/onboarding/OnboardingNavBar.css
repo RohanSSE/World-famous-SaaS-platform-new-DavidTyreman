@@ -6,7 +6,8 @@
   max-width: 1120px;
   margin: 0 auto;
   position: relative;
-  z-index: 3;
+  z-index: 30;
+  pointer-events: auto;
 }
 
 .onboarding-pill-btn {
@@ -20,6 +21,9 @@
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
+  position: relative;
+  z-index: 31;
+  pointer-events: auto;
 }
 
 .onboarding-pill-btn:hover {

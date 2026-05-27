@@ -1,61 +1,45 @@
-/** **************************************
-* Fonts: app
-*************************************** */
-@import '@fontsource-variable/dm-sans';
-
-@import '@fontsource/barlow/400.css';
-@import '@fontsource/barlow/500.css';
-@import '@fontsource/barlow/600.css';
-@import '@fontsource/barlow/700.css';
-@import '@fontsource/barlow/800.css';
-
-/** **************************************
-* Plugins
-*************************************** */
-/* scrollbar */
 @import './components/scrollbar/styles.css';
-
-/* chart */
 @import './components/chart/styles.css';
+@import './styles/admin-brand.css';
 
-/** **************************************
-* Baseline
-*************************************** */
-html {
-  height: 100%;
-  -webkit-overflow-scrolling: touch;
+html[data-color-scheme='dark'] {
+  color-scheme: dark;
 }
 
 html,
-html[data-color-scheme='light'] {
-  color-scheme: light;
+body,
+#root {
+  height: 100%;
+  width: 100%;
 }
 
-body,
-#root,
-#root__layout {
-  display: flex;
-  flex: 1 1 auto;
-  min-height: 100%;
-  flex-direction: column;
+body.godfather-admin {
+  margin: 0;
 }
+
+body.godfather-admin #root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
 img {
   max-width: 100%;
   vertical-align: middle;
 }
+
 ul {
   margin: 0;
   padding: 0;
   list-style-type: none;
 }
+
 input[type='number'] {
   -moz-appearance: textfield;
   appearance: none;
 }
-input[type='number']::-webkit-outer-spin-button {
-  margin: 0;
-  -webkit-appearance: none;
-}
+
+input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   margin: 0;
   -webkit-appearance: none;

@@ -43,6 +43,11 @@ const ROUTE_ACTIONS = {
     buttonLabel: 'Next',
     actionText: 'continue to the next question.',
   },
+  '/phase-questions/1': {
+    actions: ['Submit', 'Save', 'Next'],
+    buttonLabel: 'Submit',
+    actionText: 'answer the manifesto question and submit.',
+  },
   '/ChatKickoffPage': {
     actions: ['Save', 'Select a question', 'Send'],
     buttonLabel: 'Save',
@@ -96,7 +101,9 @@ const AssistantAvatar = () => {
   const idleTimerRef = useRef(null);
 
   // Check if current route should show assistant
-  const shouldShow = allowedRoutes.includes(location.pathname);
+  const shouldShow =
+    allowedRoutes.includes(location.pathname) ||
+    location.pathname.startsWith("/phase-questions");
 
   // Reset userClosedRef and time when route changes
   useEffect(() => {

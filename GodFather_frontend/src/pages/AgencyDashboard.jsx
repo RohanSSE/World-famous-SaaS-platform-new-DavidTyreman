@@ -330,7 +330,18 @@ export default function AgencyDashboard() {
         const data = await authService.getAgencyDashboard();
         if (!cancelled) setDashboardData(data);
       } catch (err) {
-        if (!cancelled) setError(err?.message || "Failed to load dashboard");
+        if (!cancelled) {
+          const msg = err?.message || err?.detail || "Failed to load dashboard";
+          const isPending =
+            err?.status === 403 ||
+            err?.code === "agency_pending_approval" ||
+            String(msg).toLowerCase().includes("pending");
+          if (isPending) {
+            navigate("/agency-pending", { replace: true });
+            return;
+          }
+          setError(msg);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

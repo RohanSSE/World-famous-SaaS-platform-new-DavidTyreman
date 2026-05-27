@@ -86,7 +86,12 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
   const getRedirectRoute = (userData) => {
     const roleName = userData?.role_name;
     if (roleName === "agency") return "/agency-dashboard";
-    if (roleName === "client") return "/welcome";
+    if (roleName === "client") {
+      if (typeof localStorage !== "undefined" && localStorage.getItem("sessionId")) {
+        return "/phase-questions/1";
+      }
+      return "/welcome";
+    }
     const roleId = userData?.role;
     if (roleId === 3) return "/agency-dashboard";
     // if (roleId === 2) return "/stepper";
@@ -107,9 +112,19 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
         try {
           // Attempt to log in
           const result = await login(formData.email, formData.password);
-          // Fetch fresh profile to get role details
           const profile = await authService.getProfile();
-          // Redirect based on role
+          const roleName = (profile || result.user)?.role_name;
+          if (
+            roleName === "agency" &&
+            profile?.is_active === false
+          ) {
+            await authService.logout();
+            onClose();
+            navigate("/agency-pending", {
+              state: { email: formData.email },
+            });
+            return;
+          }
           const redirectRoute = getRedirectRoute(
             profile || result.user || auth.user
           );
@@ -120,17 +135,28 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
           }, 500);
         } catch (err) {
           console.error("Login error:", err);
+          const isPending =
+            err.code === "agency_pending_approval" ||
+            err.status === 403 ||
+            String(err.detail || err.message || "")
+              .toLowerCase()
+              .includes("pending");
+          if (isPending) {
+            onClose();
+            navigate("/agency-pending", {
+              state: {
+                email: formData.email,
+                message: err.detail || err.message,
+              },
+            });
+            return;
+          }
           setError(
             err.message ||
               err.error ||
               err.detail ||
               "Login failed. Please check your credentials."
           );
-          // Redirect to introductory page if login fails
-          setTimeout(() => {
-            onClose();
-            navigate("/intro-ductory"); // Replace with your introductory page route
-          }, 500);
         }
       } else {
         try {
@@ -141,7 +167,12 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
             formData.confirmPassword,
             userType
           );
-          setSuccessMessage("Account created successfully! Please log in.");
+          setSuccessMessage(
+            result?.message ||
+              (userType === "agency"
+                ? "Agency registered. An admin must activate your account before you can sign in."
+                : "Account created successfully! Please log in."),
+          );
           // Clear form and switch to login mode after a short delay
           setTimeout(() => {
             setFormData({ email: "", password: "", confirmPassword: "" });

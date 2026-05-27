@@ -1,5 +1,6 @@
 import { varAlpha, createPaletteChannel } from "minimal-shared/utils";
 import { themeConfig } from "../theme-config";
+
 const primary = createPaletteChannel(themeConfig.palette.primary);
 const secondary = createPaletteChannel(themeConfig.palette.secondary);
 const info = createPaletteChannel(themeConfig.palette.info);
@@ -8,32 +9,36 @@ const warning = createPaletteChannel(themeConfig.palette.warning);
 const error = createPaletteChannel(themeConfig.palette.error);
 const common = createPaletteChannel(themeConfig.palette.common);
 const grey = createPaletteChannel(themeConfig.palette.grey);
+
 const text = {
-  light: createPaletteChannel({
-    primary: grey[800],
-    secondary: grey[600],
-    disabled: grey[500]
-  })
+  dark: createPaletteChannel({
+    primary: "#FFFFFF",
+    secondary: "#99A1B8",
+    disabled: "#6B7280",
+  }),
 };
+
 const background = {
-  light: createPaletteChannel({
-    paper: "#FFFFFF",
-    default: grey[100],
-    neutral: grey[200]
-  })
+  dark: createPaletteChannel({
+    paper: "#1A1C3A",
+    default: "#0B0D1F",
+    neutral: "#12132D",
+  }),
 };
-const baseAction = {
-  hover: varAlpha(grey["500Channel"], 0.08),
-  selected: varAlpha(grey["500Channel"], 0.16),
-  focus: varAlpha(grey["500Channel"], 0.24),
-  disabled: varAlpha(grey["500Channel"], 0.8),
-  disabledBackground: varAlpha(grey["500Channel"], 0.24),
-  hoverOpacity: 0.08,
-  disabledOpacity: 0.48
-};
+
 const action = {
-  light: { ...baseAction, active: grey[600] }
+  dark: {
+    hover: varAlpha(primary.mainChannel, 0.1),
+    selected: varAlpha(primary.mainChannel, 0.18),
+    focus: varAlpha(primary.mainChannel, 0.24),
+    disabled: varAlpha(grey["500Channel"], 0.8),
+    disabledBackground: varAlpha(grey["500Channel"], 0.24),
+    hoverOpacity: 0.08,
+    disabledOpacity: 0.48,
+    active: "#86E3FF",
+  },
 };
+
 const basePalette = {
   primary,
   secondary,
@@ -43,20 +48,22 @@ const basePalette = {
   error,
   common,
   grey,
-  divider: varAlpha(grey["500Channel"], 0.2)
+  divider: varAlpha(grey["500Channel"], 0.16),
 };
+
 const palette = {
-  light: {
+  dark: {
     ...basePalette,
-    text: text.light,
-    background: background.light,
-    action: action.light
-  }
+    divider: varAlpha(primary.mainChannel, 0.12),
+    text: text.dark,
+    background: background.dark,
+    action: action.dark,
+  },
 };
+
 export {
   action,
   background,
-  baseAction,
   basePalette,
   common,
   error,
@@ -67,5 +74,5 @@ export {
   secondary,
   success,
   text,
-  warning
+  warning,
 };

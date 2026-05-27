@@ -152,10 +152,12 @@ def review_dashboard(request):
         return Response({"detail": "No access to this dashboard"}, status=403)
     
     user = request.user
-    if not user.agency:
+    from accounts.agency_utils import ensure_agency_for_user
+    agency = user.agency or (ensure_agency_for_user(user) if user.has_role('agency') else None)
+    if not agency:
         return Response({"detail": "Not part of any agency"}, status=403)
 
-    sessions = Session.objects.filter(agency=user.agency)
+    sessions = Session.objects.filter(agency=agency)
     
     sessions_with_feedback = sessions.annotate(
         pending_feedback_count=Count('review_comments', filter=Q(review_comments__is_resolved=False))
@@ -188,8 +190,22 @@ def agency_dashboard(request):
     # Agency users see their agency sessions; admins see all
     if user.is_superuser or user.has_role('admin'):
         sessions = Session.objects.all()
-    elif user.agency:
-        sessions = Session.objects.filter(agency=user.agency)
+    elif user.has_role('agency') or user.agency_id:
+        from accounts.agency_utils import ensure_agency_for_user
+        from accounts.status_utils import is_user_effectively_active
+
+        if user.has_role('agency') and not is_user_effectively_active(user):
+            return Response(
+                {
+                    "detail": "Your agency account is pending admin approval.",
+                    "code": "agency_pending_approval",
+                },
+                status=403,
+            )
+        agency = ensure_agency_for_user(user)
+        if not agency:
+            return Response({"detail": "Not part of any agency"}, status=403)
+        sessions = Session.objects.filter(agency=agency)
     else:
         return Response({"detail": "Not part of any agency"}, status=403)
 
@@ -576,9 +592,15 @@ def session_list(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_create(request):
-    if not request.user.has_perm_codename('sessions.create'):
+    role_name = getattr(request.user.role, 'name', None) if request.user.role else None
+    can_create = (
+        request.user.is_superuser
+        or request.user.has_perm_codename('sessions.create')
+        or role_name in ('client', 'agency')
+    )
+    if not can_create:
         return Response({"detail": "No permission"}, status=403)
-    
+
     serializer = SessionCreateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     
@@ -1193,6 +1215,107 @@ def question_list(request):
 
 
 
+
+
+QUESTION_ADMIN_COUNTS = {
+    1: 8,   # Phase 1: 8 questions
+    2: 12,  # Phase 2: 12 questions
+    3: 10,  # Phase 3: 10 questions
+}
+
+
+def _is_question_admin(user):
+    # Admin users: Django staff/superuser or app role name containing "admin"
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "is_superuser", False) or getattr(user, "is_staff", False):
+        return True
+    role_name = (getattr(getattr(user, "role", None), "name", None) or "").lower()
+    return "admin" in role_name
+
+
+@swagger_auto_schema(
+    method="post",
+    operation_description="Admin: bulk replace questions for stages 1..3",
+    responses={200: "Questions updated", 400: "Bad input", 403: "Forbidden"},
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, HasRolePermission])
+def admin_questions_bulk_set(request):
+    if not _is_question_admin(request.user):
+        return Response(
+            {"detail": "You do not have permission to modify questions."},
+            status=403,
+        )
+
+    stages_payload = request.data.get("stages") or {}
+    if not isinstance(stages_payload, dict):
+        return Response(
+            {"detail": "`stages` must be an object like {\"1\": [...], \"2\": [...]}."},
+            status=400,
+        )
+
+    # Validate required stage lists exactly
+    for stage_num, required_count in QUESTION_ADMIN_COUNTS.items():
+        stage_key = str(stage_num)
+        texts = stages_payload.get(stage_key) if stage_key in stages_payload else stages_payload.get(stage_num)
+        if texts is None:
+            return Response(
+                {"detail": f"Missing questions for stage {stage_num}."},
+                status=400,
+            )
+        if not isinstance(texts, list):
+            return Response(
+                {"detail": f"Stage {stage_num} must be a list of strings."},
+                status=400,
+            )
+        if len(texts) != required_count:
+            return Response(
+                {"detail": f"Stage {stage_num} requires exactly {required_count} questions, got {len(texts)}."},
+                status=400,
+            )
+
+        for i, t in enumerate(texts):
+            if t is None or not str(t).strip():
+                return Response(
+                    {"detail": f"Stage {stage_num} question #{i + 1} cannot be empty."},
+                    status=400,
+                )
+
+    from django.db import transaction
+
+    with transaction.atomic():
+        created = {}
+        for stage_num in sorted(QUESTION_ADMIN_COUNTS.keys()):
+            Question.objects.filter(stage=stage_num).delete()
+
+            texts = (
+                stages_payload.get(str(stage_num))
+                if str(stage_num) in stages_payload
+                else stages_payload.get(stage_num)
+            )
+
+            new_qs = [
+                Question(
+                    stage=stage_num,
+                    order=idx + 1,
+                    text=str(text).strip(),
+                    category="other",
+                    is_required=True,
+                    is_active=True,
+                    placeholder=None,
+                    help_text=None,
+                )
+                for idx, text in enumerate(texts)
+            ]
+
+            created_stage = Question.objects.bulk_create(new_qs)
+            created[str(stage_num)] = QuestionSerializer(created_stage, many=True).data
+
+    return Response(
+        {"detail": "Questions updated successfully.", "created": created},
+        status=200,
+    )
 
 
 @swagger_auto_schema(

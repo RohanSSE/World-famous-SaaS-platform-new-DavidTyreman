@@ -141,7 +141,15 @@ class Agency(models.Model):
     description = models.TextField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(
+        default=False,
+        help_text="Inactive until an admin activates the agency.",
+    )
+    approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Set when an admin approves this agency.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

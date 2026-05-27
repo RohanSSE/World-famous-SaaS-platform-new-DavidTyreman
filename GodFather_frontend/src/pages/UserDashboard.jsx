@@ -469,7 +469,7 @@ export default function UserDashboard() {
       if (sessionObj.id) localStorage.setItem("sessionId", String(sessionObj.id));
       toast.success("Session created successfully!");
       setShowFoundationModal(false);
-      navigate("/foundation-questions");
+      navigate("/phase-questions/1");
     } catch (err) {
       setModalError(err.message || "Failed to create session.");
       toast.error(err.message);
@@ -489,7 +489,7 @@ export default function UserDashboard() {
   const handleContinueSession = (session) => {
     localStorage.setItem("session", JSON.stringify(session));
     if (session.id) localStorage.setItem("sessionId", String(session.id));
-    navigate("/foundation-questions");
+    navigate("/phase-questions/1");
   };
 
   const handleToggleLock = async (session) => {
@@ -589,7 +589,7 @@ export default function UserDashboard() {
           <div className="ud-redirect-card" onClick={() => {
             const s = sessions[0];
             if (s) { localStorage.setItem("session", JSON.stringify(s)); localStorage.setItem("sessionId", String(s.id)); }
-            navigate("/foundation-questions");
+            navigate("/phase-questions/1");
           }}>
             <Layers size={32} />
             <h3>Foundation Questions</h3>

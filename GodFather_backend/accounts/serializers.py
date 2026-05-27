@@ -117,16 +117,20 @@ class AgencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Agency
         fields = ['id', 'name', 'owner', 'owner_email', 'description', 'website', 
-                  'phone_number', 'is_active', 'members_count', 'sessions_count', 
+                  'phone_number', 'is_active', 'approved_at', 'members_count', 'sessions_count', 
                   'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'approved_at', 'created_at', 'updated_at']
     
     def get_members_count(self, obj):
-        return obj.users.filter(is_active=True).count()
+        return obj.users.filter(role__name="client").count()
     
     def get_sessions_count(self, obj):
         return obj.assigned_sessions.count()
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["is_active"] = bool(instance.is_active and instance.approved_at)
+        return data
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -136,24 +140,26 @@ class UserSerializer(serializers.ModelSerializer):
     # agency_details = AgencySerializer(source='agency', read_only=True)
     permissions = serializers.SerializerMethodField()
     role_name = serializers.SerializerMethodField()
+    agency_name = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
-            'id', 
-            'email', 
+            'id',
+            'email',
             'role',
             'role_name',
-            # 'role_details',
-            'agency',  # ADD THIS
-            # 'agency_details',  # ADD THIS
+            'agency',
+            'agency_name',
             'phone_number',
             'is_active',
+            'is_staff',
+            'is_superuser',
             'permissions',
-            'created_at', 
+            'created_at',
             'updated_at'
         ]
-        read_only_fields = ['id', 'email', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'email', 'is_staff', 'is_superuser', 'created_at', 'updated_at']
 
     def get_permissions(self, obj):
         """Return user's permissions through their role"""
@@ -161,6 +167,17 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_role_name(self, obj):
         return obj.role.name if obj.role else None
+
+    def get_agency_name(self, obj):
+        return obj.agency.name if obj.agency else None
+
+    def to_representation(self, instance):
+        from .status_utils import is_user_effectively_active
+
+        data = super().to_representation(instance)
+        if self.context.get("effective_status", True):
+            data["is_active"] = is_user_effectively_active(instance)
+        return data
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -225,14 +242,21 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
         email = validated_data.pop('email')
-        
-        # Delegate to custom manager (auto-sets role based on agency)
+        user_type = (self.context.get("user_type") or "user").lower()
+        pending_agency = user_type == "agency"
+
         user = User.objects.create_user(
             email=email,
             password=password,
-            **validated_data  # Includes agency, phone_number, role (if manually provided, but manager will overwrite based on agency)
+            is_active=False if pending_agency else True,
+            **validated_data,
         )
-        
+
+        role = self.context.get("role")
+        if role is not None:
+            user.role = role
+            user.save(update_fields=["role"])
+
         return user
 
 
