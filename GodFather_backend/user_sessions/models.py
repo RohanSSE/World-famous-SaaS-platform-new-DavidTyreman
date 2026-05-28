@@ -383,7 +383,9 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import make_password, check_password
-from pgvector.django import HnswIndex, VectorField
+
+if getattr(settings, "PGVECTOR_ENABLED", False):
+    from pgvector.django import HnswIndex, VectorField
 
 from utils.ai_knowledge_config import EMBEDDING_DIMS
 from accounts.models import Agency
@@ -960,7 +962,10 @@ class BrandMemory(models.Model):
     content = models.TextField()
     value = models.JSONField(default=dict, blank=True)
     confidence = models.FloatField(default=0.5)
-    embedding = VectorField(dimensions=EMBEDDING_DIMS, null=True, blank=True)
+    if getattr(settings, "PGVECTOR_ENABLED", False):
+        embedding = VectorField(dimensions=EMBEDDING_DIMS, null=True, blank=True)
+    else:
+        embedding = models.JSONField(default=list, null=True, blank=True)
     agent_id = models.CharField(max_length=50, blank=True, default="")
     importance_score = models.FloatField(default=0.5)
     weight = models.FloatField(default=1.0)
@@ -981,15 +986,16 @@ class BrandMemory(models.Model):
     class Meta:
         unique_together = [("session", "key")]
         ordering = ["-updated_at"]
-        indexes = [
-            HnswIndex(
-                name="brand_memory_embedding_idx",
-                fields=["embedding"],
-                m=16,
-                ef_construction=64,
-                opclasses=["vector_cosine_ops"],
-            ),
-        ]
+        if getattr(settings, "PGVECTOR_ENABLED", False):
+            indexes = [
+                HnswIndex(
+                    name="brand_memory_embedding_idx",
+                    fields=["embedding"],
+                    m=16,
+                    ef_construction=64,
+                    opclasses=["vector_cosine_ops"],
+                ),
+            ]
 
     def __str__(self):
         return f"{self.memory_type}:{self.key[:40]}"

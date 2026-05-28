@@ -1,6 +1,14 @@
-import pgvector.django.indexes
-import pgvector.django.vector
+import os
 from django.db import migrations, models
+
+
+def _use_pgvector() -> bool:
+    return os.environ.get("PGVECTOR_ENABLED", "false").lower() in ("1", "true", "yes")
+
+
+if _use_pgvector():
+    import pgvector.django.indexes
+    import pgvector.django.vector
 
 
 class Migration(migrations.Migration):
@@ -18,13 +26,18 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="brandmemory",
             name="embedding",
-            field=pgvector.django.vector.VectorField(blank=True, dimensions=1536, null=True),
+            field=(
+                pgvector.django.vector.VectorField(blank=True, dimensions=1536, null=True)
+                if _use_pgvector()
+                else models.JSONField(blank=True, default=list, null=True)
+            ),
         ),
         migrations.AddField(
             model_name="brandmemory",
             name="importance_score",
             field=models.FloatField(default=0.5),
         ),
+    ] + ([
         migrations.AddIndex(
             model_name="brandmemory",
             index=pgvector.django.indexes.HnswIndex(
@@ -35,4 +48,4 @@ class Migration(migrations.Migration):
                 opclasses=["vector_cosine_ops"],
             ),
         ),
-    ]
+    ] if _use_pgvector() else [])

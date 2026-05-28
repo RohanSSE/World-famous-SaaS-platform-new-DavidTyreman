@@ -143,8 +143,9 @@ DATABASES = {
     }
 }
 
-# Phase 14 — PGVector semantic memory (ES remains for keyword/filter)
-PGVECTOR_ENABLED = os.environ.get("PGVECTOR_ENABLED", "true").lower() in ("1", "true", "yes")
+# Phase 14 — PGVector semantic memory (ES remains for keyword/filter).
+# Default to disabled so local/dev runs work in Elasticsearch-only mode.
+PGVECTOR_ENABLED = os.environ.get("PGVECTOR_ENABLED", "false").lower() in ("1", "true", "yes")
 
 
 # Password validation

@@ -15,7 +15,11 @@ from typing import Any, Dict, List, Optional
 from django.conf import settings
 from django.db.models import F
 from django.utils import timezone
-from pgvector.django import CosineDistance
+
+try:
+    from pgvector.django import CosineDistance
+except Exception:  # pragma: no cover - optional dependency in ES-only mode
+    CosineDistance = None
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +36,7 @@ AGENT_MEMORY_TYPES = {
 
 
 def pgvector_enabled() -> bool:
-    return bool(getattr(settings, "PGVECTOR_ENABLED", True))
+    return bool(getattr(settings, "PGVECTOR_ENABLED", False)) and CosineDistance is not None
 
 
 def _row_to_chunk(row, distance: float) -> Dict[str, Any]:
