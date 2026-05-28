@@ -1,0 +1,115 @@
+.bbr-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at 26% 20%, rgba(85, 120, 255, 0.22), transparent 34%),
+    linear-gradient(135deg, #030826 0%, #04063f 100%);
+  color: #eaf1ff;
+  position: relative;
+  overflow: hidden;
+}
+
+.bbr-topbar {
+  width: 100%;
+}
+
+.bbr-logo { height: 24px; }
+.bbr-top-right { display: flex; gap: 8px; align-items: center; }
+.bbr-chip {
+  border: 1px solid rgba(183, 211, 255, 0.45);
+  border-radius: 999px;
+  background: #f8fbff;
+  color: #3d5bd5;
+  font-size: 10px;
+  padding: 3px 12px;
+}
+.bbr-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: #3f63ec;
+  color: white;
+  font-size: 11px;
+}
+
+.bbr-main {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 26px 20px 56px;
+  text-align: center;
+}
+
+.bbr-back {
+  position: fixed;
+  left: 18px;
+  top: 84px;
+  border: 1px solid rgba(141, 170, 255, 0.45);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 11px;
+  color: #dae9ff;
+  background: rgba(82, 104, 200, 0.26);
+  z-index: 5;
+  cursor: pointer;
+}
+
+.bbr-main h1 {
+  margin: 4px 0 8px;
+  font-size: 46px;
+}
+
+.bbr-main > p {
+  max-width: 760px;
+  margin: 0 auto;
+  color: rgba(215, 231, 255, 0.92);
+  line-height: 1.45;
+}
+
+.bbr-cards {
+  margin: 22px auto 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  max-width: 720px;
+}
+
+.bbr-card {
+  text-align: left;
+  border: 1px solid rgba(132, 168, 255, 0.55);
+  border-radius: 10px;
+  padding: 14px;
+  background: rgba(13, 24, 78, 0.52);
+}
+.bbr-card h3 { margin: 0 0 8px; font-size: 16px; }
+.bbr-card ul { margin: 0; padding-left: 16px; line-height: 1.35; }
+.bbr-card p { margin: 10px 0 0; color: rgba(215, 231, 255, 0.9); }
+
+.bbr-foot {
+  margin: 14px auto 16px !important;
+  color: rgba(215, 231, 255, 0.86);
+}
+
+.bbr-cta {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 34px;
+  color: #fff;
+  font-weight: 600;
+  background: linear-gradient(90deg, #3f63ec 0%, #7ce7ff 100%);
+  box-shadow: 0 10px 24px rgba(63, 99, 236, 0.38);
+}
+
+.bbr-orb {
+  position: fixed;
+  right: 160px;
+  bottom: 180px;
+  width: 84px;
+  height: 84px;
+}
+
+.bbr-session-tag {
+  position: fixed;
+  right: 150px;
+  top: 14px;
+  font-size: 11px;
+  color: rgba(189, 216, 255, 0.82);
+}

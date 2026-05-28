@@ -1232,11 +1232,14 @@
 //   );
 // }
 
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import authService from "../services/authService";
 import "../components/BrandSummaryPage.css";
-import ChatNavbar from "./ChatNavbar";
+import logo from "../assets/mask-group.png";
+import BrandOrb from "../components/orb/BrandOrb";
+import OrbPresence from "../components/orb/OrbPresence";
+import { useOrbPresence } from "../context/OrbPresenceContext";
 
 // Set to false to use real API (generateFoundationSummary); true for dummy data
 const USE_DUMMY_DATA = false;
@@ -1521,19 +1524,25 @@ function RenderElement({ el, dropCap = false }) {
 
 export default function BrandSummaryPage() {
   const navigate = useNavigate();
-  const [stage, setStage] = useState("cover");
-  const [generating, setGenerating] = useState(true);
+  const location = useLocation();
+  const { setOrbThinking, setOrbSpeaking, setOrbIdle } = useOrbPresence();
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
   const [brandName, setBrandName] = useState("Your Brand");
-  const [leftElements, setLeftElements] = useState([]);
-  const [rightElements, setRightElements] = useState([]);
+  const [elements, setElements] = useState([]);
+  const [brandBookPages, setBrandBookPages] = useState([]);
+  const [sidebarTitle, setSidebarTitle] = useState("Brand Book");
+  const [sessionId, setSessionId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(0);
   // const [rawApiResponse, setRawApiResponse] = useState(null);
   // const [showRawResponse, setShowRawResponse] = useState(false);
-  const [contentDensity, setContentDensity] = useState("normal"); // "compact" | "normal" | "spacious"
   const [heading, setHeading] = useState(null);
   const [subheading, setSubheading] = useState(null);
   const [title, setTitle] = useState(null);
+  const [orbInsight, setOrbInsight] = useState("");
+  const [orbInsightLoading, setOrbInsightLoading] = useState(false);
+  const insightCacheRef = useRef({});
 
   useEffect(() => {
     document.body.style.overflow = "auto";
@@ -1545,26 +1554,39 @@ export default function BrandSummaryPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        setGenerating(true);
         let raw = "";
         if (USE_DUMMY_DATA) {
-          await new Promise((r) => setTimeout(r, 1800));
+          await new Promise((r) => setTimeout(r, 900));
           raw = DUMMY_SUMMARY;
         } else {
-          let sessionId = localStorage.getItem("sessionId");
-          if (!sessionId) {
+          let sid = localStorage.getItem("sessionId");
+          if (!sid) {
             try {
               const sessionJson = localStorage.getItem("session");
               const session = sessionJson ? JSON.parse(sessionJson) : null;
-              sessionId = session?.id ?? session?.pk ?? null;
+              sid = session?.id ?? session?.pk ?? null;
             } catch (_) {}
           }
-          if (!sessionId) {
+          if (!sid) {
             setError("No session found. Complete foundation questions or start a session first.");
             setLoading(false);
             return;
           }
-          const resp = await authService.generateFoundationSummary(sessionId);
+          setSessionId(String(sid));
+          let resp = null;
+          try {
+            // Final brand book should use all 30 answers.
+            resp = await authService.generateSessionSummary(sid);
+          } catch {
+            // Backward fallback when full summary endpoint is unavailable.
+            resp = await authService.generateFoundationSummary(sid);
+          }
+          const serverBook = Array.isArray(resp?.brand_book?.pages) ? resp.brand_book.pages : [];
+          if (serverBook.length > 0) {
+            setBrandBookPages(serverBook);
+            setSidebarTitle(resp?.brand_book?.sidebar_title || "Brand Book");
+            setBrandName(resp?.brand_book?.brand_name || "Your Brand");
+          }
           // setRawApiResponse(resp);
           let parsed;
           try {
@@ -1577,14 +1599,7 @@ export default function BrandSummaryPage() {
           setHeading(h || resp?.heading || resp?.headline || null);
           setSubheading(sh || resp?.subheading || resp?.sub_headline || resp?.subtitle || null);
           setTitle(t || resp?.title || null);
-          const mid = Math.ceil(elements.length / 2);
-          setLeftElements(elements.slice(0, mid));
-          setRightElements(elements.slice(mid));
-          const words = countWords(elements);
-          if (words > 450) setContentDensity("compact");
-          else if (words < 180) setContentDensity("spacious");
-          else setContentDensity("normal");
-          setGenerating(false);
+          setElements(elements);
           return;
         }
         const { brandName: bn, heading: h, subheading: sh, title: t, elements } = parseSummary(raw);
@@ -1592,16 +1607,8 @@ export default function BrandSummaryPage() {
         setHeading(h);
         setSubheading(sh);
         setTitle(t);
-        const mid = Math.ceil(elements.length / 2);
-        setLeftElements(elements.slice(0, mid));
-        setRightElements(elements.slice(mid));
-        const words = countWords(elements);
-        if (words > 450) setContentDensity("compact");
-        else if (words < 180) setContentDensity("spacious");
-        else setContentDensity("normal");
-        setGenerating(false);
+        setElements(elements);
       } catch (e) {
-        setGenerating(false);
         console.error("Brand summary load error:", e);
         const message =
           e?.response?.data?.detail ||
@@ -1617,15 +1624,194 @@ export default function BrandSummaryPage() {
     load();
   }, []);
 
-  const handleOpen = () => {
-    if (generating) return;
-    setStage("opening");
-    setTimeout(() => setStage("spread"), 700);
+  const pages = useMemo(() => {
+    if (brandBookPages.length > 0) {
+      return brandBookPages;
+    }
+    const output = [];
+    let bucket = [];
+    const maxPerPage = 8;
+    elements.forEach((el) => {
+      const isBreakCandidate = el.type === "heading" || el.type === "subsection";
+      if (bucket.length >= maxPerPage || (isBreakCandidate && bucket.length >= maxPerPage - 2)) {
+        output.push(bucket);
+        bucket = [];
+      }
+      bucket.push(el);
+    });
+    if (bucket.length > 0) output.push(bucket);
+    return output.length > 0 ? output : [[]];
+  }, [elements]);
+
+  useEffect(() => {
+    if (currentPage > pages.length - 1) {
+      setCurrentPage(0);
+    }
+  }, [currentPage, pages.length]);
+
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const resolveExportSessionId = async () => {
+        const sid = sessionId || localStorage.getItem("sessionId");
+        let sessions = [];
+        try {
+          sessions = await authService.getSessions();
+        } catch {
+          sessions = [];
+        }
+
+        const normalized = Array.isArray(sessions) ? sessions : [];
+        const sidExists = sid && normalized.some((s) => String(s.id ?? s.pk) === String(sid));
+        if (sid && sidExists) return String(sid);
+
+        const preferred =
+          normalized.find((s) => s.status === "in_progress") ||
+          normalized.find((s) => s.status === "draft") ||
+          normalized.find((s) => s.status === "completed") ||
+          normalized[0];
+
+        const resolved = preferred ? String(preferred.id ?? preferred.pk ?? "") : "";
+        if (resolved) {
+          setSessionId(resolved);
+          localStorage.setItem("sessionId", resolved);
+        }
+        return resolved;
+      };
+
+      const exportSid = await resolveExportSessionId();
+      if (!exportSid) {
+        throw new Error("No valid session found for export");
+      }
+
+      await authService.downloadBrandSummaryExport(exportSid, {
+        brand_book: {
+          sidebar_title: sidebarTitle,
+          brand_name: brandName,
+          pages: brandBookPages.length > 0 ? brandBookPages : [],
+        },
+        summary: {
+          heading: heading || title || "Brand Overview",
+          sub_heading: subheading || "",
+          sections: elements.map((el) => ({
+            title: el.type === "heading" || el.type === "subsection" ? el.text : "",
+            content: el.type === "body" || el.type === "bullet" || el.type === "numbered" ? el.text : "",
+          })),
+        },
+      });
+    } catch (err) {
+      const msg = err?.message || "Export failed";
+      setError(msg);
+    } finally {
+      setExporting(false);
+    }
   };
 
-  const handleClose = () => {
-    setStage("closing");
-    setTimeout(() => setStage("end"), 700);
+  const userInitial = (() => {
+    try {
+      const auth = localStorage.getItem("auth");
+      const parsed = auth ? JSON.parse(auth) : null;
+      return (parsed?.user?.name || parsed?.user?.email || "A").charAt(0).toUpperCase();
+    } catch {
+      return "A";
+    }
+  })();
+
+  const activePage = pages[currentPage] || {};
+  const activeElements = activePage?.elements || [];
+  const totalPages = pages.length;
+  const words = countWords(elements);
+  const contentDensity = words > 450 ? "compact" : words < 180 ? "spacious" : "normal";
+
+  const goPrev = () => setCurrentPage((p) => Math.max(0, p - 1));
+  const goNext = () => setCurrentPage((p) => Math.min(totalPages - 1, p + 1));
+
+  useEffect(() => {
+    const requestedPage = Number(location.state?.page);
+    if (Number.isFinite(requestedPage) && requestedPage >= 0) {
+      setCurrentPage(Math.min(requestedPage, Math.max(0, totalPages - 1)));
+    }
+  }, [location.state, totalPages]);
+
+  const pageHasOverview = Array.isArray(activePage?.overview_fields) && activePage.overview_fields.length > 0;
+  const renderMetaFields = pageHasOverview || currentPage === 0;
+
+  const getMeta = (label) => {
+    const source = elements.find(
+      (el) => el.type === "heading" && String(el.text || "").toLowerCase().includes(label.toLowerCase()),
+    );
+    if (!source) return "Not specified";
+    const idx = elements.findIndex((x) => x.key === source.key);
+    const next = elements[idx + 1];
+    return next?.text || "Not specified";
+  };
+
+  const showHeadingInsight = async (headingText, contentText = "") => {
+    const key = `${currentPage}::${headingText}::${contentText.slice(0, 120)}`;
+    if (insightCacheRef.current[key]) {
+      setOrbInsight(insightCacheRef.current[key]);
+      setOrbSpeaking();
+      return;
+    }
+    if (!sessionId) return;
+    setOrbInsightLoading(true);
+    setOrbThinking("Reading this section...");
+    try {
+      const res = await authService.getBrandBookHeadingInsight(sessionId, {
+        heading: headingText,
+        content: contentText,
+        page_id: activePage?.id || "",
+      });
+      const toEnglishInsight = (heading, content, serverMsg = "") => {
+        const h = String(heading || "").toLowerCase();
+        const c = String(content || "").trim();
+        const first = c ? `${c.split(".")[0].trim()}.` : "";
+        if (h.includes("overview")) {
+          return `This section gives a high-level brand blueprint: identity, category position, and core purpose.${first ? ` Key insight: ${first}` : ""}`;
+        }
+        if (h.includes("dna")) {
+          return `This section reveals your brand's core traits that shape tone, behavior, and decisions.${first ? ` Key insight: ${first}` : ""}`;
+        }
+        if (h.includes("promise")) {
+          return `This heading clarifies the consistent outcome and experience customers should expect.${first ? ` Key insight: ${first}` : ""}`;
+        }
+        if (h.includes("emotional")) {
+          return `This section highlights the emotional before/after transformation for customers.${first ? ` Key insight: ${first}` : ""}`;
+        }
+        if (h.includes("differentiation")) {
+          return `This point explains your unique market edge and why your brand stands apart.${first ? ` Key insight: ${first}` : ""}`;
+        }
+        if (h.includes("style") || h.includes("tone") || h.includes("visual")) {
+          return `This section decodes brand expression: voice, visual mood, and design direction.${first ? ` Key insight: ${first}` : ""}`;
+        }
+        if (h.includes("tagline")) {
+          return `This section provides concise messaging options that make the brand memorable.${first ? ` Key insight: ${first}` : ""}`;
+        }
+        const s = String(serverMsg || "").trim();
+        const hasHinglishCue = /\b(ka|ki|se|hai|aur|yahaan|yahan|samajh|aap|milta|dikhta|kyu|kya)\b/i.test(s);
+        if (!s || hasHinglishCue) {
+          return `This heading explains a focused strategic angle that can guide execution decisions.${first ? ` Key insight: ${first}` : ""}`;
+        }
+        return s;
+      };
+
+      const msg = toEnglishInsight(headingText, contentText, res?.message || "");
+      if (msg) {
+        insightCacheRef.current[key] = msg;
+        setOrbInsight(msg);
+        setOrbSpeaking();
+      }
+    } catch {
+      /* non-fatal */
+    } finally {
+      setOrbInsightLoading(false);
+    }
+  };
+
+  const clearHeadingInsight = () => {
+    setOrbInsight("");
+    setOrbIdle();
   };
 
   if (loading) {
@@ -1649,138 +1835,248 @@ export default function BrandSummaryPage() {
   }
 
   return (
-    <>
-    <ChatNavbar showSaveButton={true} showDownloadButton={true} />
-    <div className="bsp-wrapper"> 
-      <div className="bsp-stage">   
-        {/* ── COVER: single page centered ── */}
-        {(stage === "cover" || stage === "opening") && (
-          <div
-            className={`bsp-single-page bsp-cover ${
-              stage === "opening" ? "bsp-anim-open" : ""
-            }`}
-          >
-            <div className="bsp-cover-body">
-              <span className="bsp-ornament">✦</span>
-              <h1 className="bsp-cover-title">Brand Summary</h1>
-              <h2 className="bsp-cover-brand">{brandName}</h2>
-              {/* <p className="bsp-cover-tagline">Your Brand at a Glance</p> */}
-              {generating ? (
-                <div className="bsp-loading-row">
-                  <div className="bsp-spinner bsp-spinner-sm" />
-                  <span className="bsp-loading-label">Generating your summary…</span>
-                </div>
-              ) : (
-                <button className="bsp-btn-primary" onClick={handleOpen}>
-                  Click Here
-                </button>
-              )}
-            </div>
-            <div className="bsp-corner bsp-corner-tl" />
-            <div className="bsp-corner bsp-corner-br" />
-          </div>
-        )}
-
-        {/* ── SPREAD: double-page (2× width of cover) ── */}
-        {(stage === "spread" || stage === "closing") && (
-          <div
-            className={`bsp-spread bsp-density-${contentDensity} ${
-              stage === "spread" ? "bsp-anim-spread-in" : ""
-            }`}
-          >
-            {/* Left content page */}
-            <div className="bsp-page bsp-page-left">
-              <div className={`bsp-page-inner bsp-page-inner-${contentDensity}`}>
-                {title && (
-                  <h2 className="bsp-main-title">{title}</h2>
-                )}
-                {heading && (
-                  <h3 className="bsp-main-heading">{heading}</h3>
-                )}
-                {subheading && (
-                  <h4 className="bsp-main-subheading">{subheading}</h4>
-                )}
-                {leftElements.map((el, idx) => {
-                  const isFirstBody = el.type === "body" && leftElements.findIndex((e) => e.type === "body") === idx;
-                  return <RenderElement key={el.key} el={el} dropCap={isFirstBody} />;
-                })}
-              </div>
-              <span className="bsp-page-num">2</span>
-              <div className="bsp-spine-line" />
-            </div>
-
-            {/* Right content page — click to go to end */}
-            <div
-              className={`bsp-page bsp-page-right ${
-                stage === "closing" ? "bsp-anim-close" : ""
-              }`}
-              onClick={stage === "spread" ? handleClose : undefined}
-            >
-              <div className={`bsp-page-inner bsp-page-inner-${contentDensity}`}>
-                {rightElements.map((el, idx) => {
-                  const isFirstBody = el.type === "body" && rightElements.findIndex((e) => e.type === "body") === idx;
-                  return <RenderElement key={el.key} el={el} dropCap={isFirstBody} />;
-                })}
-              </div>
-              <span className="bsp-page-num bsp-num-right">3</span>
-            </div>
-          </div>
-        )}
-
-        {/* ── END: single page centered ── */}
-        {stage === "end" && (
-          <div className="bsp-single-page bsp-end bsp-anim-end-in">
-            <div className="bsp-end-body">
-              <span className="bsp-ornament">✦</span>
-              <h2 className="bsp-end-title">End of Summary</h2>
-              <p className="bsp-end-msg">Your brand foundation is ready</p>
-              <div className="bsp-end-buttons">
-                <button
-                  type="button"
-                  className="bsp-btn-secondary"
-                  onClick={() => setStage("spread")}
-                >
-                  View Again
-                </button>
-                <button
-                  className="bsp-btn-primary"
-                  onClick={() => navigate("/ChatKickoffPage")}
-                >
-                  Continue to chat
-                </button>
-              </div>
-            </div>
-            <div className="bsp-end-footer">The End</div>
-            <div className="bsp-corner bsp-corner-tl" />
-            <div className="bsp-corner bsp-corner-br" />
-          </div>
-        )}
-
-      </div>
-
-      {stage === "spread" && (
-        <p className="bsp-hint-text">Click the right page to continue →</p>
-      )}
-
-      {/* Raw API response (for debugging / inspection) */}
-      {/* {rawApiResponse != null && (
-        <div className="bsp-raw-response">
+    <div className="bsp-book-screen">
+      <header className="bsp-book-topbar">
+        <img src={logo} alt="The Godfather" className="bsp-book-logo" />
+        <div className="bsp-book-top-actions">
           <button
             type="button"
-            className="bsp-raw-toggle"
-            onClick={() => setShowRawResponse((s) => !s)}
+            className="bsp-export-btn"
+            disabled={exporting || !sessionId}
+            onClick={handleExport}
           >
-            {showRawResponse ? "Hide" : "View"} raw API response
+            {exporting ? "Exporting..." : "Export"}
           </button>
-          {showRawResponse && (
-            <pre className="bsp-raw-pre">
-              {JSON.stringify(rawApiResponse, null, 2)}
-            </pre>
-          )}
+          <button type="button" className="bsp-avatar-btn" aria-label="Profile">
+            {userInitial}
+          </button>
         </div>
-      )} */}
+      </header>
 
+      <div className="bsp-book-frame">
+        <aside className="bsp-book-rail">
+          <button type="button" className="bsp-back-btn" onClick={() => navigate(-1)}>
+            Back
+          </button>
+          <div className="bsp-rail-title-wrap">
+            <span className="bsp-rail-watermark">{sidebarTitle}</span>
+            <span className="bsp-rail-title">{sidebarTitle}</span>
+          </div>
+        </aside>
+
+        <main className="bsp-book-content">
+          {currentPage === totalPages - 1 && activePage?.cta_label && (
+            <div className="bsp-top-cta-wrap">
+              <button
+                type="button"
+                className="bsp-top-cta-btn"
+                onClick={() => navigate("/brand-book-ready")}
+              >
+                {activePage.cta_label}
+              </button>
+            </div>
+          )}
+
+          {renderMetaFields && (
+            <section className="bsp-overview">
+              <h2>{activePage?.title || "Brand Overview"}</h2>
+              <div className="bsp-meta-grid">
+                {(activePage?.overview_fields || [
+                  { label: "Brand Name", value: brandName || "Example Brand" },
+                  { label: "Industry/Category", value: getMeta("industry") },
+                  { label: "Core Belief (1-line Purpose)", value: getMeta("belief") },
+                ]).map((field, idx) => (
+                  <div
+                    key={`meta-${idx}`}
+                    onMouseEnter={() => showHeadingInsight(field.label, field.value)}
+                    onMouseLeave={clearHeadingInsight}
+                  >
+                    <p className="bsp-meta-label">{field.label}</p>
+                    <p className="bsp-meta-value">{field.value}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className={`bsp-content-flow bsp-density-${contentDensity}`}>
+            {currentPage === 0 && !activePage?.title && title && (
+              <h3
+                className="bsp-main-title"
+                onMouseEnter={() => showHeadingInsight(title, subheading || "")}
+                onMouseLeave={clearHeadingInsight}
+              >
+                {title}
+              </h3>
+            )}
+            {currentPage === 0 && !activePage?.title && heading && (
+              <h4
+                className="bsp-main-heading"
+                onMouseEnter={() => showHeadingInsight(heading, subheading || "")}
+                onMouseLeave={clearHeadingInsight}
+              >
+                {heading}
+              </h4>
+            )}
+            {currentPage === 0 && !activePage?.title && subheading && (
+              <h5
+                className="bsp-main-subheading"
+                onMouseEnter={() => showHeadingInsight(subheading, "")}
+                onMouseLeave={clearHeadingInsight}
+              >
+                {subheading}
+              </h5>
+            )}
+
+            {Array.isArray(activePage?.sections) &&
+              activePage.sections.map((sec, idx) => (
+                <article key={`section-${idx}`} className="bsp-structured-section">
+                  <h3
+                    className="bsp-section-title"
+                    onMouseEnter={() => showHeadingInsight(sec.title, sec.content)}
+                    onMouseLeave={clearHeadingInsight}
+                  >
+                    {sec.title}
+                  </h3>
+                  <p className="bsp-body-text">{sec.content}</p>
+                </article>
+              ))}
+
+            {Array.isArray(activePage?.dna_points) && activePage.dna_points.length > 0 && (
+              <article className="bsp-structured-section">
+                <h3
+                  className="bsp-section-title"
+                  onMouseEnter={() => showHeadingInsight(activePage.title || "Brand DNA", activePage.dna_points.join(" "))}
+                  onMouseLeave={clearHeadingInsight}
+                >
+                  {activePage.title || "Brand DNA"}
+                </h3>
+                <ul className="bsp-dna-list">
+                  {activePage.dna_points.map((p, idx) => (
+                    <li key={`dna-${idx}`} className="bsp-list-item">{p}</li>
+                  ))}
+                </ul>
+              </article>
+            )}
+
+            {activePage?.emotional_connection && (
+              <article className="bsp-structured-section">
+                <h3
+                  className="bsp-section-title"
+                  onMouseEnter={() =>
+                    showHeadingInsight(
+                      activePage.emotional_connection.title,
+                      `${activePage.emotional_connection.before} ${activePage.emotional_connection.after}`,
+                    )
+                  }
+                  onMouseLeave={clearHeadingInsight}
+                >
+                  {activePage.emotional_connection.title}
+                </h3>
+                <div className="bsp-two-col">
+                  <div>
+                    <p className="bsp-meta-label">{activePage.emotional_connection.before_title}</p>
+                    <p className="bsp-body-text">{activePage.emotional_connection.before}</p>
+                  </div>
+                  <div>
+                    <p className="bsp-meta-label">{activePage.emotional_connection.after_title}</p>
+                    <p className="bsp-body-text">{activePage.emotional_connection.after}</p>
+                  </div>
+                </div>
+              </article>
+            )}
+
+            {activePage?.style_tone && (
+              <article className="bsp-structured-section">
+                <h3
+                  className="bsp-section-title"
+                  onMouseEnter={() => showHeadingInsight(activePage.style_tone.title, activePage.style_tone.summary)}
+                  onMouseLeave={clearHeadingInsight}
+                >
+                  {activePage.style_tone.title}
+                </h3>
+                <p className="bsp-body-text">{activePage.style_tone.summary}</p>
+                <div className="bsp-three-col">
+                  <div>
+                    <p className="bsp-meta-label">Tone of Voice</p>
+                    <p className="bsp-body-text">{activePage.style_tone.tone}</p>
+                  </div>
+                  <div>
+                    <p className="bsp-meta-label">Visual Mood</p>
+                    <p className="bsp-body-text">{activePage.style_tone.visual}</p>
+                  </div>
+                  <div>
+                    <p className="bsp-meta-label">Design Style</p>
+                    <p className="bsp-body-text">{activePage.style_tone.design}</p>
+                  </div>
+                </div>
+              </article>
+            )}
+
+            {Array.isArray(activePage?.taglines) && activePage.taglines.length > 0 && (
+              <article className="bsp-structured-section">
+                <h3
+                  className="bsp-section-title"
+                  onMouseEnter={() => showHeadingInsight("Brand Tagline Drafts", activePage.taglines.join(" "))}
+                  onMouseLeave={clearHeadingInsight}
+                >
+                  Brand Tagline Drafts
+                </h3>
+                <ol className="bsp-tagline-list">
+                  {activePage.taglines.map((t, idx) => (
+                    <li key={`tag-${idx}`} className="bsp-list-item">{t}</li>
+                  ))}
+                </ol>
+              </article>
+            )}
+
+            {!activePage?.sections &&
+              activeElements.map((el, idx) => {
+                const isFirstBody = el.type === "body" && activeElements.findIndex((e) => e.type === "body") === idx;
+                return <RenderElement key={el.key} el={el} dropCap={isFirstBody} />;
+              })}
+          </section>
+
+          <footer className="bsp-book-pager">
+            <button type="button" className="bsp-pager-btn" onClick={goPrev} disabled={currentPage === 0}>
+              ‹
+            </button>
+            <div className="bsp-pager-dots">
+              {pages.map((_, idx) => (
+                <button
+                  type="button"
+                  key={`dot-${idx}`}
+                  className={`bsp-pager-dot ${idx === currentPage ? "active" : ""}`}
+                  onClick={() => setCurrentPage(idx)}
+                  aria-label={`Go to page ${idx + 1}`}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              className="bsp-pager-btn"
+              onClick={goNext}
+              disabled={currentPage >= totalPages - 1}
+            >
+              ›
+            </button>
+          </footer>
+        </main>
+      </div>
+
+      <div className="bsp-corner-orb" aria-hidden="true">
+        <OrbPresence>
+          <BrandOrb size="welcome" />
+        </OrbPresence>
+        {(orbInsightLoading || orbInsight) && (
+          <div className="bsp-orb-insight">
+            <p className="bsp-orb-insight-title">ORB Insight</p>
+            <p className="bsp-orb-insight-text">
+              {orbInsightLoading ? "Orb is reading this heading..." : orbInsight}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
-    </>
   );
 }

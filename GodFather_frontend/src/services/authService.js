@@ -600,6 +600,31 @@ const authService = {
     }
   },
 
+  getBrandBookHeadingInsight: async (sessionId, payload) => {
+    if (!sessionId) throw new Error("Missing sessionId for getBrandBookHeadingInsight");
+    if (!payload?.heading) throw new Error("heading is required for getBrandBookHeadingInsight");
+    try {
+      const response = await api.post(
+        `/sessions/${encodeURIComponent(sessionId)}/brand-book-insight/`,
+        {
+          heading: payload.heading,
+          content: payload.content ?? "",
+          page_id: payload.page_id ?? "",
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Failed to get heading insight";
+      const err = new Error(msg);
+      err._raw = error;
+      throw err;
+    }
+  },
+
   // ========== SESSION COMPLETION ==========
   // ✅ FIXED: Use POST to hit /sessions/{id}/complete/
   completeSession: async (sessionId) => {
@@ -754,7 +779,8 @@ generateFoundationSummary: async (sessionId) => {
 
   try {
     const response = await api.post(
-      `/sessions/${encodeURIComponent(sessionId)}/generate-foundation-summary/`
+      `/sessions/${encodeURIComponent(sessionId)}/generate-foundation-summary/`,
+      { async: false }
     );
     return response.data; // { summary, total_questions_answered, cached }
   } catch (error) {
@@ -773,7 +799,8 @@ generateSessionSummary: async (sessionId) => {
   }
   try {
     const response = await api.post(
-      `/sessions/${encodeURIComponent(sessionId)}/generate-summary/`
+      `/sessions/${encodeURIComponent(sessionId)}/generate-summary/`,
+      { async: false }
     );
     return response.data;
   } catch (error) {
@@ -1195,7 +1222,7 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
     const response = await api.get(
       `/sessions/${encodeURIComponent(sessionId)}/brand-export/`,
       {
-        params: { workflow, format, ...(styled ? { styled: "premium" } : {}) },
+        params: { workflow, export_format: format, ...(styled ? { styled: "premium" } : {}) },
         responseType: "blob",
       }
     );
@@ -1207,6 +1234,29 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
     const a = document.createElement("a");
     a.href = url;
     a.download = `brand-${workflow}-${sessionId}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    return true;
+  },
+
+  downloadBrandSummaryExport: async (sessionId, payload = {}) => {
+    const response = await api.post(
+      `/sessions/${encodeURIComponent(sessionId)}/brand-export/`,
+      {
+        workflow: "brand_summary",
+        export_format: "pdf",
+        styled: "premium",
+        ...payload,
+      },
+      { responseType: "blob" }
+    );
+    const blob = new Blob([response.data], {
+      type: response.headers["content-type"] || "application/pdf",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `brand-summary-${sessionId}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
     return true;

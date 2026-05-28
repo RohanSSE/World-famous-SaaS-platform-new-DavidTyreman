@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams, Navigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ChatNavbar from "./ChatNavbar";
@@ -10,10 +10,16 @@ import {
   isPhaseUnlocked,
   unlockPhaseAfterComplete,
   PHASE_1_MANIFESTO_STEPS,
+  TOTAL_JOURNEY_QUESTIONS,
+  countStoredJourneyAnswers,
+  getPhaseAnswersStorageKey,
 } from "../constants/journeyPhases";
-import chatQuestionIcon from "../assets/ChatQuestionIcon.png";
 import chatIcon1 from "../assets/chat-icon1.png";
 import chatIcon2 from "../assets/chat-icon2.png";
+import {
+  extractApplicableNudgeText,
+  scoreAnswerQualityLocal,
+} from "../utils/answerQuality";
 import "./PhaseQuestionPage.css";
 
 function SessionTitleModal({
@@ -85,6 +91,13 @@ export default function PhaseQuestionPage() {
   const phase = getJourneyPhase(phaseId);
   const inputRef = useRef(null);
 
+  const resizeInput = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
   const savedSessionJson = localStorage.getItem("session");
   const savedSessionId = localStorage.getItem("sessionId");
   const initialSession = savedSessionJson
@@ -114,12 +127,14 @@ export default function PhaseQuestionPage() {
   const [loadError, setLoadError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [nudges, setNudges] = useState([]);
+  const [nudgeQuality, setNudgeQuality] = useState(null);
   const [nudgeIndex, setNudgeIndex] = useState(0);
   const [nudgesLoading, setNudgesLoading] = useState(false);
+  const [journeyAnsweredCount, setJourneyAnsweredCount] = useState(0);
   const nudgesDebounceRef = useRef(null);
   const nudgePickedRef = useRef(false);
 
-  const storageKey = sessionId ? `phaseAnswers_${sessionId}_p${phaseId}` : `phaseAnswers_p${phaseId}`;
+  const storageKey = getPhaseAnswersStorageKey(sessionId, phaseId);
 
   useEffect(() => {
     if (session) setShowTitleModal(false);
@@ -229,7 +244,68 @@ export default function PhaseQuestionPage() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [sessionId, phaseId]);
+
+  useEffect(() => {
+    if (!sessionId || questions.length === 0) return;
+    let cancelled = false;
+
+    async function loadExistingAnswers() {
+      try {
+        const remoteAnswers = await authService.getAnswers(sessionId, {});
+        if (cancelled) return;
+
+        const idToKey = {};
+        questions.forEach((q) => {
+          const qid = q.raw?.id ?? q.id;
+          if (qid != null) idToKey[String(qid)] = q.key;
+        });
+
+        setAnswers((prev) => {
+          const next = { ...prev };
+          (Array.isArray(remoteAnswers) ? remoteAnswers : []).forEach((a) => {
+            const key = idToKey[String(a.question)] || `q_${a.question}`;
+            if (typeof a.answer_text === "string" && a.answer_text.trim() !== "") {
+              next[key] = a.answer_text;
+            }
+          });
+          localStorage.setItem(storageKey, JSON.stringify(next));
+          return next;
+        });
+      } catch {
+        /* keep local cache */
+      }
+    }
+
+    loadExistingAnswers();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, questions, storageKey]);
+
+  const refreshJourneyAnswerCount = async () => {
+    if (!sessionId) {
+      const localCount = countStoredJourneyAnswers(null);
+      setJourneyAnsweredCount(localCount);
+      return localCount;
+    }
+    try {
+      const remoteAnswers = await authService.getAnswers(sessionId, {});
+      const count = (Array.isArray(remoteAnswers) ? remoteAnswers : []).filter((a) =>
+        String(a.answer_text ?? "").trim(),
+      ).length;
+      setJourneyAnsweredCount(count);
+      return count;
+    } catch {
+      const localCount = countStoredJourneyAnswers(sessionId);
+      setJourneyAnsweredCount(localCount);
+      return localCount;
+    }
+  };
+
+  useEffect(() => {
+    refreshJourneyAnswerCount();
+  }, [sessionId, answers]);
 
   useEffect(() => {
     const q = questions[currentIdx];
@@ -237,23 +313,43 @@ export default function PhaseQuestionPage() {
     const saved = answers[q.key];
     setInputValue(saved != null ? String(saved) : "");
     setNudges([]);
+    setNudgeQuality(null);
     setNudgeIndex(0);
     setNudgesLoading(false);
-    if (inputRef.current) inputRef.current.focus();
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+      inputRef.current.focus();
+    }
   }, [currentIdx, questions, answers]);
 
-  const fetchNudges = async (hint, questionId) => {
+  useLayoutEffect(() => {
+    resizeInput();
+  }, [inputValue, currentIdx]);
+
+  const fetchNudges = async (hint, question) => {
+    const q = question || questions[currentIdx];
+    if (!q) return;
+
     setNudgesLoading(true);
+    setNudgeQuality(scoreAnswerQualityLocal(q, hint));
+
     try {
-      const res = await authService.getAiAnswerSuggestions(sessionId, questionId, hint);
+      const res = await authService.getAiAnswerSuggestions(sessionId, q.id, hint);
       let list = [];
       if (Array.isArray(res)) {
         list = res;
       } else if (res && typeof res === "object") {
         list = res.suggestions ?? res.suggestion ?? [];
+        if (res.quality && res.quality_label) {
+          setNudgeQuality({
+            quality: res.quality,
+            quality_label: res.quality_label,
+            reason: res.reason || "",
+          });
+        }
       }
       const cleaned = (Array.isArray(list) ? list : [])
-        .map((s) => String(s).trim())
+        .map((s) => extractApplicableNudgeText(String(s).trim()))
         .filter(Boolean);
       setNudges(cleaned);
       setNudgeIndex(0);
@@ -281,16 +377,19 @@ export default function PhaseQuestionPage() {
 
     if (!sessionId || !q?.id || hint.length < 3) {
       setNudges([]);
+      setNudgeQuality(null);
       setNudgesLoading(false);
       return;
     }
+
+    setNudgeQuality(scoreAnswerQualityLocal(q, hint));
 
     nudgesDebounceRef.current = setTimeout(async () => {
       if (nudgePickedRef.current) {
         nudgePickedRef.current = false;
         return;
       }
-      await fetchNudges(hint, q.id);
+      await fetchNudges(hint, q);
     }, 500);
 
     return () => {
@@ -300,9 +399,13 @@ export default function PhaseQuestionPage() {
 
   const applyNudge = (text) => {
     nudgePickedRef.current = true;
-    setInputValue(text);
+    const cleaned = extractApplicableNudgeText(text);
+    setInputValue(cleaned);
     setNudgeIndex(0);
-    inputRef.current?.focus();
+    requestAnimationFrame(() => {
+      resizeInput();
+      inputRef.current?.focus();
+    });
   };
 
   const handleRefineClick = async () => {
@@ -314,7 +417,7 @@ export default function PhaseQuestionPage() {
       setNudgeIndex((prev) => (prev + 1) % nudges.length);
       return;
     }
-    await fetchNudges(hint, q.id);
+    await fetchNudges(hint, q);
   };
 
   const persistAnswers = (next) => {
@@ -366,16 +469,22 @@ export default function PhaseQuestionPage() {
     }
   };
 
-  const handleSubmit = async () => {
+  const allPhaseAnswered =
+    questions.length > 0 &&
+    questions.every((q) => String(answers[q.key] ?? "").trim());
+
+  const allJourneyAnswered = journeyAnsweredCount >= TOTAL_JOURNEY_QUESTIONS;
+  const isFinalPhase = Number(phaseId) === 3;
+
+  const saveCurrentAnswer = async () => {
     const currentQuestion = questions[currentIdx];
-    if (!currentQuestion) return;
+    if (!currentQuestion) return null;
     const value = inputValue.trim();
     if (!value) {
       setSubmitError("Please answer before submitting.");
-      return;
+      return null;
     }
     setSubmitError("");
-    setSubmitting(true);
 
     const nextAnswers = { ...answers, [currentQuestion.key]: value };
     persistAnswers(nextAnswers);
@@ -384,32 +493,67 @@ export default function PhaseQuestionPage() {
     const apiQuestionId = currentQuestion.raw?.id ?? currentQuestion.id;
 
     if (sid && apiQuestionId) {
-      try {
-        await authService.createAnswer(sid, {
-          question: Number(apiQuestionId),
-          answer_text: value,
-        });
-      } catch (err) {
-        setSubmitError(err?.message || "Failed to save answer");
-        setSubmitting(false);
+      await authService.createAnswer(sid, {
+        question: Number(apiQuestionId),
+        answer_text: value,
+      });
+    }
+    await refreshJourneyAnswerCount();
+    return nextAnswers;
+  };
+
+  const handleSend = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const nextAnswers = await saveCurrentAnswer();
+      if (!nextAnswers) return;
+
+      const phaseComplete =
+        questions.length > 0 &&
+        questions.every((q) => String(nextAnswers[q.key] ?? "").trim());
+
+      if (!phaseComplete && currentIdx < questions.length - 1) {
+        setCurrentIdx((i) => i + 1);
+      }
+    } catch (err) {
+      setSubmitError(err?.message || "Failed to save answer");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSendClick = () => {
+    if (allPhaseAnswered) {
+      toast.info("Hit submit button");
+      return;
+    }
+    handleSend();
+  };
+
+  const handlePhaseSubmit = async () => {
+    if (!allPhaseAnswered || submitting) return;
+    setSubmitting(true);
+    try {
+      const currentQuestion = questions[currentIdx];
+      const value = inputValue.trim();
+      if (currentQuestion && value && !String(answers[currentQuestion.key] ?? "").trim()) {
+        const saved = await saveCurrentAnswer();
+        if (!saved) return;
+      }
+
+      unlockPhaseAfterComplete(phaseId);
+      const completedPhase = getJourneyPhase(phaseId);
+      if (completedPhase?.complete) {
+        navigate(`/phase-complete/${phaseId}`);
         return;
       }
+      navigate("/ChatKickoffPage");
+    } catch (err) {
+      setSubmitError(err?.message || "Failed to complete phase");
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
-
-    if (currentIdx < questions.length - 1) {
-      setCurrentIdx((i) => i + 1);
-      return;
-    }
-
-    unlockPhaseAfterComplete(phaseId);
-    const completedPhase = getJourneyPhase(phaseId);
-    if (completedPhase?.complete) {
-      navigate(`/phase-complete/${phaseId}`);
-      return;
-    }
-    navigate("/ChatKickoffPage");
   };
 
   const handlePrev = () => {
@@ -420,11 +564,47 @@ export default function PhaseQuestionPage() {
     if (currentIdx < questions.length - 1) setCurrentIdx((i) => i + 1);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const q = questions[currentIdx];
     if (!q) return;
-    persistAnswers({ ...answers, [q.key]: inputValue });
+    const value = inputValue.trim();
+    let nextAnswers = { ...answers };
+    if (value) {
+      nextAnswers = { ...answers, [q.key]: value };
+      persistAnswers(nextAnswers);
+      const sid = sessionId;
+      const apiQuestionId = q.raw?.id ?? q.id;
+      if (sid && apiQuestionId) {
+        try {
+          await authService.createAnswer(sid, {
+            question: Number(apiQuestionId),
+            answer_text: value,
+          });
+        } catch {
+          /* non-fatal for local save */
+        }
+      }
+    }
+
+    const answeredInPhase =
+      questions.length > 0 &&
+      questions.every((item) => String(nextAnswers[item.key] ?? "").trim());
+    const refreshedCount = await refreshJourneyAnswerCount();
+    const journeyDone = (refreshedCount ?? journeyAnsweredCount) >= TOTAL_JOURNEY_QUESTIONS;
+
+    if (isFinalPhase && answeredInPhase && journeyDone) {
+      navigate(`/phase-complete/${phaseId}`);
+      return;
+    }
     toast.success("Saved");
+  };
+
+  const handleSubmitClick = () => {
+    if (isFinalPhase && allPhaseAnswered) {
+      toast.info("Hit save button");
+      return;
+    }
+    handlePhaseSubmit();
   };
 
   if (!phase || !isPhaseUnlocked(phase.id)) {
@@ -465,6 +645,7 @@ export default function PhaseQuestionPage() {
         sessionId={sessionId}
         onSave={handleSave}
         showSaveButton
+        saveDisabled={!allJourneyAnswered}
         showDownloadButton={false}
         showLogoutButton
       />
@@ -523,20 +704,36 @@ export default function PhaseQuestionPage() {
                   {nudgesLoading && (
                     <p className="pq-nudges-status">Thinking of ideas…</p>
                   )}
-                  {!nudgesLoading && !!activeNudge && (
+                  {!nudgesLoading && nudgeQuality && (
                     <div className="pq-nudges-panel">
-                      <p className="pq-nudges-lead">You could also say:</p>
-                      <button
-                        type="button"
-                        className="pq-nudge-chip"
-                        onClick={() => applyNudge(activeNudge)}
+                      <p
+                        className={`pq-nudge-quality pq-nudge-quality--${nudgeQuality.quality || "too_weak"}`}
                       >
-                        {activeNudge}
-                      </button>
-                      {nudges.length > 1 && (
-                        <p className="pq-nudges-status pq-nudges-status--muted">
-                          Tap AI Refine for next suggestion ({nudgeIndex + 1}/{nudges.length})
-                        </p>
+                        {nudgeQuality.quality_label}
+                      </p>
+                      {nudgeQuality.reason && (
+                        <p className="pq-nudges-reason">{nudgeQuality.reason}</p>
+                      )}
+                      {activeNudge && (
+                        <>
+                          <p className="pq-nudges-lead">
+                            {nudgeQuality.quality === "strong"
+                              ? "Make it even sharper:"
+                              : "Try this instead:"}
+                          </p>
+                          <button
+                            type="button"
+                            className="pq-nudge-chip"
+                            onClick={() => applyNudge(activeNudge)}
+                          >
+                            {activeNudge}
+                          </button>
+                          {nudges.length > 1 && (
+                            <p className="pq-nudges-status pq-nudges-status--muted">
+                              Tap AI Refine for next suggestion ({nudgeIndex + 1}/{nudges.length})
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -552,26 +749,41 @@ export default function PhaseQuestionPage() {
 
               <div className="pq-chat">
                 <div className="pq-bubble pq-bubble--bot">
-                  <img src={chatQuestionIcon} alt="" className="pq-bot-avatar" />
+                  <img src="/Group%2021.svg" alt="" className="pq-bot-avatar" />
                   <div className="pq-bubble-text">{questionLabel}</div>
                 </div>
               </div>
 
               <div className="pq-input-wrap">
-                <div className="pq-input-row">
-                  <input
+                <div
+                  className={`pq-input-row${
+                    inputValue.includes("\n") || inputValue.length > 72
+                      ? " pq-input-row--multiline"
+                      : ""
+                  }`}
+                >
+                  <textarea
                     ref={inputRef}
-                    type="text"
+                    rows={1}
                     className="pq-input"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
-                        handleSubmit();
+                        if (allPhaseAnswered) {
+                          if (isFinalPhase) {
+                            toast.info("Hit save button");
+                          } else {
+                            handlePhaseSubmit();
+                          }
+                        } else {
+                          handleSend();
+                        }
                       }
                     }}
                     placeholder={currentQuestion.placeholder}
+                    aria-label="Your answer"
                   />
                   <div className="pq-refine-wrap">
                     <div className="pq-refine-tip">
@@ -590,10 +802,10 @@ export default function PhaseQuestionPage() {
                   </div>
                   <button
                     type="button"
-                    className="pq-icon-btn pq-icon-btn--send"
-                    onClick={handleSubmit}
+                    className={`pq-icon-btn pq-icon-btn--send${allPhaseAnswered ? " pq-icon-btn--send-locked" : ""}`}
+                    onClick={handleSendClick}
                     disabled={submitting}
-                    title="Send"
+                    title={allPhaseAnswered ? "Hit submit button" : "Send"}
                     aria-label="Send"
                   >
                     <img src={chatIcon2} alt="" />
@@ -623,9 +835,16 @@ export default function PhaseQuestionPage() {
                   </div>
                   <button
                     type="button"
-                    className="pq-submit-btn"
-                    onClick={handleSubmit}
-                    disabled={submitting}
+                    className={`pq-submit-btn${isFinalPhase && allPhaseAnswered ? " pq-submit-btn--locked" : ""}`}
+                    onClick={handleSubmitClick}
+                    disabled={submitting || !allPhaseAnswered}
+                    title={
+                      isFinalPhase && allPhaseAnswered
+                        ? "Hit save button"
+                        : allPhaseAnswered
+                        ? "Submit this phase"
+                        : `Answer all ${totalQuestions} questions to submit`
+                    }
                   >
                     {submitting ? "Saving…" : "Submit"}
                   </button>

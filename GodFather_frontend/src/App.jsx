@@ -165,10 +165,13 @@ import ProtectedRoute from "./context/ProtectedRoute";
 import SignupLoginModal from "./pages/SignupLoginModal";
 import ChatKickOffPage from "./pages/ChatKickOffPage";
 import BrandSummaryPage from "./pages/BrandSummaryPage";
+import BrandBookReadyPage from "./pages/BrandBookReadyPage";
 import Stepper from "./pages/Stepper";
 import DeepDivePage from "./pages/Deepdivepage";
 import BrandOperatingSystem from "./pages/BrandOperatingSystem";
 import BrandOnboarding from "./pages/BrandOnboarding";
+import OutputModePage from "./pages/OutputModePage";
+import OutputChatPage from "./pages/OutputChatPage";
 import WelcomePage from "./pages/WelcomePage";
 import AgencyPendingPage from "./pages/AgencyPendingPage";
 import BrandIntroPage from "./pages/BrandIntroPage";
@@ -187,6 +190,7 @@ function AppContent() {
     "/brand-intro",
     "/before-continue",
     "/journey-phases",
+    "/brand-summary",
   ].includes(location.pathname) ||
     location.pathname.startsWith("/phase-intro") ||
     location.pathname.startsWith("/phase-questions") ||
@@ -300,6 +304,30 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <BrandSummaryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/brand-book-ready"
+          element={
+            <ProtectedRoute>
+              <BrandBookReadyPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/output-mode"
+          element={
+            <ProtectedRoute>
+              <OutputModePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/output-chat"
+          element={
+            <ProtectedRoute>
+              <OutputChatPage />
             </ProtectedRoute>
           }
         />

@@ -1,0 +1,151 @@
+.ocp-page {
+  min-height: 100vh;
+  background: linear-gradient(145deg, #030826 0%, #04063f 100%);
+  color: #e8f0ff;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.ocp-topbar {
+  width: 100%;
+}
+
+.ocp-main {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 18px 20px 84px;
+}
+
+.ocp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.ocp-chip {
+  border: 1px solid rgba(141, 170, 255, 0.45);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 11px;
+  color: #dae9ff;
+  background: rgba(82, 104, 200, 0.26);
+}
+
+.ocp-bubble {
+  max-width: min(700px, calc(100vw - 100px));
+  margin: 8px auto 170px;
+  border: 1px solid rgba(139, 176, 255, 0.45);
+  border-radius: 16px;
+  padding: 14px 18px 14px 42px;
+  position: relative;
+  background: rgba(9, 19, 73, 0.56);
+  box-sizing: border-box;
+}
+
+.ocp-dot {
+  position: absolute;
+  left: 12px;
+  top: 14px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #c0f9ff, #5bc9ff 65%);
+}
+
+.ocp-bubble p {
+  margin: 0;
+  line-height: 1.5;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.ocp-input-wrap {
+  width: min(600px, calc(100vw - 120px));
+  margin: 0 auto 0;
+  border: 1px solid rgba(141, 170, 255, 0.45);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  padding: 6px 7px 6px 18px;
+  background: rgba(9, 17, 64, 0.62);
+  box-sizing: border-box;
+}
+
+.ocp-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #e8f0ff;
+  font-size: 15px;
+  min-width: 0;
+}
+
+.ocp-send {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(90deg, #3f63ec 0%, #7ce7ff 100%);
+  flex-shrink: 0;
+}
+
+.ocp-orb {
+  position: fixed;
+  right: 148px;
+  bottom: 144px;
+  width: 84px;
+  height: 84px;
+  z-index: 4;
+  overflow: visible;
+}
+
+@media (max-width: 1100px) {
+  .ocp-bubble p {
+    font-size: 15px;
+  }
+
+  .ocp-input {
+    font-size: 15px;
+  }
+
+  .ocp-orb {
+    right: 92px;
+    bottom: 116px;
+    width: 76px;
+    height: 76px;
+  }
+}
+
+@media (max-width: 760px) {
+  .ocp-main {
+    padding: 12px 14px 64px;
+  }
+
+  .ocp-bubble {
+    max-width: calc(100vw - 28px);
+    margin-bottom: 120px;
+  }
+
+  .ocp-bubble p {
+    font-size: 16px;
+  }
+
+  .ocp-input-wrap {
+    width: calc(100vw - 34px);
+  }
+
+  .ocp-input {
+    font-size: 16px;
+  }
+
+  .ocp-orb {
+    right: 34px;
+    bottom: 86px;
+    width: 64px;
+    height: 64px;
+  }
+}

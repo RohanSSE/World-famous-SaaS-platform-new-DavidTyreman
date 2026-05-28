@@ -132,3 +132,34 @@ export const PHASE_1_MANIFESTO_STEPS = [
 // Frontend "Phase 1" UI expects the backend's stage=1 ("Basic") questions list.
 // Backend: question_list() returns stage=1 questions when session.get_current_stage() === 1.
 export const PHASE_FOUNDATION_STAGE = 1;
+
+export const TOTAL_JOURNEY_QUESTIONS = 30;
+
+export const JOURNEY_STAGE_QUESTION_COUNTS = {
+  1: 8,
+  2: 12,
+  3: 10,
+};
+
+export function getPhaseAnswersStorageKey(sessionId, phaseId) {
+  return sessionId
+    ? `phaseAnswers_${sessionId}_p${phaseId}`
+    : `phaseAnswers_p${phaseId}`;
+}
+
+/** Count non-empty answers stored locally across all journey phases. */
+export function countStoredJourneyAnswers(sessionId) {
+  let total = 0;
+  for (let phase = 1; phase <= JOURNEY_PHASES.length; phase += 1) {
+    try {
+      const raw = localStorage.getItem(getPhaseAnswersStorageKey(sessionId, phase));
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") continue;
+      total += Object.values(parsed).filter((v) => String(v ?? "").trim()).length;
+    } catch {
+      /* ignore */
+    }
+  }
+  return total;
+}

@@ -5,16 +5,16 @@
       "flags": [
         "unsupported_claim"
       ],
-      "frequency": 111,
+      "frequency": 114,
       "severity": 0.922,
       "recommended_fix": "full_verify_and_hedge",
-      "last_seen": "2026-05-25T09:32:14.485147+00:00",
+      "last_seen": "2026-05-28T09:59:46.405512+00:00",
       "example_queries": [
-        "Our ads say innovation but manifesto says trust. What now?",
-        "How should founder personality shape the brand?",
         "We sound like every other SaaS company. Fix that.",
         "How should our brand respond in a crisis?",
-        "How do we articulate a brand promise customers believe?"
+        "How do we articulate a brand promise customers believe?",
+        "Using ONLY retrieved brand book knowledge, produce a complete Brand DNA: core beliefs, non-negotiables, emotional promis",
+        "Describe audience psychology: motivations, pain points, desired identity, fears, desires, and emotional drivers grounded"
       ]
     },
     {
@@ -23,16 +23,16 @@
         "low_strategic_density",
         "unsupported_claim"
       ],
-      "frequency": 40,
+      "frequency": 48,
       "severity": 0.949,
       "recommended_fix": "expand_manifesto_chunks",
-      "last_seen": "2026-05-25T09:30:30.551051+00:00",
+      "last_seen": "2026-05-28T09:58:59.814356+00:00",
       "example_queries": [
-        "We rejected a playful tone before. Should we revisit?",
-        "How do we understand audience psychology for positioning?",
-        "Should our manifesto focus on trust or speed?",
-        "What is brand DNA and why does it matter?",
-        "How does storytelling build brand trust?"
+        "How does storytelling build brand trust?",
+        "Using ONLY retrieved brand book knowledge, produce a complete Brand DNA: core beliefs, non-negotiables, emotional promis",
+        "POSITIONING ENGINE \u2014 Using ONLY brand book excerpts: category role, competitive frame, status signals, and differentiati",
+        "Create a tone guide: voice, energy, forbidden phrases, preferred phrases, and communication laws aligned with the brand ",
+        "MESSAGING FRAMEWORK \u2014 Build messaging ladder: brand promise, proof points, emotional hooks, and pillar hierarchy \u2014 all f"
       ]
     },
     {
@@ -102,6 +102,23 @@
         "Should our manifesto focus on trust or speed?",
         "What is brand DNA and why does it matter?",
         "How does storytelling build brand trust?"
+      ]
+    },
+    {
+      "failure_pattern": "low_strategic_density_reasoning_drift_unsupported_claim",
+      "flags": [
+        "low_strategic_density",
+        "reasoning_drift",
+        "unsupported_claim"
+      ],
+      "frequency": 3,
+      "severity": 0.075,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-05-28T09:39:30.755104+00:00",
+      "example_queries": [
+        "POSITIONING ENGINE \u2014 Using ONLY brand book excerpts: category role, competitive frame, status signals, and differentiati",
+        "Create a tone guide: voice, energy, forbidden phrases, preferred phrases, and communication laws aligned with the brand ",
+        "MESSAGING FRAMEWORK \u2014 Build messaging ladder: brand promise, proof points, emotional hooks, and pillar hierarchy \u2014 all f"
       ]
     },
     {
