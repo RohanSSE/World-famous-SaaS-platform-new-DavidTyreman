@@ -1216,6 +1216,84 @@
   background: #63cbff;
 }
 
+.bsp-pdf-export-host .bsp-book-screen {
+  width: 932px;
+  height: 768px;
+  min-height: 768px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.bsp-pdf-export-host .bsp-book-frame {
+  grid-template-columns: 210px 1fr !important;
+  min-height: 748px;
+  height: 748px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+.bsp-pdf-export-host .bsp-book-rail {
+  border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-bottom: 0 !important;
+  padding: 24px 20px !important;
+  display: flex !important;
+  justify-content: center !important;
+  min-height: auto !important;
+}
+
+.bsp-pdf-export-host .bsp-rail-title-wrap {
+  margin: auto 0 !important;
+  position: relative !important;
+  min-height: 260px !important;
+}
+
+.bsp-pdf-export-host .bsp-rail-watermark,
+.bsp-pdf-export-host .bsp-rail-title {
+  writing-mode: horizontal-tb !important;
+  transform: none !important;
+  position: absolute !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 18px !important;
+  line-height: 1 !important;
+}
+
+.bsp-pdf-export-host .bsp-pdf-rail-word {
+  writing-mode: vertical-rl !important;
+  text-orientation: upright !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+}
+
+.bsp-pdf-export-host .bsp-rail-watermark {
+  left: 10px !important;
+  top: 0 !important;
+  font-size: 40px !important;
+}
+
+.bsp-pdf-export-host .bsp-rail-title {
+  left: 60px !important;
+  top: 0 !important;
+  font-size: 30px !important;
+}
+
+.bsp-pdf-export-host .bsp-book-content {
+  padding: 28px 46px 24px !important;
+  overflow: hidden !important;
+}
+
+.bsp-pdf-export-host .bsp-content-flow {
+  overflow: hidden !important;
+}
+
+.bsp-pdf-export-host .bsp-two-col {
+  grid-template-columns: 1fr 1fr !important;
+}
+
+.bsp-pdf-export-host .bsp-three-col {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
 @media (max-width: 980px) {
   .bsp-book-frame {
     grid-template-columns: 1fr;

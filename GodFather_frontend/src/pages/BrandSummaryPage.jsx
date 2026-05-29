@@ -1240,6 +1240,7 @@ import logo from "../assets/mask-group.png";
 import BrandOrb from "../components/orb/BrandOrb";
 import OrbPresence from "../components/orb/OrbPresence";
 import { useOrbPresence } from "../context/OrbPresenceContext";
+import { downloadBrandBookScreenPdf } from "../utils/BrandBookPdfGenerator";
 
 // Set to false to use real API (generateFoundationSummary); true for dummy data
 const USE_DUMMY_DATA = false;
@@ -1653,52 +1654,15 @@ export default function BrandSummaryPage() {
     if (exporting) return;
     setExporting(true);
     try {
-      const resolveExportSessionId = async () => {
-        const sid = sessionId || localStorage.getItem("sessionId");
-        let sessions = [];
-        try {
-          sessions = await authService.getSessions();
-        } catch {
-          sessions = [];
-        }
-
-        const normalized = Array.isArray(sessions) ? sessions : [];
-        const sidExists = sid && normalized.some((s) => String(s.id ?? s.pk) === String(sid));
-        if (sid && sidExists) return String(sid);
-
-        const preferred =
-          normalized.find((s) => s.status === "in_progress") ||
-          normalized.find((s) => s.status === "draft") ||
-          normalized.find((s) => s.status === "completed") ||
-          normalized[0];
-
-        const resolved = preferred ? String(preferred.id ?? preferred.pk ?? "") : "";
-        if (resolved) {
-          setSessionId(resolved);
-          localStorage.setItem("sessionId", resolved);
-        }
-        return resolved;
-      };
-
-      const exportSid = await resolveExportSessionId();
-      if (!exportSid) {
-        throw new Error("No valid session found for export");
-      }
-
-      await authService.downloadBrandSummaryExport(exportSid, {
-        brand_book: {
-          sidebar_title: sidebarTitle,
-          brand_name: brandName,
-          pages: brandBookPages.length > 0 ? brandBookPages : [],
-        },
-        summary: {
-          heading: heading || title || "Brand Overview",
-          sub_heading: subheading || "",
-          sections: elements.map((el) => ({
-            title: el.type === "heading" || el.type === "subsection" ? el.text : "",
-            content: el.type === "body" || el.type === "bullet" || el.type === "numbered" ? el.text : "",
-          })),
-        },
+      await downloadBrandBookScreenPdf({
+        brandName,
+        contentDensity,
+        elements,
+        heading,
+        pages,
+        sidebarTitle,
+        subheading,
+        title,
       });
     } catch (err) {
       const msg = err?.message || "Export failed";
@@ -1719,7 +1683,7 @@ export default function BrandSummaryPage() {
   })();
 
   const activePage = pages[currentPage] || {};
-  const activeElements = activePage?.elements || [];
+  const activeElements = Array.isArray(activePage) ? activePage : activePage?.elements || [];
   const totalPages = pages.length;
   const words = countWords(elements);
   const contentDensity = words > 450 ? "compact" : words < 180 ? "spacious" : "normal";
@@ -1842,7 +1806,7 @@ export default function BrandSummaryPage() {
           <button
             type="button"
             className="bsp-export-btn"
-            disabled={exporting || !sessionId}
+            disabled={exporting || totalPages === 0}
             onClick={handleExport}
           >
             {exporting ? "Exporting..." : "Export"}
