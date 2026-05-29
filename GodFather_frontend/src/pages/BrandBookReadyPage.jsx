@@ -4,6 +4,29 @@ import OrbPresence from "../components/orb/OrbPresence";
 import ChatNavbar from "./ChatNavbar";
 import "./BrandBookReadyPage.css";
 
+const discoveryPoints = [
+  "Emotional positioning",
+  "Strategic differentiation",
+  "Customer psychology",
+  "Messaging opportunities",
+  "Brand voice",
+  "Growth direction",
+  "Deeper strategic alignment",
+];
+
+const outputPoints = [
+  "Ask sharper brand questions",
+  "Request refinements",
+  "Strengthen positioning",
+  "Explore new opportunities",
+  "Generate strategic campaigns",
+  "Create storytelling ideas",
+  "Build community engagement",
+  "Develop promotional concepts",
+  "Create thought leadership",
+  "Keep evolving your brand over time",
+];
+
 export default function BrandBookReadyPage() {
   const navigate = useNavigate();
 
@@ -45,32 +68,25 @@ export default function BrandBookReadyPage() {
 
         <div className="bbr-cards">
           <article className="bbr-card">
-            <h3>Inside, you&apos;ll discover</h3>
-            <ul>
-              <li>your emotional positioning</li>
-              <li>strategic differentiation</li>
-              <li>customer psychology</li>
-              <li>messaging opportunities</li>
-              <li>brand voice</li>
-              <li>growth direction</li>
-              <li>deeper strategic alignment</li>
+            <div className="bbr-card-heading">
+              <h3>You&apos;ll Discover</h3>
+            </div>
+            <ul className="bbr-list">
+              {discoveryPoints.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
             </ul>
-            <p>And this is only the beginning.</p>
+            <p className="bbr-card-note">And this is only the beginning.</p>
           </article>
 
           <article className="bbr-card">
-            <h3>You can now:</h3>
-            <ul>
-              <li>ask questions</li>
-              <li>request refinements</li>
-              <li>strengthen positioning</li>
-              <li>explore new opportunities</li>
-              <li>generate strategic campaigns</li>
-              <li>create storytelling ideas</li>
-              <li>build community engagement</li>
-              <li>develop promotional concepts</li>
-              <li>create thought leadership</li>
-              <li>continue evolving your brand over time</li>
+            <div className="bbr-card-heading">
+              <h3>You Can Now</h3>
+            </div>
+            <ul className="bbr-list">
+              {outputPoints.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
             </ul>
           </article>
         </div>

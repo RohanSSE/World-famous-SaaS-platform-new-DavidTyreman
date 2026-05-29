@@ -14,6 +14,8 @@
   max-width: 980px;
   margin: 0 auto;
   padding: 18px 20px 84px;
+  position: relative;
+  z-index: 5;
 }
 
 .ocp-row {
@@ -30,17 +32,52 @@
   font-size: 11px;
   color: #dae9ff;
   background: rgba(82, 104, 200, 0.26);
+  cursor: pointer;
+}
+
+.ocp-chat-panel {
+  width: min(760px, calc(100vw - 120px));
+  min-height: 280px;
+  max-height: calc(100vh - 300px);
+  margin: 8px auto 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  padding: 2px 4px 10px;
+  box-sizing: border-box;
 }
 
 .ocp-bubble {
   max-width: min(700px, calc(100vw - 100px));
-  margin: 8px auto 170px;
+  width: fit-content;
+  margin: 0;
   border: 1px solid rgba(139, 176, 255, 0.45);
   border-radius: 16px;
   padding: 14px 18px 14px 42px;
   position: relative;
   background: rgba(9, 19, 73, 0.56);
   box-sizing: border-box;
+}
+
+.ocp-bubble.is-assistant {
+  align-self: flex-start;
+}
+
+.ocp-bubble.is-user {
+  align-self: flex-end;
+  max-width: min(620px, calc(100vw - 120px));
+  padding: 12px 16px;
+  border-color: rgba(192, 249, 255, 0.42);
+  background: rgba(63, 99, 236, 0.24);
+}
+
+.ocp-bubble.is-error {
+  border-color: rgba(255, 148, 148, 0.45);
+}
+
+.ocp-bubble.is-loading p {
+  color: rgba(232, 240, 255, 0.72);
 }
 
 .ocp-dot {
@@ -58,7 +95,32 @@
   line-height: 1.5;
   font-size: 15px;
   font-weight: 500;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+}
+
+.ocp-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ocp-sources span {
+  border: 1px solid rgba(192, 249, 255, 0.24);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: #c0f9ff;
+  background: rgba(192, 249, 255, 0.06);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ocp-error {
+  width: min(600px, calc(100vw - 120px));
+  margin: 0 auto 10px;
+  color: #ffc7c7;
+  font-size: 13px;
 }
 
 .ocp-input-wrap {
@@ -83,6 +145,10 @@
   min-width: 0;
 }
 
+.ocp-input::placeholder {
+  color: rgba(232, 240, 255, 0.48);
+}
+
 .ocp-send {
   width: 30px;
   height: 30px;
@@ -91,6 +157,13 @@
   color: #fff;
   background: linear-gradient(90deg, #3f63ec 0%, #7ce7ff 100%);
   flex-shrink: 0;
+  cursor: pointer;
+}
+
+.ocp-send:disabled,
+.ocp-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 .ocp-orb {
@@ -127,7 +200,12 @@
 
   .ocp-bubble {
     max-width: calc(100vw - 28px);
-    margin-bottom: 120px;
+  }
+
+  .ocp-chat-panel {
+    width: calc(100vw - 28px);
+    min-height: 300px;
+    max-height: calc(100vh - 260px);
   }
 
   .ocp-bubble p {
@@ -135,6 +213,10 @@
   }
 
   .ocp-input-wrap {
+    width: calc(100vw - 34px);
+  }
+
+  .ocp-error {
     width: calc(100vw - 34px);
   }
 

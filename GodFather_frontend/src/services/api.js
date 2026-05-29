@@ -32,6 +32,15 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const isRefreshRequest = originalRequest?.url?.includes('/auth/token/refresh/');
+
+    if (error.response?.status === 401 && isRefreshRequest) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      window.location.href = '/intro-ductory';
+      return Promise.reject(error);
+    }
 
     // If 401 and haven't retried yet, try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
