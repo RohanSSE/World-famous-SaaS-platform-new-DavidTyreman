@@ -1,42 +1,33 @@
 const themeConfig = {
-  /** **************************************
-   * Base
-   *************************************** */
   classesPrefix: "minimal",
-  /** **************************************
-   * Typography
-   *************************************** */
   fontFamily: {
-    primary: "DM Sans Variable",
-    secondary: "Barlow"
+    primary: "NeueHaasGrotTextRound, Inter, sans-serif",
+    secondary: "NeueHaasGrotTextRound, Inter, sans-serif",
   },
-  /** **************************************
-   * Palette
-   *************************************** */
   palette: {
     primary: {
-      lighter: "#D0ECFE",
-      light: "#73BAFB",
-      main: "#1877F2",
-      dark: "#0C44AE",
-      darker: "#042174",
-      contrastText: "#FFFFFF"
+      lighter: "#86e3ff",
+      light: "#5d7ffc",
+      main: "#4a6cf7",
+      dark: "#3959e5",
+      darker: "#2a3d6e",
+      contrastText: "#FFFFFF",
     },
     secondary: {
-      lighter: "#EFD6FF",
-      light: "#C684FF",
-      main: "#8E33FF",
-      dark: "#5119B7",
-      darker: "#27097A",
-      contrastText: "#FFFFFF"
+      lighter: "#c4b5fd",
+      light: "#8b5cf6",
+      main: "#6b5cff",
+      dark: "#4c3d99",
+      darker: "#27097a",
+      contrastText: "#FFFFFF",
     },
     info: {
-      lighter: "#CAFDF5",
-      light: "#61F3F3",
-      main: "#00B8D9",
-      dark: "#006C9C",
-      darker: "#003768",
-      contrastText: "#FFFFFF"
+      lighter: "#86e3ff",
+      light: "#5d7ffc",
+      main: "#4a6cf7",
+      dark: "#2a3d6e",
+      darker: "#0f2858",
+      contrastText: "#FFFFFF",
     },
     success: {
       lighter: "#D3FCD2",
@@ -44,7 +35,7 @@ const themeConfig = {
       main: "#22C55E",
       dark: "#118D57",
       darker: "#065E49",
-      contrastText: "#ffffff"
+      contrastText: "#ffffff",
     },
     warning: {
       lighter: "#FFF5CC",
@@ -52,7 +43,7 @@ const themeConfig = {
       main: "#FFAB00",
       dark: "#B76E00",
       darker: "#7A4100",
-      contrastText: "#1C252E"
+      contrastText: "#1C252E",
     },
     error: {
       lighter: "#FFE9D5",
@@ -60,30 +51,26 @@ const themeConfig = {
       main: "#FF5630",
       dark: "#B71D18",
       darker: "#7A0916",
-      contrastText: "#FFFFFF"
+      contrastText: "#FFFFFF",
     },
     grey: {
-      "50": "#FCFDFD",
-      "100": "#F9FAFB",
-      "200": "#F4F6F8",
-      "300": "#DFE3E8",
-      "400": "#C4CDD5",
-      "500": "#919EAB",
-      "600": "#637381",
-      "700": "#454F5B",
-      "800": "#1C252E",
-      "900": "#141A21"
+      50: "#f0f4ff",
+      100: "#d8e0f5",
+      200: "#a8b4d0",
+      300: "#7a8ab0",
+      400: "#5a6a90",
+      500: "#8b95b0",
+      600: "#6b7590",
+      700: "#1a1c3a",
+      800: "#12132d",
+      900: "#0b0d1f",
     },
-    common: { black: "#000000", white: "#FFFFFF" }
+    common: { black: "#000000", white: "#FFFFFF" },
   },
-  /** **************************************
-   * Css variables
-   *************************************** */
   cssVariables: {
     cssVarPrefix: "",
-    colorSchemeSelector: "data-color-scheme"
-  }
+    colorSchemeSelector: "data-color-scheme",
+  },
 };
-export {
-  themeConfig
-};
+
+export { themeConfig };

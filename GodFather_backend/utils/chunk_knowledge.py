@@ -27,7 +27,7 @@ def load_and_chunk_rag_doc(
     max_words: int = AI_KNOWLEDGE_SEMANTIC_MAX_WORDS,
     overlap_words: int = AI_KNOWLEDGE_SEMANTIC_OVERLAP,
 ) -> List[Dict[str, Any]]:
-    """Load all files from Rag_doc/<category>/ and return semantic chunk dicts."""
+    """Load all files from configured RAG document sources and return chunks."""
     all_chunks: List[Dict[str, Any]] = []
     files = discover_rag_doc_files()
 

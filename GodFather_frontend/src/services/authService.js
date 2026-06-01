@@ -2,6 +2,27 @@ import api from "./api";
 
 const API_BASE_URL = api.defaults.baseURL;
 
+/** Parse DRF / axios errors into a single user-facing string */
+export function formatApiError(error, fallback = "Request failed") {
+  if (!error) return fallback;
+  const data = error.response?.data;
+  if (typeof data === "string") return data;
+  if (data?.detail) {
+    return typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+  }
+  if (data?.message) return data.message;
+  if (data && typeof data === "object") {
+    const parts = [];
+    for (const [key, val] of Object.entries(data)) {
+      if (Array.isArray(val)) parts.push(`${key}: ${val.join(" ")}`);
+      else if (typeof val === "string") parts.push(`${key}: ${val}`);
+    }
+    if (parts.length) return parts.join(" · ");
+  }
+  if (error.message) return error.message;
+  return fallback;
+}
+
 const authService = {
   // Sign up new user
   signup: async (email, password, confirmPassword, userType) => {
@@ -40,7 +61,12 @@ const authService = {
 
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: "Login failed" };
+      const data = error.response?.data || {};
+      throw {
+        ...data,
+        message: data.detail || data.message || "Login failed",
+        status: error.response?.status,
+      };
     }
   },
 
@@ -390,14 +416,15 @@ const authService = {
   // Create a new session
   createSession: async (payload) => {
     try {
-      const response = await api.post("/sessions/create/", payload);
+      const body = { title: String(payload?.title || "").trim() };
+      const agencyId = payload?.agency != null ? Number(payload.agency) : NaN;
+      if (Number.isFinite(agencyId) && agencyId > 0) {
+        body.agency = agencyId;
+      }
+      const response = await api.post("/sessions/create/", body);
       return response.data;
     } catch (error) {
-      const msg =
-        error.response?.data?.message ||
-        error.response?.data?.detail ||
-        "Failed to create session";
-      throw { message: msg };
+      throw { message: formatApiError(error, "Failed to create session") };
     }
   },
 
@@ -573,6 +600,31 @@ const authService = {
     }
   },
 
+  getBrandBookHeadingInsight: async (sessionId, payload) => {
+    if (!sessionId) throw new Error("Missing sessionId for getBrandBookHeadingInsight");
+    if (!payload?.heading) throw new Error("heading is required for getBrandBookHeadingInsight");
+    try {
+      const response = await api.post(
+        `/sessions/${encodeURIComponent(sessionId)}/brand-book-insight/`,
+        {
+          heading: payload.heading,
+          content: payload.content ?? "",
+          page_id: payload.page_id ?? "",
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Failed to get heading insight";
+      const err = new Error(msg);
+      err._raw = error;
+      throw err;
+    }
+  },
+
   // ========== SESSION COMPLETION ==========
   // ✅ FIXED: Use POST to hit /sessions/{id}/complete/
   completeSession: async (sessionId) => {
@@ -727,7 +779,8 @@ generateFoundationSummary: async (sessionId) => {
 
   try {
     const response = await api.post(
-      `/sessions/${encodeURIComponent(sessionId)}/generate-foundation-summary/`
+      `/sessions/${encodeURIComponent(sessionId)}/generate-foundation-summary/`,
+      { async: false }
     );
     return response.data; // { summary, total_questions_answered, cached }
   } catch (error) {
@@ -746,7 +799,8 @@ generateSessionSummary: async (sessionId) => {
   }
   try {
     const response = await api.post(
-      `/sessions/${encodeURIComponent(sessionId)}/generate-summary/`
+      `/sessions/${encodeURIComponent(sessionId)}/generate-summary/`,
+      { async: false }
     );
     return response.data;
   } catch (error) {
@@ -979,7 +1033,7 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
         error?.response?.data?.message ||
         error?.message ||
         "Failed to load agency dashboard";
-      throw new Error(msg);
+      throw { message: msg, status: error.response?.status, detail: msg };
     }
   },
 
@@ -1168,7 +1222,7 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
     const response = await api.get(
       `/sessions/${encodeURIComponent(sessionId)}/brand-export/`,
       {
-        params: { workflow, format, ...(styled ? { styled: "premium" } : {}) },
+        params: { workflow, export_format: format, ...(styled ? { styled: "premium" } : {}) },
         responseType: "blob",
       }
     );
@@ -1180,6 +1234,29 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
     const a = document.createElement("a");
     a.href = url;
     a.download = `brand-${workflow}-${sessionId}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    return true;
+  },
+
+  downloadBrandSummaryExport: async (sessionId, payload = {}) => {
+    const response = await api.post(
+      `/sessions/${encodeURIComponent(sessionId)}/brand-export/`,
+      {
+        workflow: "brand_summary",
+        export_format: "pdf",
+        styled: "premium",
+        ...payload,
+      },
+      { responseType: "blob" }
+    );
+    const blob = new Blob([response.data], {
+      type: response.headers["content-type"] || "application/pdf",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `brand-summary-${sessionId}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
     return true;

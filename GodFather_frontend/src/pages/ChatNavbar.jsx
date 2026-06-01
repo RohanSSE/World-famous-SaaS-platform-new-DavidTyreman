@@ -197,6 +197,7 @@ const ChatNavbar = ({
   showCommentButton = false,
   onCommentClick = null,
   canGenerate = false,
+  saveDisabled = false,
 }) => {
   const navigate = useNavigate();
   const { logout, auth } = useAuth();
@@ -209,7 +210,7 @@ const ChatNavbar = ({
     useState(false);
 
   const handleSave = async () => {
-    if (saving) return;
+    if (saving || saveDisabled) return;
     if (onSave) {
       try {
         setSaving(true);
@@ -316,7 +317,8 @@ const ChatNavbar = ({
             <button 
               className="btn-white" 
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || saveDisabled}
+              title={saveDisabled ? "Complete all 30 questions to save" : undefined}
             >
               {saving ? (
                 <>

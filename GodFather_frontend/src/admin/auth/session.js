@@ -14,8 +14,11 @@ function readFromStorage(storage) {
 function getAuthSession() {
   return readFromStorage(localStorage) ?? readFromStorage(sessionStorage);
 }
+function hasApiToken() {
+  return Boolean(localStorage.getItem("accessToken"));
+}
 function isAuthenticated() {
-  return Boolean(getAuthSession());
+  return Boolean(getAuthSession() && hasApiToken());
 }
 function saveAuthSession(session) {
   const serializedSession = JSON.stringify(session);
@@ -25,6 +28,9 @@ function saveAuthSession(session) {
 function clearAuthSession() {
   localStorage.removeItem(AUTH_SESSION_KEY);
   sessionStorage.removeItem(AUTH_SESSION_KEY);
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
 }
 export {
   clearAuthSession,

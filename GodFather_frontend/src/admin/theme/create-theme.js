@@ -5,25 +5,29 @@ import { themeConfig } from "./theme-config";
 import { components } from "./core/components";
 import { typography } from "./core/typography";
 import { customShadows } from "./core/custom-shadows";
+
 const baseTheme = {
-  defaultColorScheme: "light",
+  defaultColorScheme: "dark",
   colorSchemes: {
+    dark: {
+      palette: palette.dark,
+      shadows: shadows.dark,
+      customShadows: customShadows.dark,
+    },
     light: {
-      palette: palette.light,
-      shadows: shadows.light,
-      customShadows: customShadows.light
-    }
+      palette: palette.dark,
+      shadows: shadows.dark,
+      customShadows: customShadows.dark,
+    },
   },
   components,
   typography,
-  shape: { borderRadius: 8 },
-  cssVariables: themeConfig.cssVariables
+  shape: { borderRadius: 10 },
+  cssVariables: themeConfig.cssVariables,
 };
+
 function createTheme({ themeOverrides = {} } = {}) {
-  const theme = createMuiTheme(baseTheme, themeOverrides);
-  return theme;
+  return createMuiTheme(baseTheme, themeOverrides);
 }
-export {
-  baseTheme,
-  createTheme
-};
+
+export { baseTheme, createTheme };

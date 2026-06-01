@@ -47,6 +47,22 @@ pdfplumber==0.11.4
 pillow==11.3.0
 pip-tools==7.5.2
 prompt_toolkit==3.0.52
+# -----------------------------------------------------------------------------
+# PGVector — frozen pins (pip install -r requirements.txt)
+# -----------------------------------------------------------------------------
+# 1) Python (pip): pgvector binds Django to Postgres vector columns.
+# 2) PostgreSQL SERVER (NOT pip): extension "vector" must exist on the DB host.
+#    Use project Docker Postgres (recommended for teammates):
+#      cd GodFather_backend
+#      docker compose up -d postgres
+#    Image: pgvector/pgvector:pg16  |  Host port: 5433  (maps container 5432)
+#    .env: POSTGRES_HOST=localhost  POSTGRES_PORT=5433  POSTGRES_DB=godfather
+#          POSTGRES_USER=postgres   POSTGRES_PASSWORD=postgres
+#    Then: python manage.py migrate
+#    Verify: python scripts/verify_pgvector.py
+#    Error "extension vector is not available" = wrong Postgres (plain PG without
+#    pgvector) or wrong port (5432 vs 5433). Fix infra, not pip.
+# -----------------------------------------------------------------------------
 psycopg2-binary==2.9.11
 pgvector==0.3.6
 pycparser==2.23

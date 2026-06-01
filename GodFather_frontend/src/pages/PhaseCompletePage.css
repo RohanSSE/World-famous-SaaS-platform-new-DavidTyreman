@@ -1,0 +1,219 @@
+.phase-complete-page {
+  min-height: 100vh;
+  background: #030508;
+  background-image: radial-gradient(ellipse 90% 70% at 50% 20%, #0f2858 0%, #061018 50%, #020408 100%);
+  color: #fff;
+  font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.phase-complete-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, transparent 0%, rgba(3, 5, 8, 0.4) 55%, rgba(3, 5, 8, 0.85) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.phase-complete-glow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(57, 89, 229, 0.28) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.phase-complete-page .onboarding-header {
+  padding: 0.5rem 2.5rem 0.2rem;
+}
+
+.phase-complete-page .onboarding-nav-row {
+  padding: 0 2.5rem 0.1rem;
+}
+
+.phase-complete-main {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 120px);
+  padding: 1rem 1.5rem 3rem;
+}
+
+.phase-complete-card {
+  width: 100%;
+  max-width: 560px;
+  padding: 2.25rem 2rem 2rem;
+  border-radius: 20px;
+  text-align: center;
+  background: rgba(6, 12, 28, 0.75);
+  border: 1px solid rgba(142, 229, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(57, 89, 229, 0.15),
+    0 20px 50px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.pc-sparkle {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pc-sparkle svg {
+  filter: drop-shadow(0 0 12px rgba(142, 229, 255, 0.55));
+}
+
+.pc-sparkle-dot {
+  position: absolute;
+  color: #8ee5ff;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.pc-sparkle-dot--1 {
+  top: 2px;
+  right: -4px;
+}
+
+.pc-sparkle-dot--2 {
+  bottom: 6px;
+  left: -2px;
+}
+
+.pc-sparkle-dot--3 {
+  top: 50%;
+  right: -10px;
+  font-size: 16px;
+}
+
+.phase-complete-title {
+  margin: 0 0 0.65rem;
+  font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+  font-weight: 600;
+  color: #fff;
+}
+
+.phase-complete-subtitle {
+  margin: 0 0 1.5rem;
+  font-size: 15px;
+  line-height: 1.45;
+  color: rgba(192, 249, 255, 0.92);
+}
+
+.phase-complete-body {
+  text-align: left;
+  margin: 0 auto 1.75rem;
+  max-width: 420px;
+}
+
+.phase-complete-lead {
+  margin: 0 0 0.75rem;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.phase-complete-list {
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.phase-complete-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(192, 249, 255, 0.88);
+}
+
+.phase-complete-arrow {
+  color: #8ee5ff;
+  flex-shrink: 0;
+}
+
+.phase-complete-next {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(192, 249, 255, 0.85);
+}
+
+.phase-complete-progress-wrap {
+  margin: 0 auto 1.75rem;
+  max-width: 320px;
+}
+
+.phase-complete-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.phase-complete-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3959e5 0%, #6ab5f8 50%, #8ee5ff 100%);
+  box-shadow: 0 0 12px rgba(142, 229, 255, 0.5);
+  transition: width 0.6s ease;
+}
+
+.phase-complete-progress-label {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.phase-complete-cta {
+  width: 100%;
+  max-width: 280px;
+  padding: 0.9rem 1.5rem;
+  border: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(
+    90deg,
+    #3959e5 0%,
+    #508ef1 35%,
+    #6ab5f8 65%,
+    #8ee5ff 100%
+  );
+  box-shadow: 0 10px 36px rgba(57, 89, 229, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.phase-complete-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 44px rgba(142, 229, 255, 0.35);
+}
+
+@media (max-width: 600px) {
+  .phase-complete-card {
+    padding: 1.75rem 1.25rem 1.5rem;
+  }
+
+  .phase-complete-body {
+    max-width: 100%;
+  }
+}

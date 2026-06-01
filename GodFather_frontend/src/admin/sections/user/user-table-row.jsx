@@ -26,7 +26,7 @@ function UserTableRow({
     setOpenPopover(null);
   }, []);
   return <>
-      <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
+      <TableRow hover tabIndex={-1} role="checkbox" selected={selected} className="admin-users-table-row">
         <TableCell padding="checkbox">
           <Checkbox disableRipple checked={selected} onChange={onSelectRow} />
         </TableCell>
@@ -39,8 +39,10 @@ function UserTableRow({
       alignItems: "center"
     }}
   >
-            <Avatar alt={row.name} src={row.avatarUrl} />
-            {row.name}
+            <Avatar alt={row.name} src={row.avatarUrl} sx={{ width: 32, height: 32 }} />
+            <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+              {row.name}
+            </Box>
           </Box>
         </TableCell>
 
@@ -48,17 +50,17 @@ function UserTableRow({
 
         <TableCell>{row.role}</TableCell>
 
-        <TableCell align="center">
-          {row.isVerified ? <Iconify width={22} icon="solar:check-circle-bold" sx={{ color: "success.main" }} /> : "-"}
-        </TableCell>
+        <TableCell>{row.phone || "—"}</TableCell>
 
         <TableCell>
-          <Label color={row.status === "inactive" ? "warning" : "success"}>{row.status}</Label>
+          <Label color={row.status === "active" ? "success" : "warning"}>
+            {row.status === "pending" ? "Pending" : row.status}
+          </Label>
         </TableCell>
 
-        <TableCell align="right">
-          <IconButton onClick={handleOpenPopover}>
-            <Iconify icon="eva:more-vertical-fill" />
+        <TableCell align="right" padding="none" sx={{ pr: 1 }}>
+          <IconButton size="small" onClick={handleOpenPopover} aria-label="Actions">
+            <Iconify icon="eva:more-vertical-fill" width={20} />
           </IconButton>
         </TableCell>
       </TableRow>
@@ -97,7 +99,7 @@ function UserTableRow({
             Assign
           </MenuItem>
 
-          {row.status === "inactive" ? <MenuItem
+          {row.status !== "active" ? <MenuItem
     onClick={() => {
       onActivate(row.id);
       handleClosePopover();

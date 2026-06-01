@@ -2,6 +2,8 @@
 
 Drop training and reference documents here. They are chunked, embedded, and indexed into Elasticsearch (`ai_knowledge`) for RAG at runtime.
 
+Legacy flat PDFs placed in `Rag_docs/` are also indexed. Their category is inferred from the filename, so new brand books and briefs dropped there become available to RAG after the index rebuilds.
+
 ## Folder layout
 
 | Folder | Use for |

@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.conf import settings
+from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -27,7 +28,16 @@ from .serializers import (
     ChangePasswordSerializer
 )
 from .models import Role, Permission, Agency
-from .permissions import HasRolePermission, require_permissions
+from .agency_utils import ensure_agency_for_user
+from .status_utils import is_user_effectively_active
+from .permissions import (
+    HasRolePermission,
+    require_permissions,
+    can_view_user_directory,
+    can_view_agency_directory,
+    can_update_user_record,
+    can_update_agency_record,
+)
 
 
 User = get_user_model()
@@ -50,19 +60,48 @@ User = get_user_model()
 @permission_classes([AllowAny])
 def register(request):
     """Register a new user"""
-    serializer = RegisterSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-
-    # Handle user_type → role assignment
-    user_type = request.data.get('user_type', 'user')  # "user" or "agency"
-    role_name = 'agency' if user_type == 'agency' else 'client'
+    user_type = request.data.get('user_type', 'user')  # "user", "agency", or "admin"
+    if user_type == 'agency':
+        role_name = 'agency'
+    elif user_type == 'admin':
+        role_name = 'admin'
+    else:
+        role_name = 'client'
     role, _ = Role.objects.get_or_create(name=role_name, defaults={'description': f'Role: {role_name}'})
 
-    user = serializer.save()
-    user.role = role
-    user.save(update_fields=['role'])
+    serializer = RegisterSerializer(
+        data=request.data,
+        context={'user_type': user_type, 'role': role},
+    )
+    serializer.is_valid(raise_exception=True)
 
-    # Generate JWT tokens so the user is logged in immediately
+    user = serializer.save()
+
+    if role_name == 'agency':
+        # Enforce pending state (user + agency org) until admin activates
+        User.objects.filter(pk=user.pk).update(is_active=False, role=role)
+        user.refresh_from_db()
+        ensure_agency_for_user(user)
+        agency = user.agency
+        if agency:
+            Agency.objects.filter(pk=agency.pk).update(
+                is_active=False,
+                approved_at=None,
+            )
+        return Response(
+            {
+                'message': 'Agency registered successfully. An admin must activate your account before you can sign in.',
+                'user': UserSerializer(user).data,
+                'pending_approval': True,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    if role_name == 'admin':
+        user.is_staff = True
+    user.save(update_fields=['role', 'is_staff'])
+
+    # Generate JWT tokens so the user is logged in immediately (client / admin)
     refresh = RefreshToken.for_user(user)
 
     return Response(
@@ -114,11 +153,22 @@ def login_with_email(request):
             {"detail": "Invalid email or password"},
             status=status.HTTP_401_UNAUTHORIZED
         )
-    
-    if not user.is_active:
+
+    user = User.objects.select_related("role", "agency").get(pk=user.pk)
+
+    if not is_user_effectively_active(user):
+        role_name = (user.role.name if user.role else "") or ""
+        if role_name.lower() == "agency":
+            return Response(
+                {
+                    "detail": "Your agency account is pending admin approval. Please contact support or wait for activation.",
+                    "code": "agency_pending_approval",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
         return Response(
             {"detail": "User account is deactivated"},
-            status=status.HTTP_403_FORBIDDEN
+            status=status.HTTP_403_FORBIDDEN,
         )
 
     # Generate JWT tokens
@@ -150,7 +200,8 @@ def login_with_email(request):
 def me(request):
     """Get or update current user profile"""
     if request.method == 'GET':
-        return Response(UserSerializer(request.user).data)
+        user = User.objects.select_related("role", "agency").get(pk=request.user.pk)
+        return Response(UserSerializer(user).data)
     
     # Update user profile
     partial = request.method == 'PATCH'
@@ -528,12 +579,12 @@ def permission_detail(request, pk):
 @permission_classes([IsAuthenticated, HasRolePermission])
 def users_list(request):
     """List all users"""
-    if not request.user.has_perm_codename('users.view'):
+    if not can_view_user_directory(request.user):
         return Response(
             {"detail": "You do not have permission to view users"},
             status=status.HTTP_403_FORBIDDEN
         )
-    users = User.objects.all()
+    users = User.objects.all().select_related('role', 'agency').order_by('-created_at')
     return Response(UserSerializer(users, many=True).data)
 
 
@@ -560,7 +611,7 @@ def user_detail(request, pk):
     user = get_object_or_404(User, pk=pk)
     
     if request.method == 'GET':
-        if not request.user.has_perm_codename('users.view'):
+        if not can_view_user_directory(request.user):
             return Response(
                 {"detail": "You do not have permission to view users"},
                 status=status.HTTP_403_FORBIDDEN
@@ -568,7 +619,7 @@ def user_detail(request, pk):
         return Response(UserSerializer(user).data)
     
     elif request.method in ['PUT', 'PATCH']:
-        if not request.user.has_perm_codename('users.update'):
+        if not can_update_user_record(request.user):
             return Response(
                 {"detail": "You do not have permission to update users"},
                 status=status.HTTP_403_FORBIDDEN
@@ -576,7 +627,22 @@ def user_detail(request, pk):
         serializer = UserSerializer(user, data=request.data, partial=request.method=='PATCH')
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        user.refresh_from_db()
+        if user.role and user.role.name.lower() == 'agency':
+            ensure_agency_for_user(user)
+            agency = user.agency
+            if agency:
+                if user.is_active:
+                    Agency.objects.filter(pk=agency.pk).update(
+                        is_active=True,
+                        approved_at=timezone.now(),
+                    )
+                else:
+                    Agency.objects.filter(pk=agency.pk).update(
+                        is_active=False,
+                        approved_at=None,
+                    )
+        return Response(UserSerializer(user).data)
     
     elif request.method == 'DELETE':
         if not request.user.has_perm_codename('users.delete'):
@@ -609,10 +675,10 @@ def user_detail(request, pk):
 def agencies_list_create(request):
     """List or create agencies"""
     if request.method == 'GET':
-        if not request.user.has_perm_codename('agencies.view'):
-            return Response({"detail": "No permission"}, status=403)
-        
-        agencies = Agency.objects.all()
+        if not can_view_agency_directory(request.user):
+            return Response({"detail": "You do not have permission to view agencies"}, status=403)
+
+        agencies = Agency.objects.all().select_related('owner').order_by('-created_at')
         return Response(AgencySerializer(agencies, many=True).data)
     
     elif request.method == 'POST':
@@ -648,17 +714,52 @@ def agency_detail(request, pk):
     agency = get_object_or_404(Agency, pk=pk)
     
     if request.method == 'GET':
-        if not request.user.has_perm_codename('agencies.view'):
-            return Response({"detail": "No permission"}, status=403)
+        if not can_view_agency_directory(request.user):
+            return Response({"detail": "You do not have permission to view agencies"}, status=403)
         return Response(AgencySerializer(agency).data)
     
     elif request.method in ['PUT', 'PATCH']:
-        if not request.user.has_perm_codename('agencies.update'):
-            return Response({"detail": "No permission"}, status=403)
-        serializer = AgencySerializer(agency, data=request.data, partial=request.method=='PATCH')
+        # Allow global agency editors (admin/staff) OR the agency owner to update this record
+        if not (can_update_agency_record(request.user) or agency.owner_id == request.user.id):
+            # Fallback: allow activating/deactivating only (is_active) for users
+            # who are allowed to view agencies in the admin panel.
+            if can_view_agency_directory(request.user):
+                allowed_keys = {"is_active"}
+                incoming_keys = set((request.data or {}).keys())
+                if incoming_keys.issubset(allowed_keys):
+                    pass
+                else:
+                    return Response(
+                        {"detail": "You do not have permission to update agencies"},
+                        status=403,
+                    )
+            else:
+                return Response(
+                    {"detail": "You do not have permission to update agencies"},
+                    status=403,
+                )
+        serializer = AgencySerializer(agency, data=request.data, partial=request.method == 'PATCH')
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        agency.refresh_from_db()
+        if agency.is_active and agency.approved_at is None:
+            agency.approved_at = timezone.now()
+            agency.save(update_fields=['approved_at'])
+        elif not agency.is_active and agency.approved_at is not None:
+            agency.approved_at = None
+            agency.save(update_fields=['approved_at'])
+
+        if agency.owner_id:
+            owner = agency.owner
+            if agency.is_active and agency.approved_at:
+                if not owner.is_active:
+                    owner.is_active = True
+                    owner.save(update_fields=['is_active'])
+                ensure_agency_for_user(owner)
+            elif owner.is_active:
+                owner.is_active = False
+                owner.save(update_fields=['is_active'])
+        return Response(AgencySerializer(agency).data)
     
     elif request.method == 'DELETE':
         if not request.user.has_perm_codename('agencies.delete'):

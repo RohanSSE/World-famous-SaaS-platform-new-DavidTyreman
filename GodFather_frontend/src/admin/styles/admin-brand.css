@@ -1,0 +1,406 @@
+/* Brand Godfather — Admin shell (matches Agency Dashboard) */
+:root {
+  --gf-navy-dark: #0b0d1f;
+  --gf-navy-medium: #12132d;
+  --gf-navy-light: #1a1c3a;
+  --gf-blue-primary: #4a6cf7;
+  --gf-blue-secondary: #5d7ffc;
+  --gf-cyan-accent: #86e3ff;
+  --gf-white: #ffffff;
+  --gf-white-muted: rgba(255, 255, 255, 0.6);
+  --gf-border: rgba(142, 229, 255, 0.08);
+  --gf-card-bg: rgba(26, 28, 58, 0.4);
+  --gf-card-border: #5b6798;
+}
+
+body.godfather-admin {
+  font-family: 'NeueHaasGrotTextRound', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--gf-navy-dark);
+  color: var(--gf-white);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.godfather-admin #root,
+body.godfather-admin #root__layout {
+  background: transparent;
+}
+
+/* ── Root shell ── */
+.admin-adb-root {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background: var(--gf-navy-dark);
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-adb-root .adb-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.admin-adb-root .adb-glow-left {
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  left: -100px;
+  bottom: -200px;
+  background: radial-gradient(circle, rgba(134, 227, 255, 0.15) 0%, transparent 70%);
+  filter: blur(120px);
+  opacity: 0.6;
+}
+
+.admin-adb-root .adb-glow-right {
+  position: absolute;
+  width: 900px;
+  height: 900px;
+  right: -200px;
+  top: -300px;
+  background: radial-gradient(circle, rgba(74, 108, 247, 0.12) 0%, transparent 70%);
+  filter: blur(150px);
+  opacity: 0.5;
+}
+
+.admin-adb-layout {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  height: calc(100vh - 72px);
+}
+
+.admin-adb-main.adb-main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px 48px;
+  background: transparent;
+}
+
+.admin-adb-content {
+  max-width: 1400px;
+  width: 100%;
+}
+
+/* ── Top bar (ChatNavbar style) ── */
+.admin-chat-header {
+  position: relative;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px;
+  min-height: 72px;
+  background: var(--gf-navy-medium);
+  border-bottom: 1px solid var(--gf-border);
+  flex-shrink: 0;
+}
+
+.admin-chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--gf-white-muted);
+  cursor: pointer;
+}
+
+.admin-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--gf-white);
+}
+
+@media (max-width: 1199px) {
+  .admin-menu-btn {
+    display: flex;
+  }
+}
+
+.admin-chat-logo-wrap {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.admin-chat-logo-wrap:hover {
+  opacity: 0.85;
+}
+
+.admin-chat-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.admin-chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-avatar-top {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gf-blue-primary), var(--gf-blue-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--gf-white);
+  box-shadow: 0 4px 12px rgba(74, 108, 247, 0.3);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ── Sidebar (agency-sidebar) ── */
+.admin-agency-sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--gf-navy-medium);
+  border-right: 1px solid var(--gf-border);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+@media (min-width: 1200px) {
+  .admin-agency-sidebar {
+    display: flex;
+  }
+}
+
+.admin-agency-sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 12px;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.admin-agency-sidebar-header {
+  padding: 0 8px 10px;
+  border-bottom: 1px solid var(--gf-border);
+  margin-bottom: 8px;
+}
+
+.admin-agency-sidebar-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gf-white-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.admin-agency-sidebar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gf-white);
+  margin: 0;
+}
+
+.admin-agency-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-agency-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.admin-agency-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--gf-white);
+}
+
+.admin-agency-sidebar-item.active {
+  background: rgba(57, 89, 229, 0.15);
+  color: var(--gf-cyan-accent);
+  font-weight: 500;
+}
+
+.admin-agency-sidebar-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* Mobile drawer */
+.admin-mobile-drawer .MuiDrawer-paper {
+  background: var(--gf-navy-medium) !important;
+  border-right: 1px solid var(--gf-border) !important;
+  width: 280px !important;
+}
+
+/* ── MUI overrides inside admin ── */
+body.godfather-admin .MuiCard-root {
+  background: var(--gf-card-bg) !important;
+  border: 1.5px solid var(--gf-card-border) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.godfather-admin .MuiTableCell-head {
+  background: rgba(18, 19, 45, 0.6) !important;
+  color: var(--gf-white-muted) !important;
+  border-bottom-color: var(--gf-border) !important;
+}
+
+body.godfather-admin .MuiTableCell-body {
+  border-bottom-color: var(--gf-border) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+body.godfather-admin .MuiTableRow-root:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+body.godfather-admin .MuiOutlinedInput-root {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+body.godfather-admin .MuiOutlinedInput-notchedOutline {
+  border-color: var(--gf-border) !important;
+}
+
+body.godfather-admin .MuiTab-root {
+  color: var(--gf-white-muted);
+  text-transform: none;
+  font-size: 14px;
+}
+
+body.godfather-admin .MuiTab-root.Mui-selected {
+  color: var(--gf-cyan-accent);
+}
+
+body.godfather-admin .MuiTabs-indicator {
+  background: linear-gradient(90deg, var(--gf-blue-primary), var(--gf-cyan-accent));
+  height: 2px;
+}
+
+body.godfather-admin .MuiTypography-h4,
+body.godfather-admin .adb-page-title {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--gf-white);
+  margin-bottom: 24px;
+}
+
+body.godfather-admin ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body.godfather-admin ::-webkit-scrollbar-thumb {
+  background: rgba(74, 108, 247, 0.35);
+  border-radius: 4px;
+}
+
+body.godfather-admin ::-webkit-scrollbar-track {
+  background: rgba(11, 13, 31, 0.5);
+}
+
+/* Users & Agencies table — compact, no horizontal scroll */
+.admin-users-table-wrap {
+  overflow: visible !important;
+  width: 100%;
+}
+
+.admin-users-table {
+  width: 100%;
+  table-layout: fixed;
+  min-width: 0 !important;
+}
+
+.admin-users-table .admin-users-table-row .MuiTableCell-root {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  border-bottom-color: rgba(142, 229, 255, 0.08);
+}
+
+.admin-users-table .MuiTableCell-head {
+  padding: 10px 12px !important;
+  font-size: 0.75rem !important;
+}
+
+.admin-agency-row-open {
+  background: rgba(57, 89, 229, 0.1) !important;
+}
+
+.admin-agency-members-panel {
+  width: 100%;
+  max-width: 288px;
+  min-width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+  background: #12132d;
+  border: 1px solid rgba(142, 229, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-agency-members-panel-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+}
+
+/* Auth sign-in */
+body.godfather-admin .admin-auth-root {
+  min-height: 100vh;
+  background: var(--gf-navy-dark);
+  position: relative;
+}
+
+body.godfather-admin .admin-auth-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 90% 70% at 50% 15%, #0f2858 0%, #061018 50%, #020408 100%);
+  pointer-events: none;
+  z-index: 0;
+}

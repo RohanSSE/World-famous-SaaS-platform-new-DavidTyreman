@@ -5,16 +5,16 @@
       "flags": [
         "unsupported_claim"
       ],
-      "frequency": 111,
+      "frequency": 115,
       "severity": 0.922,
       "recommended_fix": "full_verify_and_hedge",
-      "last_seen": "2026-05-25T09:32:14.485147+00:00",
+      "last_seen": "2026-05-29T06:02:48.157038+00:00",
       "example_queries": [
-        "Our ads say innovation but manifesto says trust. What now?",
-        "How should founder personality shape the brand?",
-        "We sound like every other SaaS company. Fix that.",
         "How should our brand respond in a crisis?",
-        "How do we articulate a brand promise customers believe?"
+        "How do we articulate a brand promise customers believe?",
+        "Using ONLY retrieved brand book knowledge, produce a complete Brand DNA: core beliefs, non-negotiables, emotional promis",
+        "Describe audience psychology: motivations, pain points, desired identity, fears, desires, and emotional drivers grounded",
+        "What creates brand trust?"
       ]
     },
     {
@@ -23,16 +23,16 @@
         "low_strategic_density",
         "unsupported_claim"
       ],
-      "frequency": 40,
+      "frequency": 50,
       "severity": 0.949,
       "recommended_fix": "expand_manifesto_chunks",
-      "last_seen": "2026-05-25T09:30:30.551051+00:00",
+      "last_seen": "2026-05-29T06:05:17.580690+00:00",
       "example_queries": [
-        "We rejected a playful tone before. Should we revisit?",
-        "How do we understand audience psychology for positioning?",
-        "Should our manifesto focus on trust or speed?",
-        "What is brand DNA and why does it matter?",
-        "How does storytelling build brand trust?"
+        "POSITIONING ENGINE \u2014 Using ONLY brand book excerpts: category role, competitive frame, status signals, and differentiati",
+        "Create a tone guide: voice, energy, forbidden phrases, preferred phrases, and communication laws aligned with the brand ",
+        "MESSAGING FRAMEWORK \u2014 Build messaging ladder: brand promise, proof points, emotional hooks, and pillar hierarchy \u2014 all f",
+        "how to apply my brand identity?",
+        "i want to grow my brand"
       ]
     },
     {
@@ -105,6 +105,38 @@
       ]
     },
     {
+      "failure_pattern": "low_strategic_density_reasoning_drift_unsupported_claim",
+      "flags": [
+        "low_strategic_density",
+        "reasoning_drift",
+        "unsupported_claim"
+      ],
+      "frequency": 3,
+      "severity": 0.075,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-05-28T09:39:30.755104+00:00",
+      "example_queries": [
+        "POSITIONING ENGINE \u2014 Using ONLY brand book excerpts: category role, competitive frame, status signals, and differentiati",
+        "Create a tone guide: voice, energy, forbidden phrases, preferred phrases, and communication laws aligned with the brand ",
+        "MESSAGING FRAMEWORK \u2014 Build messaging ladder: brand promise, proof points, emotional hooks, and pillar hierarchy \u2014 all f"
+      ]
+    },
+    {
+      "failure_pattern": "low_strategic_density",
+      "flags": [
+        "low_strategic_density"
+      ],
+      "frequency": 3,
+      "severity": 0.345,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-05-29T06:06:16.768351+00:00",
+      "example_queries": [
+        "We rejected a playful tone before. Should we revisit?",
+        "Should our manifesto focus on trust or speed?",
+        "for premium ?"
+      ]
+    },
+    {
       "failure_pattern": "low_confidence_overclaim_low_strategic_density_reasoning_drift_unsupported_claim",
       "flags": [
         "low_strategic_density",
@@ -118,20 +150,6 @@
       "last_seen": "2026-05-25T07:47:13.958532+00:00",
       "example_queries": [
         "How do we make competitors irrelevant?"
-      ]
-    },
-    {
-      "failure_pattern": "low_strategic_density",
-      "flags": [
-        "low_strategic_density"
-      ],
-      "frequency": 2,
-      "severity": 0.345,
-      "recommended_fix": "expand_manifesto_chunks",
-      "last_seen": "2026-05-25T08:02:49.746202+00:00",
-      "example_queries": [
-        "We rejected a playful tone before. Should we revisit?",
-        "Should our manifesto focus on trust or speed?"
       ]
     },
     {

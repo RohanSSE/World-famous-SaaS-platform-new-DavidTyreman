@@ -110,6 +110,122 @@ def _parse_structured_summary(raw_text):
         }
 
 
+def _split_text_chunks(text, sentence_limit=3):
+    text = (text or "").strip()
+    if not text:
+        return []
+    parts = [p.strip() for p in text.replace("\n", " ").split(".") if p.strip()]
+    chunks = []
+    for i in range(0, len(parts), sentence_limit):
+        seg = ". ".join(parts[i:i + sentence_limit]).strip()
+        if seg and not seg.endswith("."):
+            seg += "."
+        if seg:
+            chunks.append(seg)
+    return chunks
+
+
+def _build_brand_book_payload(session, summary):
+    """
+    Convert structured summary into deterministic 3-page brand book payload.
+    UI can render this directly like the target reference design.
+    """
+    heading = (summary or {}).get("heading") or "Brand Overview"
+    sub_heading = (summary or {}).get("sub_heading") or ""
+    sections = (summary or {}).get("sections") or []
+    normalized_sections = [
+        {
+            "title": (s.get("title") or "").strip(),
+            "content": (s.get("content") or "").strip(),
+        }
+        for s in sections
+        if isinstance(s, dict)
+    ]
+
+    def sec(idx, fallback_title):
+        if idx < len(normalized_sections):
+            item = normalized_sections[idx]
+            return {
+                "title": item["title"] or fallback_title,
+                "content": item["content"] or "",
+            }
+        return {"title": fallback_title, "content": ""}
+
+    s0 = sec(0, "Brand Origin Story")
+    s1 = sec(1, "Brand DNA")
+    s2 = sec(2, "Brand Promise")
+    s3 = sec(3, "Emotional Connection")
+    s4 = sec(4, "Differentiation Statement")
+
+    dna_items = [c for c in _split_text_chunks(s1["content"], sentence_limit=1)[:3] if c]
+    if not dna_items:
+        dna_items = ["Bold.", "Purposeful.", "Distinctive."]
+
+    emotional_chunks = _split_text_chunks(s3["content"], sentence_limit=2)
+    emotional_before = emotional_chunks[0] if emotional_chunks else s3["content"]
+    emotional_after = emotional_chunks[1] if len(emotional_chunks) > 1 else sub_heading
+
+    style_line = _split_text_chunks(sub_heading, sentence_limit=1)
+    style_text = style_line[0] if style_line else "Confident, warm, and visionary."
+    visual_text = style_line[1] if len(style_line) > 1 else "Deep blue, soft glow accents."
+    design_text = style_line[2] if len(style_line) > 2 else "Authentic, emotional, polished."
+
+    tagline_source = _split_text_chunks(s4["content"], sentence_limit=1)
+    taglines = [
+        tagline_source[0] if len(tagline_source) > 0 else "Build your truth. Live your brand.",
+        tagline_source[1] if len(tagline_source) > 1 else "Where clarity becomes culture.",
+        tagline_source[2] if len(tagline_source) > 2 else "Born to stand out. Built to last.",
+    ]
+
+    return {
+        "sidebar_title": "Brand Book",
+        "brand_name": session.title or "Brand",
+        "pages": [
+            {
+                "id": "overview",
+                "title": "Brand Overview",
+                "overview_fields": [
+                    {"label": "Brand Name", "value": session.title or "Your Brand"},
+                    {"label": "Industry/Category", "value": heading},
+                    {"label": "Core Belief (1-line Purpose)", "value": sub_heading or "Defined through your manifesto responses."},
+                ],
+                "sections": [
+                    {"title": s0["title"], "content": s0["content"]},
+                ],
+            },
+            {
+                "id": "dna",
+                "title": "Brand DNA",
+                "dna_points": dna_items,
+                "sections": [
+                    {"title": s2["title"], "content": s2["content"]},
+                ],
+                "emotional_connection": {
+                    "title": s3["title"] or "Emotional Connection",
+                    "before_title": "Before Our Brand",
+                    "before": emotional_before,
+                    "after_title": "After Our Brand",
+                    "after": emotional_after,
+                },
+            },
+            {
+                "id": "differentiation",
+                "title": s4["title"] or "Differentiation Statement",
+                "statement": s4["content"],
+                "style_tone": {
+                    "title": "Brand Style & Tone & Visual Mood",
+                    "summary": s2["content"],
+                    "tone": style_text,
+                    "visual": visual_text,
+                    "design": design_text,
+                },
+                "taglines": taglines,
+                "cta_label": "Explore More",
+            },
+        ],
+    }
+
+
 # Multiple Sessions
 @swagger_auto_schema(
     method='get',
@@ -152,10 +268,12 @@ def review_dashboard(request):
         return Response({"detail": "No access to this dashboard"}, status=403)
     
     user = request.user
-    if not user.agency:
+    from accounts.agency_utils import ensure_agency_for_user
+    agency = user.agency or (ensure_agency_for_user(user) if user.has_role('agency') else None)
+    if not agency:
         return Response({"detail": "Not part of any agency"}, status=403)
 
-    sessions = Session.objects.filter(agency=user.agency)
+    sessions = Session.objects.filter(agency=agency)
     
     sessions_with_feedback = sessions.annotate(
         pending_feedback_count=Count('review_comments', filter=Q(review_comments__is_resolved=False))
@@ -188,8 +306,22 @@ def agency_dashboard(request):
     # Agency users see their agency sessions; admins see all
     if user.is_superuser or user.has_role('admin'):
         sessions = Session.objects.all()
-    elif user.agency:
-        sessions = Session.objects.filter(agency=user.agency)
+    elif user.has_role('agency') or user.agency_id:
+        from accounts.agency_utils import ensure_agency_for_user
+        from accounts.status_utils import is_user_effectively_active
+
+        if user.has_role('agency') and not is_user_effectively_active(user):
+            return Response(
+                {
+                    "detail": "Your agency account is pending admin approval.",
+                    "code": "agency_pending_approval",
+                },
+                status=403,
+            )
+        agency = ensure_agency_for_user(user)
+        if not agency:
+            return Response({"detail": "Not part of any agency"}, status=403)
+        sessions = Session.objects.filter(agency=agency)
     else:
         return Response({"detail": "Not part of any agency"}, status=403)
 
@@ -576,9 +708,15 @@ def session_list(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_create(request):
-    if not request.user.has_perm_codename('sessions.create'):
+    role_name = getattr(request.user.role, 'name', None) if request.user.role else None
+    can_create = (
+        request.user.is_superuser
+        or request.user.has_perm_codename('sessions.create')
+        or role_name in ('client', 'agency')
+    )
+    if not can_create:
         return Response({"detail": "No permission"}, status=403)
-    
+
     serializer = SessionCreateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     
@@ -1193,6 +1331,107 @@ def question_list(request):
 
 
 
+
+
+QUESTION_ADMIN_COUNTS = {
+    1: 8,   # Phase 1: 8 questions
+    2: 12,  # Phase 2: 12 questions
+    3: 10,  # Phase 3: 10 questions
+}
+
+
+def _is_question_admin(user):
+    # Admin users: Django staff/superuser or app role name containing "admin"
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "is_superuser", False) or getattr(user, "is_staff", False):
+        return True
+    role_name = (getattr(getattr(user, "role", None), "name", None) or "").lower()
+    return "admin" in role_name
+
+
+@swagger_auto_schema(
+    method="post",
+    operation_description="Admin: bulk replace questions for stages 1..3",
+    responses={200: "Questions updated", 400: "Bad input", 403: "Forbidden"},
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, HasRolePermission])
+def admin_questions_bulk_set(request):
+    if not _is_question_admin(request.user):
+        return Response(
+            {"detail": "You do not have permission to modify questions."},
+            status=403,
+        )
+
+    stages_payload = request.data.get("stages") or {}
+    if not isinstance(stages_payload, dict):
+        return Response(
+            {"detail": "`stages` must be an object like {\"1\": [...], \"2\": [...]}."},
+            status=400,
+        )
+
+    # Validate required stage lists exactly
+    for stage_num, required_count in QUESTION_ADMIN_COUNTS.items():
+        stage_key = str(stage_num)
+        texts = stages_payload.get(stage_key) if stage_key in stages_payload else stages_payload.get(stage_num)
+        if texts is None:
+            return Response(
+                {"detail": f"Missing questions for stage {stage_num}."},
+                status=400,
+            )
+        if not isinstance(texts, list):
+            return Response(
+                {"detail": f"Stage {stage_num} must be a list of strings."},
+                status=400,
+            )
+        if len(texts) != required_count:
+            return Response(
+                {"detail": f"Stage {stage_num} requires exactly {required_count} questions, got {len(texts)}."},
+                status=400,
+            )
+
+        for i, t in enumerate(texts):
+            if t is None or not str(t).strip():
+                return Response(
+                    {"detail": f"Stage {stage_num} question #{i + 1} cannot be empty."},
+                    status=400,
+                )
+
+    from django.db import transaction
+
+    with transaction.atomic():
+        created = {}
+        for stage_num in sorted(QUESTION_ADMIN_COUNTS.keys()):
+            Question.objects.filter(stage=stage_num).delete()
+
+            texts = (
+                stages_payload.get(str(stage_num))
+                if str(stage_num) in stages_payload
+                else stages_payload.get(stage_num)
+            )
+
+            new_qs = [
+                Question(
+                    stage=stage_num,
+                    order=idx + 1,
+                    text=str(text).strip(),
+                    category="other",
+                    is_required=True,
+                    is_active=True,
+                    placeholder=None,
+                    help_text=None,
+                )
+                for idx, text in enumerate(texts)
+            ]
+
+            created_stage = Question.objects.bulk_create(new_qs)
+            created[str(stage_num)] = QuestionSerializer(created_stage, many=True).data
+
+    return Response(
+        {"detail": "Questions updated successfully.", "created": created},
+        status=200,
+    )
 
 
 @swagger_auto_schema(
@@ -3115,8 +3354,11 @@ QUESTIONS & ANSWERS:
     from user_sessions.services.ai_generation_service import run_session_summary_generation
     gen_result = run_session_summary_generation(session.pk, request.user.pk)
     if gen_result.get("success"):
+        summary_payload = gen_result["summary"] if isinstance(gen_result.get("summary"), dict) else _parse_structured_summary(gen_result.get("summary") or "")
+        brand_book = _build_brand_book_payload(session, summary_payload)
         return Response({
-            "summary": gen_result["summary"],
+            "summary": summary_payload,
+            "brand_book": brand_book,
             "total_questions_answered": gen_result["total_questions_answered"],
             "sources": gen_result.get("sources", []),
         }, status=status.HTTP_200_OK)
@@ -3755,8 +3997,11 @@ def session_generate_foundation_summary(request, pk):
     from user_sessions.services.ai_generation_service import run_foundation_summary_generation
     gen_result = run_foundation_summary_generation(session.pk, request.user.pk)
     if gen_result.get("success"):
+        summary_payload = gen_result["summary"] if isinstance(gen_result.get("summary"), dict) else _parse_structured_summary(gen_result.get("summary") or "")
+        brand_book = _build_brand_book_payload(session, summary_payload)
         return Response({
-            "summary": gen_result["summary"],
+            "summary": summary_payload,
+            "brand_book": brand_book,
             "total_questions_answered": len(qa_pairs),
             "sources": gen_result.get("sources", []),
         }, status=status.HTTP_200_OK)
@@ -3828,8 +4073,11 @@ def session_get_foundation_summary(request, pk):
     elif summary_value:
         summary_value = _parse_structured_summary(summary_value)
 
+    brand_book = _build_brand_book_payload(session, summary_value if isinstance(summary_value, dict) else _parse_structured_summary(summary_value))
+
     return Response({
         "summary": summary_value,
+        "brand_book": brand_book,
         "status": summary_obj.status,
         "generated_by": summary_obj.generated_by.email if summary_obj.generated_by else None,
         "updated_at": summary_obj.updated_at,
@@ -3924,6 +4172,7 @@ def session_update_foundation_summary(request, pk):
     resp = {
         "message": "Foundation summary updated successfully",
         "summary": summary_to_return,
+        "brand_book": _build_brand_book_payload(session, summary_to_return if isinstance(summary_to_return, dict) else _parse_structured_summary(summary_to_return)),
     }
     if feedback_result and feedback_result.get("learned"):
         resp["feedback_learning"] = {"learned": True}
@@ -3938,8 +4187,15 @@ def session_update_foundation_summary(request, pk):
 def answer_ai_suggestions(request, pk):
     """
     Called while user is typing.
-    Returns 2–3 short AI answer suggestions based on 2–3 hints words.
+    Classifies draft as too_weak / vendor_thought / strong (per question profile),
+    then returns tailored recommendations.
     """
+    from user_sessions.services.answer_quality import (
+        build_quality_prompt_context,
+        normalize_ai_quality_response,
+        score_answer_quality,
+    )
+
     session = get_object_or_404(Session, pk=pk)
     if not session.has_access(request.user):
         return Response({"detail": "Access denied"}, status=403)
@@ -3952,15 +4208,42 @@ def answer_ai_suggestions(request, pk):
     except Question.DoesNotExist:
         return Response({"detail": "Question not found"}, status=404)
 
-    system_prompt = """You are an expert brand strategist. You will receive a question (from our product) and the user's partial answer or hints (what they have typed so far).
+    heuristic = score_answer_quality(question, hints)
 
-Your task: Suggest 2–4 short, concrete answer completions. Each suggestion must be one sentence or a short phrase, professional and on-topic. Do not repeat the user's exact words unless natural; expand or rephrase helpfully.
+    system_prompt = """You are THE BRAND GODFATHER — a world-class brand strategist coach.
 
-Output format: Return only valid JSON. Use a single key "suggestions" with an array of strings. Example: {"suggestions": ["First suggestion here.", "Second suggestion here.", "Third suggestion here."]}"""
+You evaluate a user's partial or full answer draft against the specific question they are answering.
+
+Your job:
+1) Classify the draft into exactly ONE quality tier:
+   - too_weak → quality_label must be "This is too weak"
+   - vendor_thought → quality_label must be "This is a vendor thought"
+   - strong → quality_label must be "This is strong"
+
+2) Give a one-sentence reason (direct, warm, no jargon).
+
+3) Give 2–3 strings in "suggestions" — each MUST be only the final answer text the user pastes in (one sentence).
+   Never wrap with "Rewrite with...", "Try this instead:", or "like '...'".
+
+Rules:
+- Vendor trap = "we provide solutions", "unmet market needs", generic services talk, sounding hireable not memorable.
+- Weak = too short, generic buzzwords, no felt truth, no proof of behavior.
+- Strong = specific, ownable, emotional or behavioral truth that fits the question.
+- Use the question profile and heuristic hint; override only if clearly wrong.
+
+Output JSON only:
+{
+  "quality": "too_weak|vendor_thought|strong",
+  "quality_label": "This is too weak|This is a vendor thought|This is strong",
+  "reason": "...",
+  "suggestions": ["...", "..."]
+}"""
 
     user_prompt = f"""Question: {question.text.strip()}
 
-User hints: {hints}"""
+User draft: {hints}
+
+{build_quality_prompt_context(question, hints, heuristic)}"""
 
     try:
         completion = get_openai_client().chat.completions.create(
@@ -3970,25 +4253,43 @@ User hints: {hints}"""
                 {"role": "user", "content": user_prompt},
             ],
             response_format={"type": "json_object"},
-            temperature=0.7,
-            max_tokens=300,
+            temperature=0.65,
+            max_tokens=450,
         )
 
         text = completion.choices[0].message.content.strip()
         if text.startswith("```"):
             text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         result = json.loads(text)
-        suggestions = result.get("suggestions") or []
-        if not isinstance(suggestions, list):
-            suggestions = []
-        suggestions = [str(s).strip() for s in suggestions[:4] if s]
-
-        return Response({"suggestions": suggestions}, status=200)
+        payload = normalize_ai_quality_response(result, heuristic)
+        return Response(payload, status=200)
 
     except (json.JSONDecodeError, KeyError):
-        return Response({"suggestions": []}, status=200)
+        payload = normalize_ai_quality_response(
+            {"suggestions": _fallback_suggestions(heuristic)},
+            heuristic,
+        )
+        return Response(payload, status=200)
     except Exception:
         return Response({"detail": "AI service error"}, status=500)
+
+
+def _fallback_suggestions(heuristic: dict) -> list:
+    """Rule-based suggestions when AI JSON parsing fails."""
+    q = heuristic.get("quality", "too_weak")
+    if q == "vendor_thought":
+        return [
+            "Lead with what you believe — not what you sell.",
+            "Describe how people should feel around your brand, with one real behavior that proves it.",
+        ]
+    if q == "strong":
+        return [
+            "Keep this truth — now add one vivid moment that proves it in real life.",
+        ]
+    return [
+        "Name one emotion your brand refuses to compromise on, and why.",
+        "Replace generic words with a sentence only your brand could say.",
+    ]
 
 
 # ---- Contextual assistant suggestion (avatar popup) ----
@@ -4084,6 +4385,68 @@ def assistant_suggestion(request, pk):
         return Response({"message": "Keep going — you're doing great!", "cta": None}, status=status.HTTP_200_OK)
     except Exception:
         return Response({"detail": "AI service error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, HasRolePermission])
+def brand_book_heading_insight(request, pk):
+    """
+    POST /api/sessions/<pk>/brand-book-insight/
+    Returns a short orb message for a hovered heading.
+    """
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+    heading = (request.data.get("heading") or "").strip()
+    content = (request.data.get("content") or "").strip()
+    page_id = (request.data.get("page_id") or "").strip().lower()
+
+    if not heading:
+        return Response({"detail": "heading is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def first_sentence(text):
+        t = (text or "").strip()
+        if not t:
+            return ""
+        parts = [p.strip() for p in t.replace("\n", " ").split(".") if p.strip()]
+        if not parts:
+            return t
+        s = parts[0]
+        if not s.endswith("."):
+            s += "."
+        return s
+
+    hl = heading.lower()
+    if "overview" in hl:
+        message = "This section gives you a high-level brand blueprint: identity, category position, and core purpose."
+    elif "dna" in hl:
+        message = "This section reveals your brand's core traits that shape tone, behavior, and decisions."
+    elif "promise" in hl:
+        message = "This heading clarifies the consistent outcome and experience customers should expect from your brand."
+    elif "emotional" in hl:
+        message = "This section highlights the before/after emotional shift and shows the core customer transformation."
+    elif "differentiation" in hl:
+        message = "This point explains your unique market edge and why your brand stands apart."
+    elif "style" in hl or "tone" in hl or "visual" in hl:
+        message = "This section decodes brand expression: voice, visual mood, and design direction in one place."
+    elif "tagline" in hl:
+        message = "This section gives concise messaging options that make your brand memorable."
+    else:
+        message = "This heading explains a focused strategic angle that can guide execution decisions."
+
+    key_line = first_sentence(content)
+    if key_line:
+        message = f"{message} Key insight: {key_line}"
+
+    return Response(
+        {
+            "heading": heading,
+            "page_id": page_id or None,
+            "message": message,
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(['GET', 'PATCH'])
@@ -4257,12 +4620,127 @@ def _run_brand_export_package(session, workflow, user):
     return result, package, narrative
 
 
+def _summary_export_text_from_payload(brand_book, summary):
+    lines = []
+    if isinstance(summary, dict):
+        if summary.get("heading"):
+            lines.append(str(summary.get("heading")))
+        if summary.get("sub_heading"):
+            lines.append(str(summary.get("sub_heading")))
+        for section in summary.get("sections") or []:
+            if isinstance(section, dict):
+                title = str(section.get("title") or "").strip()
+                content = str(section.get("content") or "").strip()
+                if title or content:
+                    lines.append("\n".join(part for part in [title, content] if part))
+
+    if isinstance(brand_book, dict):
+        for page in brand_book.get("pages") or []:
+            if not isinstance(page, dict):
+                continue
+            page_lines = []
+            title = str(page.get("title") or "").strip()
+            if title:
+                page_lines.append(title)
+            for field in page.get("overview_fields") or []:
+                if isinstance(field, dict):
+                    label = str(field.get("label") or "").strip()
+                    value = str(field.get("value") or "").strip()
+                    if label or value:
+                        page_lines.append(f"{label}: {value}" if label else value)
+            dna_points = page.get("dna_points") or []
+            if dna_points:
+                page_lines.append("Brand DNA: " + ", ".join(str(point) for point in dna_points if point))
+            for section in page.get("sections") or []:
+                if isinstance(section, dict):
+                    section_title = str(section.get("title") or "").strip()
+                    content = str(section.get("content") or "").strip()
+                    if section_title or content:
+                        page_lines.append("\n".join(part for part in [section_title, content] if part))
+            emotional = page.get("emotional_connection") or {}
+            if isinstance(emotional, dict):
+                emotional_parts = [
+                    emotional.get("title"),
+                    emotional.get("before_title"),
+                    emotional.get("before"),
+                    emotional.get("after_title"),
+                    emotional.get("after"),
+                ]
+                emotional_text = "\n".join(str(part).strip() for part in emotional_parts if part)
+                if emotional_text:
+                    page_lines.append(emotional_text)
+            if page.get("statement"):
+                page_lines.append(str(page.get("statement")))
+            style_tone = page.get("style_tone") or {}
+            if isinstance(style_tone, dict):
+                style_parts = [
+                    style_tone.get("title"),
+                    style_tone.get("summary"),
+                    style_tone.get("tone"),
+                    style_tone.get("visual"),
+                    style_tone.get("design"),
+                ]
+                style_text = "\n".join(str(part).strip() for part in style_parts if part)
+                if style_text:
+                    page_lines.append(style_text)
+            taglines = page.get("taglines") or []
+            if taglines:
+                page_lines.append("Taglines: " + " | ".join(str(tagline) for tagline in taglines if tagline))
+            if page_lines:
+                lines.append("\n".join(page_lines))
+    return "\n\n".join(line for line in lines if str(line).strip())
+
+
+def _build_summary_export_package(session, data):
+    brand_book = data.get("brand_book") if isinstance(data, dict) else {}
+    summary = data.get("summary") if isinstance(data, dict) else {}
+
+    if not brand_book and not summary:
+        try:
+            summary_obj = FoundationSummary.objects.filter(session=session, status="completed").first()
+            summary_text = summary_obj.summary_text if summary_obj else ""
+            if summary_text and summary_text.strip().startswith("{"):
+                summary = json.loads(summary_text)
+            elif summary_text:
+                summary = _parse_structured_summary(summary_text)
+            else:
+                summary = {}
+            brand_book = _build_brand_book_payload(session, summary if isinstance(summary, dict) else {})
+        except Exception:
+            summary = {}
+            brand_book = {}
+
+    narrative = _summary_export_text_from_payload(brand_book or {}, summary or {})
+    brand_name = ""
+    if isinstance(brand_book, dict):
+        brand_name = str(brand_book.get("brand_name") or "").strip()
+    if not brand_name:
+        brand_name = session.title or "Brand"
+
+    heading = summary.get("heading") if isinstance(summary, dict) else ""
+    sub_heading = summary.get("sub_heading") if isinstance(summary, dict) else ""
+    package = {
+        "brand_dna": {
+            "narrative": narrative or sub_heading or heading or f"Brand summary for {brand_name}.",
+            "core_beliefs": [],
+            "non_negotiables": [],
+            "emotional_promise": sub_heading or "",
+            "differentiation_anchor": heading or "",
+        },
+        "positioning": {
+            "category": heading or "Brand Overview",
+            "competitive_frame": sub_heading or narrative[:500],
+        },
+    }
+    return package, narrative, brand_name
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def session_brand_export(request, pk):
     """
     POST/GET /api/sessions/<pk>/brand-export/
-    Query/body: workflow, format (json|pdf|pptx)
+    Query/body: workflow, export_format (json|pdf|pptx)
     """
     session = get_object_or_404(Session, pk=pk)
     if not session.has_access(request.user):
@@ -4274,10 +4752,22 @@ def session_brand_export(request, pk):
         or request.query_params.get("workflow")
         or "pack"
     ).strip().lower()
-    fmt = (data.get("format") or request.query_params.get("format") or "json").strip().lower()
+    fmt = (
+        data.get("export_format")
+        or data.get("format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("file_format")
+        or request.query_params.get("format")
+        or "json"
+    ).strip().lower()
 
-    result, package, narrative = _run_brand_export_package(session, workflow, request.user)
-    title = f"{session.title or 'Brand'} — {workflow.replace('_', ' ').title()}"
+    if workflow in ("brand_summary", "brand_book", "summary"):
+        package, narrative, client_name = _build_summary_export_package(session, data)
+        result = {"brand_operating_system": package, "explainability": {}}
+        title = f"{client_name or session.title or 'Brand'} — Brand Book"
+    else:
+        result, package, narrative = _run_brand_export_package(session, workflow, request.user)
+        title = f"{session.title or 'Brand'} — {workflow.replace('_', ' ').title()}"
 
     from user_sessions.services.brand_export_engine import (
         record_export_audit,
@@ -4289,7 +4779,7 @@ def session_brand_export(request, pk):
         str(data.get("styled") or request.query_params.get("styled") or "").lower()
         in ("1", "true", "yes", "premium")
     )
-    client_name = session.title or f"Session {session.id}"
+    client_name = (client_name if workflow in ("brand_summary", "brand_book", "summary") else session.title) or f"Session {session.id}"
 
     if fmt == "pdf":
         if styled:

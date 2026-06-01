@@ -24,7 +24,7 @@ function descendingComparator(a, b, orderBy) {
 function getComparator(order, orderBy) {
   return order === "desc" ? (a, b) => descendingComparator(a, b, orderBy) : (a, b) => -descendingComparator(a, b, orderBy);
 }
-function applyFilter({ inputData, comparator, filterName }) {
+function applyFilter({ inputData, comparator, filterName, searchKeys = ["name"] }) {
   const stabilizedThis = inputData.map((el, index) => [el, index]);
   stabilizedThis.sort((a, b) => {
     const order = comparator(a[0], b[0]);
@@ -33,8 +33,9 @@ function applyFilter({ inputData, comparator, filterName }) {
   });
   inputData = stabilizedThis.map((el) => el[0]);
   if (filterName) {
-    inputData = inputData.filter(
-      (user) => user.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+    const q = filterName.toLowerCase();
+    inputData = inputData.filter((row) =>
+      searchKeys.some((key) => String(row[key] ?? "").toLowerCase().includes(q)),
     );
   }
   return inputData;

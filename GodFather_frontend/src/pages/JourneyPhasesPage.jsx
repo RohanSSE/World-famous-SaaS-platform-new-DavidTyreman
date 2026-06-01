@@ -3,37 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { FileText, Lock } from "lucide-react";
 import OnboardingNavBar from "../components/onboarding/OnboardingNavBar";
 import BrandOrb from "../components/orb/BrandOrb";
+import { JOURNEY_PHASES, isPhaseUnlocked } from "../constants/journeyPhases";
 import "./JourneyPhasesPage.css";
-
-const PHASES = [
-  {
-    id: 1,
-    questions: "Questions 1–8",
-    title: "Foundation & Identity",
-    description:
-      "Discover the emotional truth, meaning, positioning, and opportunity behind your brand.",
-  },
-  {
-    id: 2,
-    questions: "Questions 9–20",
-    title: "Differentiation & Strategic Depth",
-    description:
-      "Define what makes your brand emotionally meaningful, memorable, and difficult to ignore.",
-  },
-  {
-    id: 3,
-    questions: "Questions 21–30",
-    title: "Alignment & Brand Expansion",
-    description:
-      "Transform your insights into a strategically aligned Brand Book and long-term growth foundation.",
-  },
-];
 
 export default function JourneyPhasesPage() {
   const navigate = useNavigate();
-  const [activePhase, setActivePhase] = useState(1);
+  const [selectedPhase, setSelectedPhase] = useState(1);
 
-  const handleGoDeeper = () => navigate("/stepper");
+  const handleGoDeeper = () => {
+    if (!selectedPhase) return;
+    navigate(`/phase-questions/${selectedPhase}`);
+  };
+
   const handleBack = () => navigate("/before-continue");
 
   return (
@@ -55,17 +36,24 @@ export default function JourneyPhasesPage() {
         </div>
 
         <section className="journey-phases-cards" aria-label="Journey phases">
-          {PHASES.map((phase) => {
-            const isActive = activePhase === phase.id;
-            const isLocked = phase.id > 1;
+          {JOURNEY_PHASES.map((phase) => {
+            const isSelected = selectedPhase === phase.id;
+            const isLocked = !isPhaseUnlocked(phase.id);
             return (
               <article
                 key={phase.id}
-                className={`journey-phase-card ${isActive ? "active" : ""} ${isLocked ? "locked" : ""}`}
-                onClick={() => setActivePhase(phase.id)}
-                onKeyDown={(e) => e.key === "Enter" && setActivePhase(phase.id)}
+                className={`journey-phase-card ${isSelected ? "active" : ""} ${isLocked ? "locked" : ""}`}
+                onClick={() => {
+                  if (isLocked) return;
+                  setSelectedPhase(phase.id);
+                }}
+                onKeyDown={(e) => {
+                  if (isLocked) return;
+                  if (e.key === "Enter") setSelectedPhase(phase.id);
+                }}
                 role="button"
-                tabIndex={0}
+                tabIndex={isLocked ? -1 : 0}
+                aria-disabled={isLocked}
               >
                 <div className="journey-phase-card-top">
                   <span className="journey-phase-num">{phase.id}</span>
@@ -85,7 +73,12 @@ export default function JourneyPhasesPage() {
           })}
         </section>
 
-        <button type="button" className="journey-phases-cta" onClick={handleGoDeeper}>
+        <button
+          type="button"
+          className="journey-phases-cta"
+          onClick={handleGoDeeper}
+          disabled={!selectedPhase}
+        >
           Let&apos;s Go Deeper
         </button>
       </main>

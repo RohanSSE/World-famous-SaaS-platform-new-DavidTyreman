@@ -12,6 +12,9 @@ BACKEND_DIR = UTILS_DIR.parent
 
 # Rag_doc — categorized knowledge library (primary source)
 RAG_DOC_DIR = BACKEND_DIR / "Rag_doc"
+RAG_DOC_ADDITIONAL_DIRS = [
+    BACKEND_DIR / "Rag_docs",
+]
 RAG_DOC_CATEGORIES = [
     "branding",
     "manifesto",
