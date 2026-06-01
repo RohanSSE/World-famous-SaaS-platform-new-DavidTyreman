@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "document",
     "user_sessions",
     "ai_knowledge",
+    "synapse",
     "channels",
 ]
 
@@ -381,6 +382,11 @@ EMBEDDING_MODEL = env("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", default="text-embeddi
 _es_raw = env("ELASTICSEARCH_HOSTS", default="http://localhost:9200")
 ELASTICSEARCH_HOSTS = [h.strip() for h in _es_raw.split(",") if h.strip()]
 ELASTICSEARCH_HOST = ELASTICSEARCH_HOSTS[0].replace("http://", "").replace("https://", "")
+ES_NODE_1 = env(
+    "ES_NODE_1",
+    default=ELASTICSEARCH_HOSTS[0] if ELASTICSEARCH_HOSTS else "http://localhost:9200",
+)
+ES_NODE_2 = env("ES_NODE_2", default=ES_NODE_1)
 
 # Django cache (Redis DB 1 — Celery uses DB 0)
 CACHES = {
@@ -531,6 +537,10 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+CELERY_BROKER_HEARTBEAT = int(os.environ.get("CELERY_BROKER_HEARTBEAT", "10"))
+CELERY_BROKER_HEARTBEAT_CHECKRATE = float(
+    os.environ.get("CELERY_BROKER_HEARTBEAT_CHECKRATE", "2.0")
+)
 
 # =====================================================
 # AI KNOWLEDGE AUTO-INDEXING (Rag_doc → Elasticsearch)

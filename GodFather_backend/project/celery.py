@@ -15,3 +15,5 @@ app.conf.task_queues = (
     Queue('project.default', Exchange('project', type='direct'), routing_key='project.default'),
 )
 app.conf.task_default_routing_key = 'project.default'
+app.conf.broker_heartbeat = app.conf.get('CELERY_BROKER_HEARTBEAT', 10)
+app.conf.broker_heartbeat_checkrate = app.conf.get('CELERY_BROKER_HEARTBEAT_CHECKRATE', 2.0)

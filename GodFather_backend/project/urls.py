@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/sessions/', include('user_sessions.urls')),
     path('api/document/', include('document.urls')),
+    path('api/synapse/', include('synapse.urls')),
     # Swagger
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
