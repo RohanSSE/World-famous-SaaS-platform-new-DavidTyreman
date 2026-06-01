@@ -1,16 +1,18 @@
 from celery.result import AsyncResult
+from elasticsearch_dsl import connections
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from synapse.services.orchestrator import QuestionOrchestrator
-from synapse.services.question_router import QuestionRouter
-from synapse.services.session_manager import SessionManager
-from synapse.tasks import process_answer_async
+from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS
+from brandgodfather.services.orchestrator import QuestionOrchestrator
+from brandgodfather.services.question_router import QuestionRouter
+from brandgodfather.services.session_manager import SessionManager
+from brandgodfather.tasks import process_answer_async
 
 
-class SynapseAnswerAPIView(APIView):
+class BrandGodFatherAnswerAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -38,7 +40,7 @@ class SynapseAnswerAPIView(APIView):
         return Response(payload, status=status.HTTP_200_OK)
 
 
-class SynapseAnswerStatusAPIView(APIView):
+class BrandGodFatherAnswerStatusAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, task_id: str):
@@ -73,7 +75,7 @@ class SynapseAnswerStatusAPIView(APIView):
         )
 
 
-class SynapseSessionStartAPIView(APIView):
+class BrandGodFatherSessionStartAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -97,7 +99,7 @@ class SynapseSessionStartAPIView(APIView):
                     "prompt": first.prompt if first else "",
                 },
                 "welcome_sequence": [
-                    "Welcome to Synapse.",
+                    "Welcome to BrandGodFather.",
                     "We will go one layer deeper on every answer.",
                     "Start with complete honesty, not polished positioning.",
                 ],
@@ -106,7 +108,7 @@ class SynapseSessionStartAPIView(APIView):
         )
 
 
-class SynapseSessionDetailAPIView(APIView):
+class BrandGodFatherSessionDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, session_id: str):
@@ -130,3 +132,52 @@ class SynapseSessionDetailAPIView(APIView):
         }
         payload["depth_history"] = depth_history
         return Response(payload, status=status.HTTP_200_OK)
+
+
+class _BrandGodFatherOutputBaseAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    content_type = ""
+
+    def get(self, request, session_id: str):
+        es = connections.get_connection(alias=BRANDGODFATHER_NODE_2_ALIAS)
+        body = {
+            "size": 1,
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"session_id": session_id}},
+                        {"term": {"content_type": self.content_type}},
+                    ]
+                }
+            },
+            "sort": [{"created_at": {"order": "desc", "unmapped_type": "date"}}],
+        }
+        resp = es.search(index="brandgodfather_output_content", body=body)
+        hits = resp.get("hits", {}).get("hits", [])
+        if not hits:
+            return Response({"detail": "Output not found for this session."}, status=status.HTTP_404_NOT_FOUND)
+
+        src = hits[0].get("_source", {})
+        return Response(
+            {
+                "session_id": session_id,
+                "content_type": self.content_type,
+                "content": src.get("content"),
+                "week_number": src.get("week_number"),
+                "brand_filter_result": src.get("brand_filter_result", {}),
+                "created_at": src.get("created_at"),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class BrandGodFatherOutputSocialAPIView(_BrandGodFatherOutputBaseAPIView):
+    content_type = "social"
+
+
+class BrandGodFatherOutputCampaignAPIView(_BrandGodFatherOutputBaseAPIView):
+    content_type = "campaign"
+
+
+class BrandGodFatherOutputOutreachAPIView(_BrandGodFatherOutputBaseAPIView):
+    content_type = "outreach"

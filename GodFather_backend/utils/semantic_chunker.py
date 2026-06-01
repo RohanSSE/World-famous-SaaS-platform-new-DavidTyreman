@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # Lines to drop (PDF/slide export noise)
 _NOISE_LINE_PATTERNS = (
     re.compile(r"^Sharanya\s+Khemka\s*$", re.I),
-    re.compile(r"^SynapseIndia\s*$", re.I),
+    re.compile(r"^BrandGodFatherIndia\s*$", re.I),
     re.compile(r"^All Info from both\s*$", re.I),
 )
 

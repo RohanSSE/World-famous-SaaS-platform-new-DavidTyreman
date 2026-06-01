@@ -2,11 +2,11 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
-from synapse.tasks import ingest_pdf_task
+from brandgodfather.tasks import ingest_pdf_task
 
 
 class Command(BaseCommand):
-    help = "Dispatch Celery ingestion tasks for all Synapse PDFs in a directory"
+    help = "Dispatch Celery ingestion tasks for all BrandGodFather PDFs in a directory"
 
     def add_arguments(self, parser):
         parser.add_argument("--dir", required=True, help="Directory containing PDF files")
@@ -23,7 +23,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f"No PDF files found under: {source_dir}"))
             return
 
-        self.stdout.write(self.style.MIGRATE_HEADING(f"Dispatching Synapse ingest for {len(pdfs)} PDFs"))
+        self.stdout.write(self.style.MIGRATE_HEADING(f"Dispatching BrandGodFather ingest for {len(pdfs)} PDFs"))
 
         dispatched = 0
         for pdf_path in pdfs:
@@ -35,7 +35,7 @@ class Command(BaseCommand):
             dispatched += 1
             self.stdout.write(self.style.SUCCESS(f"Queued: {pdf_path.name}"))
 
-        self.stdout.write(self.style.MIGRATE_LABEL("\nSynapse ingest dispatch summary"))
+        self.stdout.write(self.style.MIGRATE_LABEL("\nBrandGodFather ingest dispatch summary"))
         self.stdout.write(f"- Directory: {source_dir}")
         self.stdout.write(f"- PDF files found: {len(pdfs)}")
         self.stdout.write(f"- Tasks dispatched: {dispatched}")

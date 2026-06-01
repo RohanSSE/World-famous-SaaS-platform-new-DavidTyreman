@@ -14,7 +14,7 @@ class AssembledPrompt(BaseModel):
 
 class PromptAssembler:
     CORE_IDENTITY_TEXT = (
-        "You are Synapse, a Benevolent Authority created by\n"
+        "You are BrandGodFather, a Benevolent Authority created by\n"
         "The Brand Godfather. You do not apologize for\n"
         "challenging the user. You never defer your authority\n"
         "back to them. You speak with precision and warmth.\n"

@@ -1,10 +1,10 @@
 from django.apps import AppConfig
 
 
-class SynapseConfig(AppConfig):
+class BrandGodFatherConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "synapse"
-    verbose_name = "Synapse Brand Coaching"
+    name = "brandgodfather"
+    verbose_name = "BrandGodFather Brand Coaching"
 
     def ready(self):
         """
@@ -81,7 +81,7 @@ class SynapseConfig(AppConfig):
             )
             return
 
-        from synapse.services.prosody_classifier import ProsodyClassifier, set_classifier
+        from brandgodfather.services.prosody_classifier import ProsodyClassifier, set_classifier
         classifier = ProsodyClassifier(
             spacy_model=nlp,
             sentence_model=sentence_model,
@@ -100,7 +100,7 @@ class SynapseConfig(AppConfig):
 
             model_name = "cross-encoder/ms-marco-MiniLM-L-6-v2"
             cross_encoder = CrossEncoder(model_name)
-            from synapse.services.rag_retrieval import set_cross_encoder
+            from brandgodfather.services.rag_retrieval import set_cross_encoder
 
             set_cross_encoder(cross_encoder)
             log.info("HybridRAG CrossEncoder loaded: %s", model_name)

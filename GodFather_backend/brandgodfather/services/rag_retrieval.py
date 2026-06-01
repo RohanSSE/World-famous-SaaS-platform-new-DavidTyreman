@@ -9,7 +9,7 @@ from elasticsearch_dsl import connections
 from pydantic import BaseModel
 
 from document.utils.embedding_service import EmbeddingService
-from synapse.documents import SYNAPSE_NODE_2_ALIAS
+from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS
 from utils.retry_azure import with_azure_retry
 
 logger = logging.getLogger(__name__)
@@ -46,11 +46,12 @@ def get_cross_encoder():
 
 
 class HybridRAGService:
-    INDEX_NAME = "synapse_brand_chunks"
+    INDEX_NAME = "brandgodfather_brand_chunks"
+    _es_supports_rrf_cache: Optional[bool] = None
 
     def __init__(self) -> None:
         self.embedding_service = EmbeddingService()
-        self.es = connections.get_connection(alias=SYNAPSE_NODE_2_ALIAS)
+        self.es = connections.get_connection(alias=BRANDGODFATHER_NODE_2_ALIAS)
 
     def get_question_context(
         self,
@@ -137,10 +138,15 @@ class HybridRAGService:
         k: int = 20,
     ) -> List[SearchHit]:
         if self._es_supports_rrf():
-            native = self._rrf_search_native(query_text=query_text, filters=filters, k=k)
-            top_native = native[:10]
-            reranked_native = self._rerank(query=query_text, candidates=top_native)
-            return reranked_native[:3]
+            try:
+                native = self._rrf_search_native(query_text=query_text, filters=filters, k=k)
+                top_native = native[:10]
+                reranked_native = self._rerank(query=query_text, candidates=top_native)
+                return reranked_native[:3]
+            except Exception as exc:
+                # Some clusters report support via version but still reject retriever syntax.
+                logger.warning("Native RRF unavailable at runtime, falling back: %s", exc)
+                self._force_disable_native_rrf()
 
         vector = self._embed_query(query_text)
         dense_results = self._dense_search(vector=vector, filters=filters, k=k)
@@ -153,10 +159,12 @@ class HybridRAGService:
         reranked = self._rerank(query=query_text, candidates=top_fused)
         return reranked[:3]
 
+    def _force_disable_native_rrf(self) -> None:
+        self.__class__._es_supports_rrf_cache = False
+
     def _embed_query(self, text: str) -> List[float]:
         vector = with_azure_retry(
             lambda: self.embedding_service.generate_embedding(text),
-            operation_name="hybrid_rag_query_embedding",
         )
         return vector
 
@@ -391,11 +399,17 @@ class HybridRAGService:
         return getattr(session, key, None)
 
     def _es_supports_rrf(self) -> bool:
+        cached = self.__class__._es_supports_rrf_cache
+        if cached is not None:
+            return cached
         try:
             info = self.es.info()
             version_text = str(info.get("version", {}).get("number", "0.0.0"))
             major, minor, *_ = [int(p) for p in version_text.split(".")[:2]]
-            return (major, minor) >= (8, 9)
+            supported = (major, minor) >= (8, 9)
+            self.__class__._es_supports_rrf_cache = supported
+            return supported
         except Exception:
             logger.debug("Could not determine ES version; falling back to manual RRF.")
+            self.__class__._es_supports_rrf_cache = False
             return False

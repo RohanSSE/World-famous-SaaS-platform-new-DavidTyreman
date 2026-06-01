@@ -7,6 +7,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 app = Celery('project')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
+app.conf.imports = tuple(app.conf.get('imports', ())) + ('brandgodfather.tasks',)
 
 app.conf.task_default_queue = 'project.default'
 app.conf.task_default_exchange = 'project'

@@ -220,10 +220,11 @@ class QuestionRouter:
     def handle_post_pass(self, session_id: str, q_id: str) -> None:
         q = str(q_id).upper()
         if q == "Q14":
-            from synapse.tasks import brand_type_determination_task
+            from brandgodfather.tasks import brand_type_determination_task
 
             brand_type_determination_task.delay(session_id=session_id)
         if q == "Q30":
-            from synapse.tasks import manifesto_generation_task
+            from brandgodfather.tasks import generate_BrandBook_task, manifesto_generation_task
 
+            generate_BrandBook_task.delay(session_id=session_id)
             manifesto_generation_task.delay(session_id=session_id)

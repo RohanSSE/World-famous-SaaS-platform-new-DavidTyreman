@@ -1,10 +1,10 @@
 """
-Gate 1 + Gate 2 prosody analysis layer for the Synapse coaching system.
+Gate 1 + Gate 2 prosody analysis layer for the BrandGodFather coaching system.
 
 Gate 1 (hard reject):  vendor language detected
 Gate 2 (soft signal):  2+ NLP signals fired
 
-Loaded once in SynapseConfig.ready() and held in module-level singleton.
+Loaded once in BrandGodFatherConfig.ready() and held in module-level singleton.
 """
 from __future__ import annotations
 

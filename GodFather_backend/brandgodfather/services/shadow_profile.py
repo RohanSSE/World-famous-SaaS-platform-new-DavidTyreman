@@ -8,15 +8,15 @@ from typing import Any, Dict, List, Optional, Tuple
 from elasticsearch_dsl import connections
 
 from document.utils.embedding_service import EmbeddingService
-from synapse.documents import SYNAPSE_NODE_2_ALIAS
+from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS
 from utils.retry_azure import with_azure_retry
 
 logger = logging.getLogger(__name__)
 
 
 class ShadowProfileService:
-    SESSIONS_INDEX = "synapse_sessions"
-    EPISODIC_INDEX = "synapse_episodic"
+    SESSIONS_INDEX = "brandgodfather_sessions"
+    EPISODIC_INDEX = "brandgodfather_episodic"
 
     BRAND_TERMS = {
         "brand",
@@ -47,7 +47,7 @@ class ShadowProfileService:
     }
 
     def __init__(self) -> None:
-        self.es = connections.get_connection(alias=SYNAPSE_NODE_2_ALIAS)
+        self.es = connections.get_connection(alias=BRANDGODFATHER_NODE_2_ALIAS)
         self.embedding_service = EmbeddingService()
 
     def update_profile(

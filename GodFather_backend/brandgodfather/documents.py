@@ -13,14 +13,14 @@ from elasticsearch_dsl import (
     connections,
 )
 
-SYNAPSE_NODE_2_ALIAS = "synapse_node_2"
+BRANDGODFATHER_NODE_2_ALIAS = "brandgodfather_node_2"
 
 
-# Use a dedicated alias so Synapse mappings can be created on Node 2 only.
-connections.create_connection(alias=SYNAPSE_NODE_2_ALIAS, hosts=[settings.ES_NODE_2])
+# Use a dedicated alias so BrandGodFather mappings can be created on Node 2 only.
+connections.create_connection(alias=BRANDGODFATHER_NODE_2_ALIAS, hosts=[settings.ES_NODE_2])
 
 
-class SynapseBrandChunkDocument(Document):
+class BrandGodFatherBrandChunkDocument(Document):
     chunk_id = Keyword()
     text = Text(fields={"keyword": Keyword()})
     dense_vector = DenseVector(dims=1536)
@@ -31,14 +31,14 @@ class SynapseBrandChunkDocument(Document):
     emotional_register = Keyword()
 
     class Index:
-        name = "synapse_brand_chunks"
+        name = "brandgodfather_brand_chunks"
 
 
 # Backward-compatible alias for existing references.
-SynapseChunk = SynapseBrandChunkDocument
+BrandGodFatherChunk = BrandGodFatherBrandChunkDocument
 
 
-class SynapseSessionDocument(Document):
+class BrandGodFatherSessionDocument(Document):
     session_id = Keyword()
     user_id = Keyword()
     current_phase = Keyword()
@@ -78,10 +78,10 @@ class SynapseSessionDocument(Document):
     updated_at = Date()
 
     class Index:
-        name = "synapse_sessions"
+        name = "brandgodfather_sessions"
 
 
-class SynapseEpisodicDocument(Document):
+class BrandGodFatherEpisodicDocument(Document):
     session_id = Keyword()
     q_id = Keyword()
     raw_answer = Text()
@@ -96,4 +96,16 @@ class SynapseEpisodicDocument(Document):
     timestamp = Date()
 
     class Index:
-        name = "synapse_episodic"
+        name = "brandgodfather_episodic"
+
+
+class BrandGodFatherOutputContentDocument(Document):
+    session_id = Keyword()
+    content_type = Keyword()
+    content = Object(dynamic=True)
+    week_number = Integer()
+    brand_filter_result = Object(dynamic=True)
+    created_at = Date()
+
+    class Index:
+        name = "brandgodfather_output_content"

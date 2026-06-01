@@ -11,13 +11,13 @@ from openai import AzureOpenAI
 from pydantic import BaseModel
 
 from document.utils.embedding_service import _normalize_azure_endpoint
-from synapse.documents import SYNAPSE_NODE_2_ALIAS
-from synapse.services.contradiction_engine import ContradictionEngine
-from synapse.services.prompt_assembler import PromptAssembler
-from synapse.services.prosody_classifier import get_classifier
-from synapse.services.question_router import QuestionRouter
-from synapse.services.rag_retrieval import HybridRAGService
-from synapse.services.shadow_profile import ShadowProfileService
+from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS
+from brandgodfather.services.contradiction_engine import ContradictionEngine
+from brandgodfather.services.prompt_assembler import PromptAssembler
+from brandgodfather.services.prosody_classifier import get_classifier
+from brandgodfather.services.question_router import QuestionRouter
+from brandgodfather.services.rag_retrieval import HybridRAGService
+from brandgodfather.services.shadow_profile import ShadowProfileService
 
 
 class LLMResponse(BaseModel):
@@ -37,11 +37,11 @@ class OrchestratorResult(BaseModel):
 
 
 class QuestionOrchestrator:
-    SESSION_INDEX = "synapse_sessions"
-    EPISODIC_INDEX = "synapse_episodic"
+    SESSION_INDEX = "brandgodfather_sessions"
+    EPISODIC_INDEX = "brandgodfather_episodic"
 
     def __init__(self) -> None:
-        self.es = connections.get_connection(alias=SYNAPSE_NODE_2_ALIAS)
+        self.es = connections.get_connection(alias=BRANDGODFATHER_NODE_2_ALIAS)
         self.prosody = get_classifier()
         self.contradiction_engine = ContradictionEngine()
         self.shadow_service = ShadowProfileService()

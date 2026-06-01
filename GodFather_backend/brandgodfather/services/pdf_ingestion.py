@@ -12,7 +12,7 @@ from elasticsearch_dsl import connections
 from rank_bm25 import BM25Okapi
 
 from document.utils.embedding_service import EmbeddingService
-from synapse.documents import SYNAPSE_NODE_2_ALIAS, SynapseBrandChunkDocument
+from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS, BrandGodFatherBrandChunkDocument
 from utils.retry_azure import with_azure_retry
 
 logger = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ NUMBERED_SECTION_RE = re.compile(r"^\s*\d+(?:\.\d+)*[\).:\-\s]+")
 class PDFIngestionService:
     def __init__(self) -> None:
         self.embedding_service = EmbeddingService()
-        self.es = connections.get_connection(alias=SYNAPSE_NODE_2_ALIAS)
+        self.es = connections.get_connection(alias=BRANDGODFATHER_NODE_2_ALIAS)
 
         corpus = [" ".join(tokens) for tokens in CHUNK_TYPE_KEYWORDS.values()]
         tokenized = [self._tokenize(text) for text in corpus]
@@ -322,7 +322,7 @@ class PDFIngestionService:
             }
             actions.append(
                 {
-                    "_index": SynapseBrandChunkDocument.Index.name,
+                    "_index": BrandGodFatherBrandChunkDocument.Index.name,
                     "_id": chunk["chunk_id"],
                     "_source": payload,
                 }
@@ -331,5 +331,5 @@ class PDFIngestionService:
         success, failed_items = bulk(self.es, actions, raise_on_error=False)
         failed = len(failed_items)
         if failed:
-            logger.warning("Synapse ingest completed with failures: success=%s failed=%s", success, failed)
+            logger.warning("BrandGodFather ingest completed with failures: success=%s failed=%s", success, failed)
         return {"success": success, "failed": failed}

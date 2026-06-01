@@ -75,7 +75,7 @@ INSTALLED_APPS = [
     "document",
     "user_sessions",
     "ai_knowledge",
-    "synapse",
+    "brandgodfather",
     "channels",
 ]
 
@@ -568,6 +568,18 @@ CELERY_BEAT_SCHEDULE = {
     'failure-cluster-mining': {
         'task': 'user_sessions.tasks.analyze_failures_nightly_task',
         'schedule': crontab(minute=45, hour=2),
+    },
+    'brandgodfather-weekly-social': {
+        'task': 'brandgodfather.tasks.weekly_social_task',
+        'schedule': crontab(minute=0, hour=8, day_of_week='monday'),
+    },
+    'brandgodfather-monthly-campaign': {
+        'task': 'brandgodfather.tasks.monthly_campaign_task',
+        'schedule': crontab(minute=0, hour=9, day_of_month='1'),
+    },
+    'brandgodfather-weekly-outreach': {
+        'task': 'brandgodfather.tasks.weekly_outreach_task',
+        'schedule': crontab(minute=0, hour=8, day_of_week='wednesday'),
     },
 }
 

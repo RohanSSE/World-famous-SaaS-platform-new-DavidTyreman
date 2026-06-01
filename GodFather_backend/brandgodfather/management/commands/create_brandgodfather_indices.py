@@ -3,33 +3,35 @@ from elastic_transport import ConnectionError as ESConnectionError
 from elasticsearch import ApiError
 from elasticsearch_dsl import connections
 
-from synapse.documents import (
-    SYNAPSE_NODE_2_ALIAS,
-    SynapseBrandChunkDocument,
-    SynapseEpisodicDocument,
-    SynapseSessionDocument,
+from brandgodfather.documents import (
+    BRANDGODFATHER_NODE_2_ALIAS,
+    BrandGodFatherBrandChunkDocument,
+    BrandGodFatherEpisodicDocument,
+    BrandGodFatherOutputContentDocument,
+    BrandGodFatherSessionDocument,
 )
 
 
 class Command(BaseCommand):
-    help = "Create Synapse Elasticsearch indices on Node 2"
+    help = "Create BrandGodFather Elasticsearch indices on Node 2"
 
     def handle(self, *args, **options):
-        es = connections.get_connection(alias=SYNAPSE_NODE_2_ALIAS)
+        es = connections.get_connection(alias=BRANDGODFATHER_NODE_2_ALIAS)
 
         docs = [
-            SynapseBrandChunkDocument,
-            SynapseSessionDocument,
-            SynapseEpisodicDocument,
+            BrandGodFatherBrandChunkDocument,
+            BrandGodFatherSessionDocument,
+            BrandGodFatherEpisodicDocument,
+            BrandGodFatherOutputContentDocument,
         ]
 
-        self.stdout.write(self.style.MIGRATE_HEADING("Creating Synapse indices on ES Node 2"))
+        self.stdout.write(self.style.MIGRATE_HEADING("Creating BrandGodFather indices on ES Node 2"))
 
         created = []
         for doc_cls in docs:
             index_name = doc_cls.Index.name
             try:
-                doc_cls.init(using=SYNAPSE_NODE_2_ALIAS)
+                doc_cls.init(using=BRANDGODFATHER_NODE_2_ALIAS)
             except (ApiError, ESConnectionError) as exc:
                 self.stderr.write(
                     self.style.ERROR(
@@ -40,7 +42,7 @@ class Command(BaseCommand):
             created.append(index_name)
             self.stdout.write(self.style.SUCCESS(f"Initialized index: {index_name}"))
 
-        self.stdout.write(self.style.MIGRATE_LABEL("\nSynapse index summary"))
+        self.stdout.write(self.style.MIGRATE_LABEL("\nBrandGodFather index summary"))
         for name in created:
             try:
                 present = bool(es.indices.exists(index=name))
@@ -50,4 +52,4 @@ class Command(BaseCommand):
             style = self.style.SUCCESS if present else self.style.WARNING
             self.stdout.write(style(f"- {name}: {status}"))
 
-        self.stdout.write(self.style.SUCCESS("Completed create_synapse_indices."))
+        self.stdout.write(self.style.SUCCESS("Completed create_brandgodfather_indices."))

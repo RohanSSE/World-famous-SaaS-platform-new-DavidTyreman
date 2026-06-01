@@ -7,10 +7,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from elasticsearch_dsl import connections
 from pydantic import BaseModel
 
-from synapse.documents import SYNAPSE_NODE_2_ALIAS
+from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS
 
 
-class SynapseSession(BaseModel):
+class BrandGodFatherSession(BaseModel):
     session_id: str
     user_id: str
     current_phase: str
@@ -26,13 +26,13 @@ class SynapseSession(BaseModel):
 
 
 class SessionManager:
-    SESSION_INDEX = "synapse_sessions"
-    EPISODIC_INDEX = "synapse_episodic"
+    SESSION_INDEX = "brandgodfather_sessions"
+    EPISODIC_INDEX = "brandgodfather_episodic"
 
     def __init__(self) -> None:
-        self.es = connections.get_connection(alias=SYNAPSE_NODE_2_ALIAS)
+        self.es = connections.get_connection(alias=BRANDGODFATHER_NODE_2_ALIAS)
 
-    def create_session(self, user_id: str, context_data: Dict[str, Any]) -> SynapseSession:
+    def create_session(self, user_id: str, context_data: Dict[str, Any]) -> BrandGodFatherSession:
         session_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
 
@@ -58,13 +58,13 @@ class SessionManager:
         }
 
         self.es.index(index=self.SESSION_INDEX, id=session_id, document=payload, refresh=True)
-        return SynapseSession(**payload)
+        return BrandGodFatherSession(**payload)
 
-    def get_session(self, session_id: str) -> Optional[SynapseSession]:
+    def get_session(self, session_id: str) -> Optional[BrandGodFatherSession]:
         doc_id, source = self._load_session(session_id)
         if not doc_id:
             return None
-        return SynapseSession(**source)
+        return BrandGodFatherSession(**source)
 
     def update_session(self, session_id: str, updates: Dict[str, Any]) -> bool:
         doc_id, _ = self._load_session(session_id)
@@ -77,7 +77,7 @@ class SessionManager:
         return True
 
     def advance_question(self, session_id: str) -> Optional[str]:
-        from synapse.services.question_router import QuestionRouter
+        from brandgodfather.services.question_router import QuestionRouter
 
         session = self.get_session(session_id)
         if not session:
