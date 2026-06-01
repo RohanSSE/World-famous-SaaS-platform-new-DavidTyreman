@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "document",
     "user_sessions",
     "ai_knowledge",
+    "brandgodfather",
     "channels",
 ]
 
@@ -143,8 +144,9 @@ DATABASES = {
     }
 }
 
-# Phase 14 — PGVector semantic memory (ES remains for keyword/filter)
-PGVECTOR_ENABLED = os.environ.get("PGVECTOR_ENABLED", "true").lower() in ("1", "true", "yes")
+# Phase 14 — PGVector semantic memory (ES remains for keyword/filter).
+# Default to disabled so local/dev runs work in Elasticsearch-only mode.
+PGVECTOR_ENABLED = os.environ.get("PGVECTOR_ENABLED", "false").lower() in ("1", "true", "yes")
 
 
 # Password validation
@@ -380,6 +382,11 @@ EMBEDDING_MODEL = env("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", default="text-embeddi
 _es_raw = env("ELASTICSEARCH_HOSTS", default="http://localhost:9200")
 ELASTICSEARCH_HOSTS = [h.strip() for h in _es_raw.split(",") if h.strip()]
 ELASTICSEARCH_HOST = ELASTICSEARCH_HOSTS[0].replace("http://", "").replace("https://", "")
+ES_NODE_1 = env(
+    "ES_NODE_1",
+    default=ELASTICSEARCH_HOSTS[0] if ELASTICSEARCH_HOSTS else "http://localhost:9200",
+)
+ES_NODE_2 = env("ES_NODE_2", default=ES_NODE_1)
 
 # Django cache (Redis DB 1 — Celery uses DB 0)
 CACHES = {
@@ -530,6 +537,10 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+CELERY_BROKER_HEARTBEAT = int(os.environ.get("CELERY_BROKER_HEARTBEAT", "10"))
+CELERY_BROKER_HEARTBEAT_CHECKRATE = float(
+    os.environ.get("CELERY_BROKER_HEARTBEAT_CHECKRATE", "2.0")
+)
 
 # =====================================================
 # AI KNOWLEDGE AUTO-INDEXING (Rag_doc → Elasticsearch)
@@ -557,6 +568,18 @@ CELERY_BEAT_SCHEDULE = {
     'failure-cluster-mining': {
         'task': 'user_sessions.tasks.analyze_failures_nightly_task',
         'schedule': crontab(minute=45, hour=2),
+    },
+    'brandgodfather-weekly-social': {
+        'task': 'brandgodfather.tasks.weekly_social_task',
+        'schedule': crontab(minute=0, hour=8, day_of_week='monday'),
+    },
+    'brandgodfather-monthly-campaign': {
+        'task': 'brandgodfather.tasks.monthly_campaign_task',
+        'schedule': crontab(minute=0, hour=9, day_of_month='1'),
+    },
+    'brandgodfather-weekly-outreach': {
+        'task': 'brandgodfather.tasks.weekly_outreach_task',
+        'schedule': crontab(minute=0, hour=8, day_of_week='wednesday'),
     },
 }
 

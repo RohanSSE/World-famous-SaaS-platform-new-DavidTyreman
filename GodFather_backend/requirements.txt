@@ -8,6 +8,7 @@ Brotli==1.1.0
 build==1.4.0
 celery==5.5.3
 flower==2.0.1
+redis==5.2.1
 certifi==2025.10.5
 cffi==2.0.0
 channels==4.2.0
@@ -42,6 +43,7 @@ kombu==5.5.4
 openai==2.3.0
 packaging==25.0
 pdf2image==1.17.0
+pdfplumber==0.11.4
 pillow==11.3.0
 pip-tools==7.5.2
 prompt_toolkit==3.0.52
@@ -60,7 +62,9 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
 pytz==2025.2
 PyYAML==6.0.3
+rank_bm25==0.2.2
 sentence-transformers==3.4.1
+unstructured==0.16.12
 reportlab==4.4.5
 python-pptx==1.0.2
 six==1.17.0

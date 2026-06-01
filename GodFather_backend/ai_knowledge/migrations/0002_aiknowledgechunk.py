@@ -1,6 +1,14 @@
-import pgvector.django.indexes
-import pgvector.django.vector
+import os
 from django.db import migrations, models
+
+
+def _use_pgvector() -> bool:
+    return os.environ.get("PGVECTOR_ENABLED", "false").lower() in ("1", "true", "yes")
+
+
+if _use_pgvector():
+    import pgvector.django.indexes
+    import pgvector.django.vector
 
 
 class Migration(migrations.Migration):
@@ -17,7 +25,12 @@ class Migration(migrations.Migration):
                 ("chunk_id", models.IntegerField(db_index=True, unique=True)),
                 ("title", models.CharField(blank=True, default="", max_length=500)),
                 ("content", models.TextField()),
-                ("embedding", pgvector.django.vector.VectorField(dimensions=1536)),
+                (
+                    "embedding",
+                    pgvector.django.vector.VectorField(dimensions=1536)
+                    if _use_pgvector()
+                    else models.JSONField(blank=True, default=list),
+                ),
                 ("category", models.CharField(db_index=True, default="knowledge", max_length=100)),
                 ("metadata", models.JSONField(blank=True, default=dict)),
                 ("document_id", models.IntegerField(blank=True, null=True)),
@@ -36,7 +49,7 @@ class Migration(migrations.Migration):
                         name="ai_knowledge_embedding_idx",
                         opclasses=["vector_cosine_ops"],
                     ),
-                ],
+                ] if _use_pgvector() else [],
             },
         ),
     ]

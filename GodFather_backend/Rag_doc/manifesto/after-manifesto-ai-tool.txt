@@ -6,14 +6,14 @@ Turn manifesto into daily content prompts. -
 Social post generator - Blog starter ideas - Ad 
 copy templates Energetic, playful Keeps brand 
 alive in daily comms
-SynapseIndia
+BrandGodFatherIndia
 2. Scenario Coaching Chat 
 Ask David how the brand would act in specific 
 cases. - Chat with pre-prompted buttons: “Crisis 
 Response,” “Launch,” “Customer Service Tone” - Free text allowed 
 Guiding, mentor-like 
 Replaces Google/agency for brand guidance 
-SynapseIndia
+BrandGodFatherIndia
 Training Playbook (Scenario Templates)
 Each scenario includes:
 User Input (raw question)
@@ -22,7 +22,7 @@ Refined Answer (AI-generated, manifesto
 aligned)
 Training Notes (filters applied: 3 words, 
 Playground, Promise)
-SynapseIndia
+BrandGodFatherIndia
 1. Crisis Response
 Input
 “Our product launch 
