@@ -32,4 +32,4 @@ npm install
 npm run dev
 ```
 
-Sign-in accepts any email + password (demo auth in `localStorage` until API is wired).
+Admin sign-in uses the Django API. Use a real superuser/staff/admin email account created in the backend; entering only `admin` is not a valid email login.

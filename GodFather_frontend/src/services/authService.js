@@ -5,20 +5,21 @@ const API_BASE_URL = api.defaults.baseURL;
 /** Parse DRF / axios errors into a single user-facing string */
 export function formatApiError(error, fallback = "Request failed") {
   if (!error) return fallback;
-  const data = error.response?.data;
+  const data = error.response?.data ?? (typeof error === "object" ? error : null);
   if (typeof data === "string") return data;
-  if (data?.detail) {
-    return typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
-  }
-  if (data?.message) return data.message;
   if (data && typeof data === "object") {
     const parts = [];
     for (const [key, val] of Object.entries(data)) {
+      if (["detail", "message", "status"].includes(key)) continue;
       if (Array.isArray(val)) parts.push(`${key}: ${val.join(" ")}`);
       else if (typeof val === "string") parts.push(`${key}: ${val}`);
     }
     if (parts.length) return parts.join(" · ");
   }
+  if (data?.detail) {
+    return typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+  }
+  if (data?.message) return data.message;
   if (error.message) return error.message;
   return fallback;
 }

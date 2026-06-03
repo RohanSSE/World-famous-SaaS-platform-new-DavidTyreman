@@ -1004,9 +1004,6 @@ def session_add_comment(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_answers(request, pk):
-    if not request.user.has_perm_codename('answers.view'):
-        return Response({"detail": "No permission"}, status=403)
-    
     session = get_object_or_404(Session, pk=pk)
     
     if not session.has_access(request.user):
@@ -1028,9 +1025,6 @@ def session_answers(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_conversations(request, pk):
-    if not request.user.has_perm_codename('answers.view'):
-        return Response({"detail": "No permission"}, status=403)
-    
     session = get_object_or_404(Session, pk=pk)
     
     if not session.has_access(request.user):
@@ -1056,11 +1050,11 @@ def session_conversations(request, pk):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_answer_create(request, pk):
-    if not request.user.has_perm_codename('answers.create'):
-        return Response({"detail": "No permission"}, status=403)
-    
     session = get_object_or_404(Session, pk=pk)
     
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=403)
+
     if not session.can_edit_answers(request.user):
         return Response({"detail": "Session is locked."}, status=403)
     
@@ -1144,10 +1138,11 @@ def session_answer_create(request, pk):
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_answers_batch(request, pk):
     """POST /api/sessions/{session_id}/answers/batch/ — upsert multiple answers."""
-    if not request.user.has_perm_codename('answers.create'):
-        return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
-
     session = get_object_or_404(Session, pk=pk)
+
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
     if not session.can_edit_answers(request.user):
         return Response({"detail": "Session is locked."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -1187,10 +1182,11 @@ def session_answers_batch(request, pk):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def answer_detail(request, pk, answer_id):
-    if not request.user.has_perm_codename('answers.delete'):
-        return Response({"detail": "No permission"}, status=403)
-    
     session = get_object_or_404(Session, pk=pk)
+
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=403)
+
     answer = get_object_or_404(Answer, pk=answer_id, session=session)
     
     if not session.can_edit_answers(request.user):
@@ -1956,9 +1952,6 @@ def download_manifesto_pdf(request, pk):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def answer_ai_suggestion(request, pk, answer_id):
-    if not request.user.has_perm_codename('answers.ai_suggest'):
-        return Response({"detail": "No permission"}, status=403)
-    
     session = get_object_or_404(Session, pk=pk)
     answer = get_object_or_404(Answer, pk=answer_id, session=session)
     
@@ -2124,9 +2117,6 @@ def answer_ai_suggestion_from_documents(request, pk):
     Generate AI suggestion based on relevant content from uploaded documents.
     Searches user's documents for relevant information and creates a comprehensive answer.
     """
-    if not request.user.has_perm_codename('answers.ai_suggest'):
-        return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
-    
     session = get_object_or_404(Session, pk=pk)
     if not session.has_access(request.user):
         return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
@@ -2371,9 +2361,6 @@ def answer_ai_suggestion_unified(request, pk):
     If use_documents=true, searches documents for relevant context.
     Otherwise, works like the original suggestion endpoint.
     """
-    if not request.user.has_perm_codename('answers.ai_suggest'):
-        return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
-    
     session = get_object_or_404(Session, pk=pk)
     if not session.has_access(request.user):
         return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
@@ -2737,9 +2724,6 @@ def answer_ai_suggestion_draft(request, pk):
     pk = session_id (from URL)
     Body: { "question_id": 5, "draft": "Our brand is about quality..." }
     """
-    if not request.user.has_perm_codename('answers.ai_suggest'):
-        return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
-
     # 1. Session access
     session = get_object_or_404(Session, pk=pk)
     if not session.has_access(request.user):
@@ -3662,10 +3646,11 @@ def edit_conversation(request, pk, conversation_id):
     2. Delete all subsequent messages in the thread
     3. Generate ONLY a follow-up question (assistant message) - no improved answer
     """
-    if not request.user.has_perm_codename('answers.create'):
-        return Response({"detail": "No permission"}, status=403)
-    
     session = get_object_or_404(Session, pk=pk)
+
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=403)
+
     if not session.can_edit_answers(request.user):
         return Response({"detail": "Session is locked."}, status=403)
     

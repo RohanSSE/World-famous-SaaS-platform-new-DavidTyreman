@@ -11,8 +11,8 @@ import InputAdornment from "@mui/material/InputAdornment";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useRouter } from "@admin/routes/hooks";
 import { Iconify } from "@admin/components/iconify";
-import { saveAuthSession } from "@admin/auth/session";
-import authService from "../../../services/authService";
+import { clearAuthSession, saveAuthSession } from "@admin/auth/session";
+import authService, { formatApiError } from "../../../services/authService";
 
 function canAccessAdminPanel(user) {
   if (!user) return false;
@@ -70,11 +70,20 @@ function SignInView() {
           return;
         }
 
+        clearAuthSession();
+
         const data = await authService.login(trimmedEmail, password);
-        const user = data.user || {};
+        let user = data.user || {};
+
+        try {
+          user = await authService.getProfile();
+        } catch {
+          localStorage.setItem("user", JSON.stringify(user));
+        }
 
         if (!canAccessAdminPanel(user)) {
           await authService.logout();
+          clearAuthSession();
           setErrorMessage(
             "This account cannot access the admin panel. Sign in with an admin or superuser account."
           );
@@ -83,19 +92,18 @@ function SignInView() {
 
         saveAuthSession({
           email: trimmedEmail,
-          name: trimmedName || user.email || "Admin User",
+          name: trimmedName || user.email || trimmedEmail,
           mode,
+          userId: user.id,
           role: user.role_name,
+          isStaff: Boolean(user.is_staff),
+          isSuperuser: Boolean(user.is_superuser),
           loggedInAt: new Date().toISOString(),
         });
 
         router.replace("/admin");
       } catch (err) {
-        const detail =
-          err?.detail ||
-          err?.message ||
-          (typeof err === "string" ? err : "Login failed. Check email and password.");
-        setErrorMessage(typeof detail === "string" ? detail : "Login failed.");
+        setErrorMessage(formatApiError(err, "Login failed. Check email and password."));
       } finally {
         setSubmitting(false);
       }

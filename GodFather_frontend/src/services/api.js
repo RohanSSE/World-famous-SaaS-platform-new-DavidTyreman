@@ -3,7 +3,40 @@ import axios from 'axios';
 // const API_BASE_URL = 'http://20.197.2.65:4000/api';
 // Default 8001 — port 8000 is often used by Cursor IDE on Windows; override in .env.development
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api';
+  import.meta.env.VITE_API_BASE_URL || 'http://13.87.135.158:8001/api';
+
+const ADMIN_SESSION_KEY = 'admin-auth-session';
+
+function clearStoredAuth() {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+  localStorage.removeItem(ADMIN_SESSION_KEY);
+  sessionStorage.removeItem(ADMIN_SESSION_KEY);
+}
+
+function getAuthRedirectPath() {
+  return window.location.pathname.startsWith('/admin') ? '/admin/sign-in' : '/intro-ductory';
+}
+
+function redirectToAuth() {
+  const nextPath = getAuthRedirectPath();
+  if (window.location.pathname !== nextPath) {
+    window.location.href = nextPath;
+  }
+}
+
+function isAuthEndpoint(url = '') {
+  return [
+    '/auth/login/',
+    '/auth/register/',
+    '/auth/logout/',
+    '/auth/password/',
+    '/auth/token/refresh/',
+    '/auth/token/verify/',
+  ].some((path) => url.includes(path));
+}
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -35,10 +68,12 @@ api.interceptors.response.use(
     const isRefreshRequest = originalRequest?.url?.includes('/auth/token/refresh/');
 
     if (error.response?.status === 401 && isRefreshRequest) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      window.location.href = '/intro-ductory';
+      clearStoredAuth();
+      redirectToAuth();
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401 && isAuthEndpoint(originalRequest?.url)) {
       return Promise.reject(error);
     }
 
@@ -48,6 +83,11 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          clearStoredAuth();
+          redirectToAuth();
+          return Promise.reject(error);
+        }
         const response = await api.post(`/auth/token/refresh/`, {
           refresh: refreshToken,
         });
@@ -59,10 +99,8 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh failed, logout user
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/intro-ductory';
+        clearStoredAuth();
+        redirectToAuth();
         return Promise.reject(refreshError);
       }
     }
