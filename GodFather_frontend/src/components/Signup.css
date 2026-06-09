@@ -176,6 +176,34 @@ NEW: Slide down from top animation */
   color: rgba(255, 255, 255, 0.4);
 }
 
+.password-toggle-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.password-toggle-btn:hover:not(:disabled),
+.password-toggle-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  outline: none;
+}
+
+.password-toggle-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 /* Submit Button */
 .submit-btn {
   width: 100%;

@@ -3,6 +3,7 @@ import "../components/Signup.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import { toast } from "react-toastify";
+import { Eye, EyeOff } from "lucide-react";
 import mailIcon from "../svg_assets/Email.svg";
 import lockIcon from "../svg_assets/Password.svg";
 import googleIcon from "../svg_assets/Google.svg";
@@ -31,6 +32,8 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -39,8 +42,15 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
       setFormData({ email: "", password: "", confirmPassword: "" });
       setError("");
       setSuccessMessage("");
+      setShowPassword(false);
+      setShowConfirmPassword(false);
     }
   }, [initialMode, isOpen]);
+
+  useEffect(() => {
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  }, [isLogin]);
 
   if (!isOpen) return null;
 
@@ -370,26 +380,46 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
               <div className="input-group">
                 <img src={lockIcon} alt="password" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Password"
                   value={formData.password}
                   onChange={handleInputChange}
                   disabled={loading || isFormDisabled}
                 />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  disabled={loading || isFormDisabled}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
               </div>
 
               {!isLogin && (
                 <div className="input-group">
                   <img src={lockIcon} alt="confirm password" />
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
                     placeholder="Confirm Password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     disabled={loading || isFormDisabled}
                   />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    disabled={loading || isFormDisabled}
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  >
+                    {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
                 </div>
               )}
 
