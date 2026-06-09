@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils import timezone
 from django.utils.html import format_html
-from .models import User, Role, Permission, Dashboard, Agency
+from .models import User, Role, Permission, Dashboard, Agency, SubscriptionPlan, UserSubscription
 
 
 
@@ -33,6 +34,27 @@ class AgencyAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ('created_at', 'updated_at')
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if obj.is_active and obj.approved_at is None:
+            obj.approved_at = timezone.now()
+            obj.save(update_fields=['approved_at'])
+        elif not obj.is_active and obj.approved_at is not None:
+            obj.approved_at = None
+            obj.save(update_fields=['approved_at'])
+
+        if not obj.owner_id:
+            return
+
+        owner = obj.owner
+        should_owner_be_active = bool(obj.is_active and obj.approved_at)
+        if owner.is_active != should_owner_be_active:
+            owner.is_active = should_owner_be_active
+            owner.save(update_fields=['is_active'])
+        if owner.agency_id != obj.id:
+            owner.agency = obj
+            owner.save(update_fields=['agency'])
     
     def owner_email(self, obj):
         return obj.owner.email if obj.owner else '-'
@@ -340,6 +362,62 @@ class DashboardAdmin(admin.ModelAdmin):
         )
     is_active_badge.short_description = 'Status'
     is_active_badge.admin_order_field = 'is_active'
+
+
+@admin.register(SubscriptionPlan)
+class SubscriptionPlanAdmin(admin.ModelAdmin):
+    list_display = ('name', 'price_badge', 'billing_interval', 'question_gate_after', 'is_active_badge', 'display_order', 'updated_at')
+    list_filter = ('is_active', 'billing_interval', 'currency')
+    search_fields = ('name', 'description')
+    ordering = ('display_order', 'id')
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'description', 'price', 'currency', 'billing_interval', 'question_gate_after', 'is_active', 'display_order')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    readonly_fields = ('created_at', 'updated_at')
+
+    def price_badge(self, obj):
+        return format_html('<strong>{} {}</strong>', obj.currency.upper(), obj.price)
+    price_badge.short_description = 'Price'
+
+    def is_active_badge(self, obj):
+        if obj.is_active:
+            return format_html('<span style="color: green; font-weight: bold;">●</span> Active')
+        return format_html('<span style="color: red; font-weight: bold;">●</span> Inactive')
+    is_active_badge.short_description = 'Status'
+    is_active_badge.admin_order_field = 'is_active'
+
+
+@admin.register(UserSubscription)
+class UserSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('user_email', 'plan', 'status', 'is_active_badge', 'current_period_end', 'updated_at')
+    list_filter = ('status', 'plan', 'created_at', 'updated_at')
+    search_fields = (
+        'user__email',
+        'plan__name',
+        'stripe_customer_id',
+        'stripe_checkout_session_id',
+        'stripe_subscription_id',
+    )
+    autocomplete_fields = ('user', 'plan')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-updated_at',)
+
+    def user_email(self, obj):
+        return obj.user.email
+    user_email.short_description = 'User'
+    user_email.admin_order_field = 'user__email'
+
+    def is_active_badge(self, obj):
+        if obj.is_active:
+            return format_html('<span style="color: green; font-weight: bold;">●</span> Active')
+        return format_html('<span style="color: red; font-weight: bold;">●</span> Inactive')
+    is_active_badge.short_description = 'Access'
 
 
 

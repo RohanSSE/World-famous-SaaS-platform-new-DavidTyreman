@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate, useParams, Navigate } from "react-router-dom";
+import { useNavigate, useParams, Navigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import ChatNavbar from "./ChatNavbar";
 import BrandOrb from "../components/orb/BrandOrb";
@@ -7,7 +7,11 @@ import OrbPresence from "../components/orb/OrbPresence";
 import authService from "../services/authService";
 import {
   getJourneyPhase,
+  getJourneyQuestionNumber,
+  getStoredBillingUser,
+  isJourneyQuestionUnlocked,
   isPhaseUnlocked,
+  JOURNEY_PHASES,
   unlockPhaseAfterComplete,
   PHASE_1_MANIFESTO_STEPS,
   TOTAL_JOURNEY_QUESTIONS,
@@ -18,9 +22,16 @@ import chatIcon1 from "../assets/chat-icon1.png";
 import chatIcon2 from "../assets/chat-icon2.png";
 import {
   extractApplicableNudgeText,
+  normalizeAnswerQualityCopy,
   scoreAnswerQualityLocal,
 } from "../utils/answerQuality";
 import "./PhaseQuestionPage.css";
+
+function getCurrentQuestionStorageKey(sessionId, phaseId) {
+  return sessionId
+    ? `phaseCurrentQuestion_${sessionId}_p${phaseId}`
+    : `phaseCurrentQuestion_p${phaseId}`;
+}
 
 function SessionTitleModal({
   open,
@@ -31,6 +42,7 @@ function SessionTitleModal({
   onAgencyChange,
   agenciesLoading,
   agenciesError,
+  showAgencyPicker,
   onSubmit,
   loading,
   error,
@@ -54,27 +66,31 @@ function SessionTitleModal({
             placeholder="e.g. Acme Brand Discovery"
             autoFocus
           />
-          <label className="pq-modal-label" htmlFor="pq-agency-select">
-            Agency
-          </label>
-          <select
-            id="pq-agency-select"
-            className="pq-modal-select"
-            value={selectedAgency}
-            onChange={(e) => onAgencyChange(e.target.value)}
-            disabled={agenciesLoading}
-          >
-            <option value="0">No agency</option>
-            {agencies.map((a) => {
-              const id = a.id ?? a.pk;
-              return (
-                <option key={id} value={id}>
-                  {a.name || a.title || `Agency ${id}`}
-                </option>
-              );
-            })}
-          </select>
-          {agenciesError && <p className="pq-modal-hint">{agenciesError}</p>}
+          {showAgencyPicker && (
+            <>
+              <label className="pq-modal-label" htmlFor="pq-agency-select">
+                Agency
+              </label>
+              <select
+                id="pq-agency-select"
+                className="pq-modal-select"
+                value={selectedAgency}
+                onChange={(e) => onAgencyChange(e.target.value)}
+                disabled={agenciesLoading}
+              >
+                <option value="0">No agency</option>
+                {agencies.map((a) => {
+                  const id = a.id ?? a.pk;
+                  return (
+                    <option key={id} value={id}>
+                      {a.name || a.title || `Agency ${id}`}
+                    </option>
+                  );
+                })}
+              </select>
+              {agenciesError && <p className="pq-modal-hint">{agenciesError}</p>}
+            </>
+          )}
           {error && <p className="pq-modal-error">{error}</p>}
           <button type="submit" disabled={loading || !title.trim()}>
             {loading ? "Creating…" : "Continue"}
@@ -88,6 +104,7 @@ function SessionTitleModal({
 export default function PhaseQuestionPage() {
   const navigate = useNavigate();
   const { phaseId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const phase = getJourneyPhase(phaseId);
   const inputRef = useRef(null);
 
@@ -131,17 +148,69 @@ export default function PhaseQuestionPage() {
   const [nudgeIndex, setNudgeIndex] = useState(0);
   const [nudgesLoading, setNudgesLoading] = useState(false);
   const [journeyAnsweredCount, setJourneyAnsweredCount] = useState(0);
+  const [billing, setBilling] = useState(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const nudgesDebounceRef = useRef(null);
   const nudgePickedRef = useRef(false);
+  const questionIndexRestoredRef = useRef(false);
+  const shouldForceQuestionRefineRef = useRef(
+    typeof performance !== "undefined" &&
+      performance.getEntriesByType?.("navigation")?.[0]?.type === "reload",
+  );
+  const currentUser = authService.getCurrentUser() || {};
+  const isAgencyUser = currentUser.role === 3 || currentUser.role_name === "agency";
 
   const storageKey = getPhaseAnswersStorageKey(sessionId, phaseId);
+  const currentQuestionStorageKey = getCurrentQuestionStorageKey(sessionId, phaseId);
+
+  useEffect(() => {
+    questionIndexRestoredRef.current = false;
+    setCurrentIdx(0);
+  }, [currentQuestionStorageKey]);
 
   useEffect(() => {
     if (session) setShowTitleModal(false);
   }, [session]);
 
   useEffect(() => {
+    let cancelled = false;
+    async function loadBilling() {
+      setBillingLoading(true);
+      setBillingError("");
+      try {
+        const checkoutSessionId = searchParams.get("session_id");
+        const checkoutStatus = searchParams.get("checkout");
+        const data =
+          checkoutStatus === "success" && checkoutSessionId
+            ? await authService.verifySubscriptionCheckout(checkoutSessionId)
+            : await authService.getBillingStatus();
+
+        if (cancelled) return;
+        setBilling(data);
+        if (checkoutStatus) setSearchParams({}, { replace: true });
+      } catch (err) {
+        if (!cancelled) setBillingError(err?.message || "Could not load subscription");
+      } finally {
+        if (!cancelled) setBillingLoading(false);
+      }
+    }
+
+    loadBilling();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
     if (!showTitleModal) return;
+    if (isAgencyUser) {
+      setAgencies([]);
+      setSelectedAgency("0");
+      setAgenciesError("");
+      return;
+    }
     let cancelled = false;
     (async () => {
       setAgenciesLoading(true);
@@ -164,14 +233,26 @@ export default function PhaseQuestionPage() {
     return () => {
       cancelled = true;
     };
-  }, [showTitleModal]);
+  }, [showTitleModal, isAgencyUser]);
 
   useEffect(() => {
     if (initialSession || session) return;
     let cancelled = false;
     (async () => {
       try {
-        const list = await authService.getSessions();
+        let list = [];
+        try {
+          const currentUser = authService.getCurrentUser() || {};
+          const isAgencyUser = currentUser.role === 3 || currentUser.role_name === "agency";
+          if (isAgencyUser) {
+            const dashboard = await authService.getUserDashboard();
+            list = Array.isArray(dashboard?.sessions) ? dashboard.sessions : [];
+          } else {
+            list = await authService.getSessions();
+          }
+        } catch {
+          list = await authService.getSessions();
+        }
         if (cancelled) return;
         const draft = (Array.isArray(list) ? list : []).find(
           (s) => s.status === "draft" || s.status === "in_progress",
@@ -211,13 +292,13 @@ export default function PhaseQuestionPage() {
       setLoading(true);
       setLoadError("");
       try {
-        const res = await authService.getQuestions();
-        if (cancelled) return;
-        let all = Array.isArray(res) ? res : res?.questions || [];
-        // Backend questions are stored by `Question.stage`.
-        // Frontend phaseId maps to stage numbers:
-        // phase 1 -> stage 1 (Basic), phase 2 -> stage 2 (Foundation), phase 3 -> stage 3 (Identity)
         const targetStage = Number(phaseId) || 1;
+        const res = await authService.getQuestions(sessionId, targetStage, {
+          forceRefine: shouldForceQuestionRefineRef.current,
+        });
+        shouldForceQuestionRefineRef.current = false;
+        if (cancelled) return;
+        let all = Array.isArray(res) ? res : res?.questions || (res?.question ? [res.question] : []);
         all = all
           .filter((q) => String(q.stage) === String(targetStage))
           .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -225,7 +306,7 @@ export default function PhaseQuestionPage() {
         const mapped = all.map((q, i) => ({
           id: q.id,
           key: `q_${q.id}`,
-          text: q.text || q.title || `Question ${i + 1}`,
+          text: q.user_facing_text || q.ai_refined_text || q.text || q.title || `Question ${i + 1}`,
           placeholder: q.placeholder || "Type your answer…",
           raw: q,
           shortLabel:
@@ -245,6 +326,29 @@ export default function PhaseQuestionPage() {
       cancelled = true;
     };
   }, [sessionId, phaseId]);
+
+  useEffect(() => {
+    if (!questions.length || questionIndexRestoredRef.current) return;
+    questionIndexRestoredRef.current = true;
+
+    try {
+      const savedIndex = Number(localStorage.getItem(currentQuestionStorageKey));
+      if (Number.isFinite(savedIndex)) {
+        setCurrentIdx(Math.max(0, Math.min(questions.length - 1, savedIndex)));
+      }
+    } catch {
+      /* keep first question */
+    }
+  }, [currentQuestionStorageKey, questions.length]);
+
+  useEffect(() => {
+    if (!questions.length || !questionIndexRestoredRef.current) return;
+    try {
+      localStorage.setItem(currentQuestionStorageKey, String(currentIdx));
+    } catch {
+      /* ignore */
+    }
+  }, [currentIdx, currentQuestionStorageKey, questions.length]);
 
   useEffect(() => {
     if (!sessionId || questions.length === 0) return;
@@ -341,11 +445,11 @@ export default function PhaseQuestionPage() {
       } else if (res && typeof res === "object") {
         list = res.suggestions ?? res.suggestion ?? [];
         if (res.quality && res.quality_label) {
-          setNudgeQuality({
+          setNudgeQuality(normalizeAnswerQualityCopy({
             quality: res.quality,
             quality_label: res.quality_label,
             reason: res.reason || "",
-          });
+          }));
         }
       }
       const cleaned = (Array.isArray(list) ? list : [])
@@ -441,7 +545,7 @@ export default function PhaseQuestionPage() {
 
     setModalLoading(true);
     try {
-      const agencyNum = Number(selectedAgency) || 0;
+      const agencyNum = isAgencyUser ? 0 : Number(selectedAgency) || 0;
       const data = await authService.createSession({
         title: modalTitle.trim(),
         agency: agencyNum > 0 ? agencyNum : undefined,
@@ -542,7 +646,9 @@ export default function PhaseQuestionPage() {
         if (!saved) return;
       }
 
-      unlockPhaseAfterComplete(phaseId);
+      if (Number(phaseId) > 1) {
+        unlockPhaseAfterComplete(phaseId);
+      }
       const completedPhase = getJourneyPhase(phaseId);
       if (completedPhase?.complete) {
         navigate(`/phase-complete/${phaseId}`);
@@ -567,6 +673,11 @@ export default function PhaseQuestionPage() {
   const handleSave = async () => {
     const q = questions[currentIdx];
     if (!q) return;
+    const journeyQuestionNumber = getJourneyQuestionNumber(phaseId, currentIdx);
+    if (!isJourneyQuestionUnlocked(journeyQuestionNumber, billing || getStoredBillingUser())) {
+      await handleQuestionUpgrade();
+      return;
+    }
     const value = inputValue.trim();
     let nextAnswers = { ...answers };
     if (value) {
@@ -607,11 +718,36 @@ export default function PhaseQuestionPage() {
     handlePhaseSubmit();
   };
 
+  const handleQuestionUpgrade = async () => {
+    if (checkoutLoading) return;
+    setCheckoutLoading(true);
+    setBillingError("");
+    try {
+      const origin = window.location.origin;
+      const data = await authService.createSubscriptionCheckout({
+        success_url: `${origin}/phase-questions/${phaseId}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/phase-questions/${phaseId}?checkout=cancel`,
+      });
+      if (data?.already_active) {
+        setBilling(data);
+        return;
+      }
+      if (!data?.checkout_url) throw new Error("Checkout URL missing from server response");
+      window.location.href = data.checkout_url;
+    } catch (err) {
+      setBillingError(err?.message || "Could not start checkout");
+      setCheckoutLoading(false);
+    }
+  };
+
   if (!phase || !isPhaseUnlocked(phase.id)) {
     return <Navigate to="/journey-phases" replace />;
   }
 
   const currentQuestion = questions[currentIdx];
+  const billingSource = billing || getStoredBillingUser();
+  const journeyQuestionNumber = getJourneyQuestionNumber(phaseId, currentIdx);
+  const isCurrentQuestionLocked = currentQuestion && !isJourneyQuestionUnlocked(journeyQuestionNumber, billingSource);
   const questionLabel = currentQuestion
     ? `Q.${currentIdx + 1}. ${currentQuestion.text}`
     : "";
@@ -619,6 +755,15 @@ export default function PhaseQuestionPage() {
   const sidebarLabels =
     Number(phaseId) === 1 ? PHASE_1_MANIFESTO_STEPS : questions.map((q) => q.shortLabel);
   const totalQuestions = questions.length || sidebarLabels.length;
+  const phaseNumber = Number(phaseId) || 1;
+  const totalPhases = JOURNEY_PHASES.length;
+  const completedPhases = Math.max(0, Math.min(totalPhases, phaseNumber - 1));
+  const phaseQuestionProgress = totalQuestions > 0 ? (currentIdx + 1) / totalQuestions : 0;
+  const phaseStatus = {
+    title: `Phase ${phaseNumber} in progress`,
+    subtitle: `${completedPhases} phase${completedPhases === 1 ? "" : "s"} complete · ${phase?.title || "Brand discovery"}`,
+    progress: Math.round(((completedPhases + phaseQuestionProgress) / totalPhases) * 100),
+  };
   const activeNudge = nudges.length > 0 ? nudges[nudgeIndex % nudges.length] : "";
   const progressPercent =
     totalQuestions > 0
@@ -636,6 +781,7 @@ export default function PhaseQuestionPage() {
         onAgencyChange={setSelectedAgency}
         agenciesLoading={agenciesLoading}
         agenciesError={agenciesError}
+        showAgencyPicker={!isAgencyUser}
         onSubmit={handleCreateSession}
         loading={modalLoading}
         error={modalError}
@@ -648,6 +794,7 @@ export default function PhaseQuestionPage() {
         saveDisabled={!allJourneyAnswered}
         showDownloadButton={false}
         showLogoutButton
+        phaseStatus={phaseStatus}
       />
 
       <div className="pq-body">
@@ -684,6 +831,29 @@ export default function PhaseQuestionPage() {
             <p className="pq-status pq-status--error">{loadError}</p>
           ) : questions.length === 0 || !currentQuestion ? (
             <p className="pq-status">No questions available.</p>
+          ) : isCurrentQuestionLocked ? (
+            <div className="pq-paywall" aria-live="polite">
+              <p className="pq-paywall-kicker">Subscription required</p>
+              <h2>Continue after question {journeyQuestionNumber - 1}</h2>
+              {billingLoading ? (
+                <p>Checking your subscription…</p>
+              ) : billing?.plan ? (
+                <p>
+                  Unlock the remaining questions with {billing.plan.name} · {billing.plan.price_display}
+                </p>
+              ) : (
+                <p>Ask admin to add an active subscription plan.</p>
+              )}
+              {billingError && <p className="pq-paywall-error">{billingError}</p>}
+              <button
+                type="button"
+                className="pq-paywall-button"
+                onClick={handleQuestionUpgrade}
+                disabled={billingLoading || checkoutLoading || !billing?.plan}
+              >
+                {checkoutLoading ? "Opening checkout…" : "Upgrade & Continue"}
+              </button>
+            </div>
           ) : (
             <>
               <div className="pq-progress-wrap">
@@ -719,7 +889,7 @@ export default function PhaseQuestionPage() {
                           <p className="pq-nudges-lead">
                             {nudgeQuality.quality === "strong"
                               ? "Make it even sharper:"
-                              : "Try this instead:"}
+                              : "Let’s make it stronger like this:"}
                           </p>
                           <button
                             type="button"

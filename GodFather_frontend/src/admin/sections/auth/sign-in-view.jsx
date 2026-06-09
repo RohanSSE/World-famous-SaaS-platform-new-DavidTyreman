@@ -11,17 +11,8 @@ import InputAdornment from "@mui/material/InputAdornment";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useRouter } from "@admin/routes/hooks";
 import { Iconify } from "@admin/components/iconify";
-import { saveAuthSession } from "@admin/auth/session";
+import { isAdminUser, saveAuthSession } from "@admin/auth/session";
 import authService from "../../../services/authService";
-
-function canAccessAdminPanel(user) {
-  if (!user) return false;
-  if (user.is_superuser || user.is_staff) return true;
-  const role = (user.role_name || "").toLowerCase();
-  if (role === "admin") return true;
-  const perms = user.permissions || [];
-  return perms.includes("users.view") || perms.includes("agencies.view");
-}
 
 function SignInView() {
   const router = useRouter();
@@ -73,7 +64,7 @@ function SignInView() {
         const data = await authService.login(trimmedEmail, password);
         const user = data.user || {};
 
-        if (!canAccessAdminPanel(user)) {
+        if (!isAdminUser(user)) {
           await authService.logout();
           setErrorMessage(
             "This account cannot access the admin panel. Sign in with an admin or superuser account."
@@ -86,6 +77,8 @@ function SignInView() {
           name: trimmedName || user.email || "Admin User",
           mode,
           role: user.role_name,
+          is_staff: user.is_staff,
+          is_superuser: user.is_superuser,
           loggedInAt: new Date().toISOString(),
         });
 

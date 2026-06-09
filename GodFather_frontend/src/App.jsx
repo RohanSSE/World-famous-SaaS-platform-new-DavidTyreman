@@ -150,6 +150,7 @@ import {
   AdminReviewPage,
   AdminOpsPage,
   AdminQuestionsPage,
+  AdminSubscriptionPage,
 } from "./admin/admin-routes";
 import IntroductoryPage from "./pages/IntroductoryPage";
 
@@ -191,6 +192,7 @@ function AppContent() {
     "/before-continue",
     "/journey-phases",
     "/brand-summary",
+    "/user-dashboard",
   ].includes(location.pathname) ||
     location.pathname.startsWith("/phase-intro") ||
     location.pathname.startsWith("/phase-questions") ||
@@ -210,7 +212,7 @@ function AppContent() {
           path="/signup"
           element={
             <PublicRoute>
-              <SignupLoginModal />
+              <SignupLoginModal isOpen onClose={() => {}} initialMode="signup" />
             </PublicRoute>
           }
         />
@@ -218,7 +220,7 @@ function AppContent() {
           path="/login"
           element={
             <PublicRoute>
-              <SignupLoginModal />
+              <SignupLoginModal isOpen onClose={() => {}} initialMode="login" />
             </PublicRoute>
           }
         />
@@ -431,9 +433,10 @@ function AppContent() {
             <Route path="cognition" element={<AdminCognitionPage />} />
             <Route path="review" element={<AdminReviewPage />} />
             <Route path="ops" element={<AdminOpsPage />} />
+            <Route path="subscription" element={<AdminSubscriptionPage />} />
             <Route path="questions" element={<AdminQuestionsPage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/admin/sign-in" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Route>
 
         {/* Catch all - redirect to home */}

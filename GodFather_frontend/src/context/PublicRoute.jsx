@@ -7,8 +7,10 @@ const PublicRoute = ({ children }) => {
 
   // If authenticated, skip login/signup — go to Welcome (not user-dashboard / stepper)
   if (auth.isAuthenticated && !auth.loading) {
-    const isAgency = auth.user?.role === 3 || auth.user?.role_name === "agency";
-    return <Navigate to={isAgency ? "/agency-dashboard" : "/welcome"} replace />;
+    const isAdmin = auth.user?.is_superuser || auth.user?.is_staff || auth.user?.role_name === "admin";
+    if (isAdmin) return <Navigate to="/admin" replace />;
+
+    return <Navigate to="/welcome" replace />;
   }
 
   return children;

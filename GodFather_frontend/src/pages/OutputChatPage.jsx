@@ -25,6 +25,16 @@ function getStoredSessionId() {
   }
 }
 
+function getDashboardPath() {
+  const user = authService.getCurrentUser();
+  const roleName = (user?.role_name || "").toLowerCase();
+
+  if (user?.is_superuser || user?.is_staff || roleName === "admin") return "/admin";
+  if (roleName === "agency" || user?.role === 3) return "/agency-dashboard";
+  if (roleName === "client" || user?.role === 2) return "/user-dashboard";
+  return authService.isAuthenticated() ? "/welcome" : "/login";
+}
+
 export default function OutputChatPage() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState([introMessage]);
@@ -100,6 +110,11 @@ export default function OutputChatPage() {
           showSaveButton={false}
           showDownloadButton={false}
           showLogoutButton
+          phaseStatus={{
+            title: "Output chat",
+            subtitle: "Growth mode active · Strategy chat ready",
+            progress: 100,
+          }}
         />
       </header>
 
@@ -108,8 +123,8 @@ export default function OutputChatPage() {
           <button type="button" className="ocp-chip" onClick={() => navigate("/output-mode")}>
             Back
           </button>
-          <button type="button" className="ocp-chip" onClick={() => navigate("/brand-summary")}>
-            Exit
+          <button type="button" className="ocp-chip" onClick={() => navigate(getDashboardPath())}>
+            Go to dashboard
           </button>
         </div>
 

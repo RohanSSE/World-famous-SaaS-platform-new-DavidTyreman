@@ -2,7 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from .models import Role, Permission, Dashboard
+from django.db.models import Q
+from django.utils import timezone
+from .models import Role, Permission, Dashboard, SubscriptionPlan, UserSubscription
 from .models import Agency
 
 
@@ -133,6 +135,60 @@ class AgencySerializer(serializers.ModelSerializer):
         return data
 
 
+class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    price_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = [
+            'id',
+            'name',
+            'description',
+            'price',
+            'price_display',
+            'currency',
+            'billing_interval',
+            'question_gate_after',
+            'stripe_product_id',
+            'stripe_price_id',
+            'is_active',
+            'display_order',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_price_display(self, obj):
+        suffix = '' if obj.billing_interval == SubscriptionPlan.INTERVAL_ONE_TIME else f"/{obj.billing_interval}"
+        return f"{obj.currency.upper()} {obj.price}{suffix}"
+
+    def validate_question_gate_after(self, value):
+        if value < 0 or value > 30:
+            raise serializers.ValidationError('Question gate must be between 0 and 30.')
+        return value
+
+
+class UserSubscriptionSerializer(serializers.ModelSerializer):
+    plan = SubscriptionPlanSerializer(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = UserSubscription
+        fields = [
+            'id',
+            'plan',
+            'status',
+            'is_active',
+            'stripe_customer_id',
+            'stripe_checkout_session_id',
+            'stripe_subscription_id',
+            'current_period_end',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = fields
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for User model (read/update)"""
     
@@ -141,6 +197,8 @@ class UserSerializer(serializers.ModelSerializer):
     permissions = serializers.SerializerMethodField()
     role_name = serializers.SerializerMethodField()
     agency_name = serializers.SerializerMethodField()
+    has_active_subscription = serializers.SerializerMethodField()
+    active_subscription = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -156,6 +214,8 @@ class UserSerializer(serializers.ModelSerializer):
             'is_staff',
             'is_superuser',
             'permissions',
+            'has_active_subscription',
+            'active_subscription',
             'created_at',
             'updated_at'
         ]
@@ -170,6 +230,18 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_agency_name(self, obj):
         return obj.agency.name if obj.agency else None
+
+    def get_has_active_subscription(self, obj):
+        return bool(obj.has_active_subscription())
+
+    def get_active_subscription(self, obj):
+        now = timezone.now()
+        subscription = obj.subscriptions.select_related('plan').filter(
+            status__in=[UserSubscription.STATUS_ACTIVE, UserSubscription.STATUS_TRIALING],
+        ).filter(
+            Q(current_period_end__isnull=True) | Q(current_period_end__gt=now)
+        ).order_by('-updated_at').first()
+        return UserSubscriptionSerializer(subscription).data if subscription else None
 
     def to_representation(self, instance):
         from .status_utils import is_user_effectively_active

@@ -1,10 +1,47 @@
 /** Client-side mirror of backend answer quality labels (instant feedback while API loads). */
 
 export const QUALITY_LABELS = {
-  too_weak: "This is too weak",
-  vendor_thought: "This is a vendor thought",
-  strong: "This is strong",
+  too_weak: "Good start — let’s give it more soul",
+  vendor_thought: "Nice direction — let’s make it feel more ownable",
+  strong: "This has a strong spark — let’s sharpen it",
 };
+
+const QUALITY_REASONS = {
+  too_weak:
+    "Acha start hai. Add one real feeling, one specific reason, or one behavior so it feels more memorable.",
+  vendor_thought:
+    "You’re on the right track. Let’s shift it from service language into belief, behavior, and emotional truth.",
+  strong:
+    "This already has something useful. A sharper detail or vivid moment can make it land even better.",
+};
+
+export function normalizeAnswerQualityCopy(raw = {}) {
+  const quality = Object.prototype.hasOwnProperty.call(QUALITY_LABELS, raw.quality)
+    ? raw.quality
+    : "too_weak";
+  const reason = String(raw.reason || "").trim().toLowerCase();
+  let friendlyReason = raw.reason || QUALITY_REASONS[quality];
+
+  if (
+    !raw.reason ||
+    reason.includes("too short") ||
+    reason.includes("too weak") ||
+    reason.includes("lacks") ||
+    reason.includes("generic words") ||
+    reason.includes("vendor pitch") ||
+    reason.includes("transactional") ||
+    reason.includes("not a brand truth")
+  ) {
+    friendlyReason = QUALITY_REASONS[quality];
+  }
+
+  return {
+    ...raw,
+    quality,
+    quality_label: QUALITY_LABELS[quality],
+    reason: friendlyReason,
+  };
+}
 
 const GENERIC = new Set([
   "quality",
@@ -97,25 +134,24 @@ export function scoreAnswerQualityLocal(question, text) {
   const genericDensity = words.length ? genericHits / words.length : 0;
 
   let quality = "strong";
-  let reason = "Solid direction — keep sharpening with specifics.";
+  let reason = QUALITY_REASONS.strong;
 
   if (wc < Math.max(6, minWords - 4) || draft.length < 28) {
     quality = "too_weak";
-    reason = `Too short — aim for at least ${minWords} words with real emotional truth.`;
+    reason = `Acha start hai. Add a little more emotional truth and aim for around ${minWords} words.`;
   } else if (vendorHits >= 2 || (vendorHits >= 1 && genericDensity > 0.15)) {
     quality = "vendor_thought";
-    reason = "Sounds like a vendor pitch. Lead with belief and behavior, not services.";
+    reason = QUALITY_REASONS.vendor_thought;
   } else if (genericDensity >= 0.2 && wc < minWords) {
     quality = "too_weak";
-    reason = "Generic words without depth — say something only your brand would.";
+    reason = "Good direction. Now replace broad words with a detail only your brand would say.";
   } else if (vendorHits >= 1 && wc < minWords + 2) {
     quality = "vendor_thought";
-    reason = "Feels transactional — show who you are, not what you sell.";
+    reason = QUALITY_REASONS.vendor_thought;
   }
 
-  return {
+  return normalizeAnswerQualityCopy({
     quality,
-    quality_label: QUALITY_LABELS[quality],
     reason,
-  };
+  });
 }

@@ -1070,7 +1070,13 @@ def session_answer_create(request, pk):
     question = serializer.validated_data['question']
 
     # ADD STAGE VALIDATION HERE
-    if not session.can_access_stage(question.stage):
+    if not session.can_access_stage(question.stage, request.user):
+        if question.stage > 1:
+            return Response({
+                "detail": "Please upgrade your plan to continue after Phase 1.",
+                "code": "subscription_required",
+                "stage": question.stage,
+            }, status=402)
         return Response({
             "detail": f"Please complete Stage {session.get_current_stage()} questions first before accessing Stage {question.stage}"
         }, status=400)
@@ -1167,7 +1173,7 @@ def session_answers_batch(request, pk):
             question = Question.objects.get(id=qid, is_active=True)
         except Question.DoesNotExist:
             continue
-        if not session.can_access_stage(question.stage):
+        if not session.can_access_stage(question.stage, request.user):
             continue
         answer, _ = Answer.objects.update_or_create(
             session=session,
@@ -1255,7 +1261,8 @@ def answer_detail(request, pk, answer_id):
     operation_description="List all active questions visible to user with stage progression",
     manual_parameters=[
         openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING),
-        openapi.Parameter('session_id', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Session ID for stage checking')
+        openapi.Parameter('session_id', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Session ID for stage checking'),
+        openapi.Parameter('stage', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Requested stage number')
     ],
     responses={200: QuestionSerializer(many=True)}
 )
@@ -1263,6 +1270,7 @@ def answer_detail(request, pk, answer_id):
 @permission_classes([IsAuthenticated])
 def question_list(request):
     session_id = request.query_params.get('session_id')
+    force_refine = str(request.query_params.get('force_refine', '')).strip().lower() in ('1', 'true', 'yes', 'on')
 
     # If no session context, return all questions (admin / debug use)
     if not session_id:
@@ -1278,6 +1286,42 @@ def question_list(request):
         return Response({"detail": "Access denied"}, status=403)
 
     current_stage = session.get_current_stage()
+    requested_stage = request.query_params.get('stage')
+
+    if requested_stage:
+        try:
+            requested_stage = int(requested_stage)
+        except (TypeError, ValueError):
+            return Response({"detail": "stage must be a number"}, status=400)
+
+        if not session.can_access_stage(requested_stage, request.user):
+            payload = {
+                "detail": "Please upgrade your plan to continue after Phase 1.",
+                "code": "subscription_required" if requested_stage > 1 else "stage_locked",
+                "stage": requested_stage,
+                "current_stage": current_stage,
+            }
+            return Response(payload, status=402 if requested_stage > 1 else 400)
+
+        questions = Question.objects.filter(
+            stage=requested_stage,
+            is_active=True
+        ).order_by('order')
+
+        visible_questions = [q for q in questions if q.is_visible_to(request.user)]
+        return Response({
+            "stage": requested_stage,
+            "stage_name": dict(Question.STAGE_CHOICES).get(requested_stage),
+            "mode": "bulk",
+            "questions": _serialize_user_facing_questions(visible_questions, force_refine=force_refine),
+        })
+
+    if current_stage > 1 and not session.can_access_stage(current_stage, request.user):
+        return Response({
+            "detail": "Please upgrade your plan to continue after Phase 1.",
+            "code": "subscription_required",
+            "stage": current_stage,
+        }, status=402)
 
     # =========================
     # ✅ STAGE 1: BASIC → return ALL questions at once
@@ -1291,42 +1335,45 @@ def question_list(request):
         user = request.user
         visible_questions = [q for q in questions if q.is_visible_to(user)]
 
-        serializer = QuestionSerializer(visible_questions, many=True)
         return Response({
             "stage": 1,
             "stage_name": "Basic",
             "mode": "bulk",  # frontend can use this to show form
-            "questions": serializer.data
+            "questions": _serialize_user_facing_questions(visible_questions, force_refine=force_refine)
         })
 
     # =========================
     # ✅ STAGE 2,3,4 → return ONE question at a time (existing flow)
     # =========================
-    answered_ids = session.answers.values_list('question_id', flat=True)
+    answered_ids = set(session.answers.values_list('question_id', flat=True))
 
-    next_question = Question.objects.filter(
+    stage_questions = Question.objects.filter(
         stage=current_stage,
         is_active=True
-    ).exclude(
-        id__in=answered_ids
-    ).order_by('order').first()
+    ).order_by('order')
 
-    if not next_question:
+    visible_stage_questions = [
+        question for question in stage_questions if question.is_visible_to(request.user)
+    ]
+    refined_stage_questions = _serialize_user_facing_questions(visible_stage_questions, force_refine=force_refine)
+
+    next_question_data = None
+    for question, question_data in zip(visible_stage_questions, refined_stage_questions):
+        if question.id not in answered_ids:
+            next_question_data = question_data
+            break
+
+    if not next_question_data:
         return Response({
             "detail": "No more questions in this stage",
             "stage": current_stage
         })
 
-    if not next_question.is_visible_to(request.user):
-        return Response({"detail": "No visible question"}, status=404)
-
-    serializer = QuestionSerializer(next_question)
-
     return Response({
         "stage": current_stage,
         "stage_name": dict(Question.STAGE_CHOICES).get(current_stage),
         "mode": "single",  # frontend shows one question screen
-        "question": serializer.data
+        "question": next_question_data
     })
 
 
@@ -1348,6 +1395,19 @@ def _is_question_admin(user):
         return True
     role_name = (getattr(getattr(user, "role", None), "name", None) or "").lower()
     return "admin" in role_name
+
+
+def _serialize_user_facing_questions(questions, many=True, force_refine=False):
+    from user_sessions.services.question_refinement import (
+        ensure_refined_questions,
+        user_facing_question_text,
+    )
+
+    question_list = ensure_refined_questions(questions if many else [questions], force=force_refine)
+    data = list(QuestionSerializer(question_list, many=True).data)
+    for item, question in zip(data, question_list):
+        item["text"] = user_facing_question_text(question)
+    return data if many else data[0]
 
 
 @swagger_auto_schema(
@@ -4187,8 +4247,7 @@ def session_update_foundation_summary(request, pk):
 def answer_ai_suggestions(request, pk):
     """
     Called while user is typing.
-    Classifies draft as too_weak / vendor_thought / strong (per question profile),
-    then returns tailored recommendations.
+    Classifies draft internally, then returns warm coaching recommendations.
     """
     from user_sessions.services.answer_quality import (
         build_quality_prompt_context,
@@ -4215,12 +4274,13 @@ def answer_ai_suggestions(request, pk):
 You evaluate a user's partial or full answer draft against the specific question they are answering.
 
 Your job:
-1) Classify the draft into exactly ONE quality tier:
-   - too_weak → quality_label must be "This is too weak"
-   - vendor_thought → quality_label must be "This is a vendor thought"
-   - strong → quality_label must be "This is strong"
+1) Classify the draft into exactly ONE internal quality tier:
+    - too_weak → quality_label must be "Good start — let's give it more soul"
+    - vendor_thought → quality_label must be "Nice direction — let's make it feel more ownable"
+    - strong → quality_label must be "This has a strong spark — let's sharpen it"
 
-2) Give a one-sentence reason (direct, warm, no jargon).
+2) Give a one-sentence reason that feels like a supportive strategist, not a harsh judge.
+    Never say "weak", "too weak", "bad", "lacks", or "vendor pitch" in user-facing copy.
 
 3) Give 2–3 strings in "suggestions" — each MUST be only the final answer text the user pastes in (one sentence).
    Never wrap with "Rewrite with...", "Try this instead:", or "like '...'".
@@ -4234,7 +4294,7 @@ Rules:
 Output JSON only:
 {
   "quality": "too_weak|vendor_thought|strong",
-  "quality_label": "This is too weak|This is a vendor thought|This is strong",
+    "quality_label": "Good start — let's give it more soul|Nice direction — let's make it feel more ownable|This has a strong spark — let's sharpen it",
   "reason": "...",
   "suggestions": ["...", "..."]
 }"""

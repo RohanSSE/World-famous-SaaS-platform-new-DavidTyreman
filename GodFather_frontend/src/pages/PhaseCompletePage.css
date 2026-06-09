@@ -1,11 +1,15 @@
 .phase-complete-page {
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background: #030508;
   background-image: radial-gradient(ellipse 90% 70% at 50% 20%, #0f2858 0%, #061018 50%, #020408 100%);
   color: #fff;
   font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .phase-complete-vignette {
@@ -30,28 +34,72 @@
   z-index: 0;
 }
 
-.phase-complete-page .onboarding-header {
-  padding: 0.5rem 2.5rem 0.2rem;
+.phase-complete-page .chat-header {
+  flex-shrink: 0;
+  padding: 10px 40px;
+  min-height: 58px;
+  box-sizing: border-box;
+  background: rgba(3, 8, 18, 0.2);
 }
 
-.phase-complete-page .onboarding-nav-row {
-  padding: 0 2.5rem 0.1rem;
+.phase-complete-page .chat-logo {
+  height: 34px;
+}
+
+.phase-complete-page .chat-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+}
+
+.phase-complete-back-row {
+  position: relative;
+  z-index: 30;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 4px 2.5rem 0;
+  box-sizing: border-box;
+}
+
+.phase-complete-back-btn {
+  min-height: 30px;
+  padding: 0 1.2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(100, 140, 255, 0.35);
+  background: rgba(20, 35, 70, 0.6);
+  color: rgba(200, 220, 255, 0.95);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.phase-complete-back-btn:hover {
+  background: rgba(57, 89, 229, 0.35);
+  border-color: rgba(142, 229, 255, 0.5);
 }
 
 .phase-complete-main {
   position: relative;
   z-index: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  min-height: calc(100vh - 120px);
-  padding: 1rem 1.5rem 3rem;
+  flex: 1;
+  min-height: 0;
+  padding: 0.15rem 1.5rem 0.6rem;
+  overflow: hidden;
 }
 
 .phase-complete-card {
   width: 100%;
-  max-width: 560px;
-  padding: 2.25rem 2rem 2rem;
+  max-width: 500px;
+  padding: 1rem 1.55rem 1.05rem;
   border-radius: 20px;
   text-align: center;
   background: rgba(6, 12, 28, 0.75);
@@ -64,15 +112,17 @@
 
 .pc-sparkle {
   position: relative;
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 1.25rem;
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 0.45rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .pc-sparkle svg {
+  width: 36px;
+  height: 36px;
   filter: drop-shadow(0 0 12px rgba(142, 229, 255, 0.55));
 }
 
@@ -100,34 +150,34 @@
 }
 
 .phase-complete-title {
-  margin: 0 0 0.65rem;
-  font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.22rem, 3vw, 1.55rem);
   font-weight: 600;
   color: #fff;
 }
 
 .phase-complete-subtitle {
-  margin: 0 0 1.5rem;
-  font-size: 15px;
-  line-height: 1.45;
+  margin: 0 0 0.75rem;
+  font-size: 13px;
+  line-height: 1.35;
   color: rgba(192, 249, 255, 0.92);
 }
 
 .phase-complete-body {
   text-align: left;
-  margin: 0 auto 1.75rem;
-  max-width: 420px;
+  margin: 0 auto 0.75rem;
+  max-width: 390px;
 }
 
 .phase-complete-lead {
-  margin: 0 0 0.75rem;
-  font-size: 14px;
+  margin: 0 0 0.5rem;
+  font-size: 13px;
   font-weight: 600;
   color: #fff;
 }
 
 .phase-complete-list {
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.55rem;
   padding: 0;
   list-style: none;
 }
@@ -136,9 +186,9 @@
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  margin-bottom: 0.45rem;
-  font-size: 14px;
-  line-height: 1.45;
+  margin-bottom: 0.22rem;
+  font-size: 13px;
+  line-height: 1.32;
   color: rgba(192, 249, 255, 0.88);
 }
 
@@ -149,22 +199,22 @@
 
 .phase-complete-next {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.35;
   color: rgba(192, 249, 255, 0.85);
 }
 
 .phase-complete-progress-wrap {
-  margin: 0 auto 1.75rem;
-  max-width: 320px;
+  margin: 0 auto 0.7rem;
+  max-width: 300px;
 }
 
 .phase-complete-progress-track {
-  height: 6px;
+  height: 5px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
   overflow: hidden;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 .phase-complete-progress-fill {
@@ -177,18 +227,39 @@
 
 .phase-complete-progress-label {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.55);
+}
+
+.phase-complete-upgrade {
+  max-width: 320px;
+  margin: 0 auto 0.75rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(142, 229, 255, 0.28);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.phase-complete-upgrade p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.3;
+  color: rgba(192, 249, 255, 0.9);
+}
+
+.phase-complete-upgrade .phase-complete-error {
+  margin-top: 0.5rem;
+  color: #ffb3b3;
 }
 
 .phase-complete-cta {
   width: 100%;
-  max-width: 280px;
-  padding: 0.9rem 1.5rem;
+  max-width: 240px;
+  padding: 0.56rem 1.15rem;
   border: none;
   border-radius: 999px;
   font-family: inherit;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: #fff;
   cursor: pointer;
@@ -208,9 +279,24 @@
   box-shadow: 0 14px 44px rgba(142, 229, 255, 0.35);
 }
 
+.phase-complete-cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+  transform: none;
+}
+
 @media (max-width: 600px) {
+  .phase-complete-page .chat-header {
+    padding: 10px 18px;
+  }
+
+  .phase-complete-back-row {
+    padding: 6px 1rem 0;
+  }
+
   .phase-complete-card {
-    padding: 1.75rem 1.25rem 1.5rem;
+    padding: 1.3rem 1.15rem 1.2rem;
   }
 
   .phase-complete-body {

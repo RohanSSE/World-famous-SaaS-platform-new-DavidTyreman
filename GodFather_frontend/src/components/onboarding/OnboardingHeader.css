@@ -7,6 +7,57 @@
   z-index: 10;
 }
 
+.onboarding-phase-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -42%);
+  width: min(430px, 42vw);
+  min-height: 50px;
+  padding: 8px 18px 9px;
+  border: 1px solid rgba(142, 229, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(9, 18, 63, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 30px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+.onboarding-phase-status-copy {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+.onboarding-phase-status-title {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.onboarding-phase-status-subtitle {
+  color: rgba(192, 249, 255, 0.9);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.onboarding-phase-status-track {
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.onboarding-phase-status-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4a6cf7, #86e3ff);
+  box-shadow: 0 0 12px rgba(134, 227, 255, 0.46);
+}
+
 .onboarding-header-logo {
   background: none;
   border: none;
@@ -19,10 +70,16 @@
   font-family: inherit;
 }
 
+.onboarding-avatar-wrapper {
+  position: relative;
+  z-index: 40;
+}
+
 .onboarding-header-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
+  border: 0;
   background: linear-gradient(135deg, #3959e5, #8ee5ff);
   display: flex;
   align-items: center;
@@ -31,4 +88,114 @@
   font-weight: 700;
   color: #fff;
   box-shadow: 0 0 16px rgba(57, 89, 229, 0.5);
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+}
+
+.onboarding-avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.onboarding-avatar-chevron {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 15px;
+  height: 15px;
+  padding: 2px;
+  border-radius: 50%;
+  background: #4a6cf7;
+  color: #fff;
+  transition: transform 0.2s ease;
+}
+
+.onboarding-avatar-chevron.open {
+  transform: rotate(180deg);
+}
+
+.onboarding-avatar-dropdown {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  min-width: 205px;
+  border: 1px solid rgba(142, 229, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(15, 20, 46, 0.98);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.38);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  animation: onboardingDropdownIn 0.18s ease;
+}
+
+@keyframes onboardingDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.onboarding-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 16px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.86);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.onboarding-dropdown-item:last-child {
+  border-bottom: 0;
+}
+
+.onboarding-dropdown-item:hover {
+  background: rgba(74, 108, 247, 0.16);
+  color: #fff;
+}
+
+.onboarding-dropdown-item.logout {
+  color: #ff7b7b;
+}
+
+.onboarding-dropdown-item.logout:hover {
+  background: rgba(255, 99, 99, 0.16);
+  color: #ff9a9a;
+}
+
+@media (max-width: 760px) {
+  .onboarding-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 1rem 1rem 0.6rem;
+  }
+
+  .onboarding-phase-status {
+    position: static;
+    order: 3;
+    width: 100%;
+    transform: none;
+  }
+
+  .onboarding-phase-status-copy {
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
 }

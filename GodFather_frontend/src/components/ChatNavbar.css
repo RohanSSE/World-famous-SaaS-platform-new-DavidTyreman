@@ -12,6 +12,63 @@
   z-index: 100;
 }
 
+.chat-phase-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 38vw);
+  min-height: 42px;
+  padding: 7px 14px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(142, 229, 255, 0.24);
+  background: linear-gradient(135deg, rgba(12, 20, 48, 0.86), rgba(17, 31, 70, 0.72));
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.chat-phase-status-copy {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.chat-phase-status-title {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.chat-phase-status-subtitle {
+  color: rgba(192, 249, 255, 0.86);
+  font-size: 11px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-phase-status-track {
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.chat-phase-status-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #3959e5 0%, #6ab5f8 52%, #8ee5ff 100%);
+  box-shadow: 0 0 14px rgba(142, 229, 255, 0.55);
+}
+
 .chat-logo-wrap {
   cursor: pointer;
   transition: opacity 0.2s;
@@ -86,6 +143,27 @@
 .download-icon {
   width: 10px;
   height: 10px;
+}
+
+.chat-icon-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(142, 229, 255, 0.22);
+  border-radius: 50%;
+  color: #dce9ff;
+  background: rgba(82, 104, 200, 0.22);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chat-icon-btn:hover {
+  color: #fff;
+  border-color: rgba(142, 229, 255, 0.42);
+  background: rgba(82, 104, 200, 0.34);
 }
 
 .btn-logout {
@@ -237,6 +315,19 @@
 
   .chat-header-actions {
     gap: 10px;
+  }
+
+  .chat-phase-status {
+    width: min(300px, 42vw);
+    padding: 6px 10px;
+  }
+
+  .chat-phase-status-copy {
+    gap: 6px;
+  }
+
+  .chat-phase-status-subtitle {
+    display: none;
   }
 
   .btn-white,

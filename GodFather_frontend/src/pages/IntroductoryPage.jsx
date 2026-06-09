@@ -67,11 +67,11 @@ const handleCtaClick = () => {
     try {
       await logout();
       toast.success("Logged out successfully");
-      navigate("/", { replace: true });
+      navigate("/intro-ductory", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed");
-      navigate("/", { replace: true });
+      navigate("/intro-ductory", { replace: true });
     }
   };
 
@@ -122,6 +122,11 @@ const handleCtaClick = () => {
               showDownloadButton={false} // optional adjustments
               showSaveButton={false}
               showLogoutButton={true}
+              phaseStatus={{
+                title: "Brand journey",
+                subtitle: "Ready to continue",
+                progress: localStorage.getItem("sessionId") ? 25 : 5,
+              }}
             />
           ) : (
             <header className="intro-header">

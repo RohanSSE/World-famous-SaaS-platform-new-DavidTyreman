@@ -179,7 +179,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import { toast } from "react-toastify";
-import { Download, LogOut, User, ChevronDown, Key } from "lucide-react";
+import { Download, LogOut, User, ChevronDown, Key, Bell } from "lucide-react";
 
 import "../components/ChatNavbar.css";
 import logo from "../assets/mask-group.png";
@@ -191,13 +191,18 @@ const ChatNavbar = ({
   onSave,
   onGenerate, // function passed from page
   onDownloadPdf,
+  downloadLabel = "Download PDF",
+  downloadDisabled = false,
   showSaveButton = true,
   showDownloadButton = true,
   showLogoutButton = true,
   showCommentButton = false,
+  showNotificationButton = false,
   onCommentClick = null,
+  onNotificationClick = null,
   canGenerate = false,
   saveDisabled = false,
+  phaseStatus = null,
 }) => {
   const navigate = useNavigate();
   const { logout, auth } = useAuth();
@@ -258,11 +263,11 @@ const ChatNavbar = ({
     try {
       await logout();
       toast.success("Logged out successfully");
-      navigate("/");
+      navigate("/intro-ductory", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed");
-      navigate("/");
+      navigate("/intro-ductory", { replace: true });
     }
   };
 
@@ -311,6 +316,21 @@ const ChatNavbar = ({
           <img src={logo} alt="The Godfather" className="chat-logo" />
         </div>
 
+        {phaseStatus && (
+          <div className="chat-phase-status" aria-label="Phase progress">
+            <div className="chat-phase-status-copy">
+              <span className="chat-phase-status-title">{phaseStatus.title}</span>
+              <span className="chat-phase-status-subtitle">{phaseStatus.subtitle}</span>
+            </div>
+            <div className="chat-phase-status-track" aria-hidden="true">
+              <span
+                className="chat-phase-status-fill"
+                style={{ width: `${Math.max(0, Math.min(100, Number(phaseStatus.progress || 0)))}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="chat-header-actions">
           {/* ✅ SAVE BUTTON – calls onSave from parent */}
           {showSaveButton && (
@@ -348,9 +368,21 @@ const ChatNavbar = ({
           )}
 
           {showDownloadButton && (
-            <button className="btn-gradient" onClick={handleDownloadPdf}>
+            <button className="btn-gradient" onClick={handleDownloadPdf} disabled={downloadDisabled}>
               <Download className="download-icon" />
-              <span>Download PDF</span>
+              <span>{downloadLabel}</span>
+            </button>
+          )}
+
+          {showNotificationButton && (
+            <button
+              type="button"
+              className="chat-icon-btn"
+              onClick={onNotificationClick}
+              aria-label="Notifications"
+              title="Notifications"
+            >
+              <Bell size={18} />
             </button>
           )}
 

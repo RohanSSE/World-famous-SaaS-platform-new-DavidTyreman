@@ -1236,7 +1236,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import authService from "../services/authService";
 import "../components/BrandSummaryPage.css";
-import logo from "../assets/mask-group.png";
+import ChatNavbar from "./ChatNavbar";
 import BrandOrb from "../components/orb/BrandOrb";
 import OrbPresence from "../components/orb/OrbPresence";
 import { useOrbPresence } from "../context/OrbPresenceContext";
@@ -1672,16 +1672,6 @@ export default function BrandSummaryPage() {
     }
   };
 
-  const userInitial = (() => {
-    try {
-      const auth = localStorage.getItem("auth");
-      const parsed = auth ? JSON.parse(auth) : null;
-      return (parsed?.user?.name || parsed?.user?.email || "A").charAt(0).toUpperCase();
-    } catch {
-      return "A";
-    }
-  })();
-
   const activePage = pages[currentPage] || {};
   const activeElements = Array.isArray(activePage) ? activePage : activePage?.elements || [];
   const totalPages = pages.length;
@@ -1800,22 +1790,19 @@ export default function BrandSummaryPage() {
 
   return (
     <div className="bsp-book-screen">
-      <header className="bsp-book-topbar">
-        <img src={logo} alt="The Godfather" className="bsp-book-logo" />
-        <div className="bsp-book-top-actions">
-          <button
-            type="button"
-            className="bsp-export-btn"
-            disabled={exporting || totalPages === 0}
-            onClick={handleExport}
-          >
-            {exporting ? "Exporting..." : "Export"}
-          </button>
-          <button type="button" className="bsp-avatar-btn" aria-label="Profile">
-            {userInitial}
-          </button>
-        </div>
-      </header>
+      <ChatNavbar
+        showSaveButton={false}
+        showDownloadButton
+        showLogoutButton
+        onDownloadPdf={handleExport}
+        downloadLabel={exporting ? "Exporting..." : "Export"}
+        downloadDisabled={exporting || totalPages === 0}
+        phaseStatus={{
+          title: "Brand Book generation",
+          subtitle: "Discovery complete · Your Brand Book is being prepared",
+          progress: 100,
+        }}
+      />
 
       <div className="bsp-book-frame">
         <aside className="bsp-book-rail">

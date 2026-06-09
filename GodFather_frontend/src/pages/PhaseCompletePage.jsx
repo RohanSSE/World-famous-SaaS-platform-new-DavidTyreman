@@ -1,9 +1,13 @@
-import { useNavigate, useParams, Navigate } from "react-router-dom";
-import OnboardingNavBar from "../components/onboarding/OnboardingNavBar";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, Navigate, useSearchParams } from "react-router-dom";
+import ChatNavbar from "./ChatNavbar";
+import authService from "../services/authService";
 import {
+  doesPhaseRequireSubscription,
   getJourneyPhase,
   isPhaseUnlocked,
   JOURNEY_PHASES,
+  unlockPhaseAfterComplete,
 } from "../constants/journeyPhases";
 import "./PhaseCompletePage.css";
 
@@ -32,8 +36,13 @@ function SparkleIcon() {
 export default function PhaseCompletePage() {
   const navigate = useNavigate();
   const { phaseId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const phase = getJourneyPhase(phaseId);
   const complete = phase?.complete;
+  const [billing, setBilling] = useState(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   if (!phase || !complete || !isPhaseUnlocked(phase.id)) {
     return <Navigate to="/journey-phases" replace />;
@@ -41,12 +50,103 @@ export default function PhaseCompletePage() {
 
   const nextPhaseId = phase.id + 1;
   const hasNextPhase = nextPhaseId <= JOURNEY_PHASES.length;
+  const completedPhases = Math.max(0, Math.min(JOURNEY_PHASES.length, Number(phaseId) || 0));
+  const isDiscoveryComplete = completedPhases >= JOURNEY_PHASES.length;
+  const phaseStatus = {
+    title: isDiscoveryComplete ? "Brand Book ready" : `Phase ${phase.id} completed`,
+    subtitle: isDiscoveryComplete
+      ? "Discovery complete · Generate your Brand Book"
+      : `${completedPhases} phase${completedPhases === 1 ? "" : "s"} complete · Next phase is ready`,
+    progress: Math.round((completedPhases / JOURNEY_PHASES.length) * 100),
+  };
+  const nextPhaseNeedsSubscription = hasNextPhase && doesPhaseRequireSubscription(nextPhaseId, billing || undefined);
+  const needsUpgrade = nextPhaseNeedsSubscription && !billing?.has_active_subscription;
 
-  const handleContinue = () => {
+  useEffect(() => {
+    if (!hasNextPhase) return;
+
+    let cancelled = false;
+    async function loadBilling() {
+      setBillingLoading(true);
+      setBillingError("");
+      try {
+        const checkoutSessionId = searchParams.get("session_id");
+        const checkoutStatus = searchParams.get("checkout");
+        const data =
+          checkoutStatus === "success" && checkoutSessionId
+            ? await authService.verifySubscriptionCheckout(checkoutSessionId)
+            : await authService.getBillingStatus();
+
+        if (cancelled) return;
+        setBilling(data);
+        if (data?.has_active_subscription) {
+          unlockPhaseAfterComplete(phaseId);
+        }
+        if (checkoutStatus) setSearchParams({}, { replace: true });
+      } catch (err) {
+        if (!cancelled) setBillingError(err?.message || "Could not load subscription");
+      } finally {
+        if (!cancelled) setBillingLoading(false);
+      }
+    }
+
+    loadBilling();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasNextPhase, phaseId, searchParams, setSearchParams]);
+
+  const handleUpgrade = async () => {
+    if (checkoutLoading) return;
+    setCheckoutLoading(true);
+    setBillingError("");
+    try {
+      const origin = window.location.origin;
+      const data = await authService.createSubscriptionCheckout({
+        success_url: `${origin}/phase-complete/${phaseId}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/phase-complete/${phaseId}?checkout=cancel`,
+      });
+      if (data?.already_active) {
+        setBilling(data);
+        unlockPhaseAfterComplete(phaseId);
+        navigate(`/phase-questions/${nextPhaseId}`);
+        return;
+      }
+      if (!data?.checkout_url) throw new Error("Checkout URL missing from server response");
+      window.location.href = data.checkout_url;
+    } catch (err) {
+      setBillingError(err?.message || "Could not start checkout");
+      setCheckoutLoading(false);
+    }
+  };
+
+  const markCurrentSessionComplete = async () => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) return;
+      const data = await authService.completeSession(sessionId);
+      const updatedSession = data?.session;
+      if (updatedSession) {
+        localStorage.setItem("session", JSON.stringify(updatedSession));
+      }
+    } catch (err) {
+      console.warn("Could not mark onboarding session complete", err);
+    }
+  };
+
+  const handleContinue = async () => {
+    if (needsUpgrade) {
+      handleUpgrade();
+      return;
+    }
+    if (billing?.has_active_subscription) {
+      unlockPhaseAfterComplete(phaseId);
+    }
     if (hasNextPhase && isPhaseUnlocked(nextPhaseId)) {
       navigate(`/phase-questions/${nextPhaseId}`);
       return;
     }
+    await markCurrentSessionComplete();
     navigate("/brand-summary");
   };
 
@@ -57,11 +157,13 @@ export default function PhaseCompletePage() {
       <div className="phase-complete-vignette" aria-hidden="true" />
       <div className="phase-complete-glow" aria-hidden="true" />
 
-      <OnboardingNavBar
-        onLogoClick={() => navigate("/welcome")}
-        onBack={handleBack}
-        showNext={false}
-      />
+      <ChatNavbar showSaveButton={false} showDownloadButton={false} showLogoutButton phaseStatus={phaseStatus} />
+
+      <div className="phase-complete-back-row">
+        <button type="button" className="phase-complete-back-btn" onClick={handleBack}>
+          Back
+        </button>
+      </div>
 
       <main className="phase-complete-main">
         <article className="phase-complete-card">
@@ -99,8 +201,30 @@ export default function PhaseCompletePage() {
             </p>
           </div>
 
-          <button type="button" className="phase-complete-cta" onClick={handleContinue}>
-            {complete.ctaLabel} →
+          {hasNextPhase && nextPhaseNeedsSubscription && (
+            <div className="phase-complete-upgrade" aria-live="polite">
+              {billingLoading ? (
+                <p>Checking your subscription…</p>
+              ) : billing?.has_active_subscription ? (
+                <p>Your subscription is active. The next phase is unlocked.</p>
+              ) : billing?.plan ? (
+                <p>
+                  Continue with {billing.plan.name} · {billing.plan.price_display}
+                </p>
+              ) : (
+                <p>Ask admin to add an active subscription plan.</p>
+              )}
+              {billingError && <p className="phase-complete-error">{billingError}</p>}
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="phase-complete-cta"
+            onClick={handleContinue}
+            disabled={billingLoading || checkoutLoading || (needsUpgrade && !billing?.plan)}
+          >
+            {checkoutLoading ? "Opening checkout…" : needsUpgrade ? "Upgrade & Continue →" : `${complete.ctaLabel} →`}
           </button>
         </article>
       </main>

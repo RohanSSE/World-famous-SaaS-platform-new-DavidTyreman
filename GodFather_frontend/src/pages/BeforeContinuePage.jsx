@@ -22,6 +22,8 @@ const GUIDE_CARDS = [
   },
 ];
 
+const ORB_CUES = ["Listen", "Challenge", "Clarify"];
+
 export default function BeforeContinuePage() {
   const navigate = useNavigate();
 
@@ -34,33 +36,51 @@ export default function BeforeContinuePage() {
     }, 120);
   };
   const handleBack = () => navigate("/brand-intro");
-  const handleNext = () => handleDiscover();
 
   return (
     <div className="before-continue-page">
       <div className="before-continue-bg-orb before-continue-bg-orb-1" aria-hidden="true" />
       <div className="before-continue-bg-orb before-continue-bg-orb-2" aria-hidden="true" />
+      <div className="before-continue-grid-glow" aria-hidden="true" />
 
       <OnboardingNavBar
         onLogoClick={() => navigate("/welcome")}
         onBack={handleBack}
-        onNext={handleNext}
         logoPath="/welcome"
         backPath="/brand-intro"
-        nextPath="/journey-phases"
+        showNext={false}
+        phaseStatus={{
+          title: "Before we continue",
+          subtitle: "Discovery setup",
+          progress: 15,
+        }}
       />
 
       <main className="before-continue-main">
-        <header className="before-continue-header">
-          <h1 className="before-continue-title">Before We Continue</h1>
-          <p className="before-continue-subtitle">
-            A few things will help you get the most from this journey:
-          </p>
-        </header>
+        <section className="before-continue-hero">
+          <header className="before-continue-header">
+            <span className="before-continue-kicker">Discovery rules</span>
+            <h1 className="before-continue-title">Before We Continue</h1>
+            <p className="before-continue-subtitle">
+              A few things will help you get the most from this journey.
+            </p>
+          </header>
+
+          <aside className="before-continue-orb-stage" aria-label="ORB companion">
+            <span className="before-continue-orb-ring" aria-hidden="true" />
+            <span className="before-continue-orb-scan" aria-hidden="true" />
+            <BrandOrb size="hero" className="before-continue-hero-orb" />
+            <div className="before-continue-orb-cues" aria-hidden="true">
+              {ORB_CUES.map((cue) => (
+                <span key={cue}>{cue}</span>
+              ))}
+            </div>
+          </aside>
+        </section>
 
         <section className="before-continue-grid" aria-label="Guidelines">
-          {GUIDE_CARDS.map((card) => (
-            <article key={card.title} className="before-continue-card">
+          {GUIDE_CARDS.map((card, index) => (
+            <article key={card.title} className="before-continue-card" style={{ "--card-index": index }}>
               <h2>{card.title}</h2>
               <p>{card.body}</p>
             </article>
@@ -68,8 +88,8 @@ export default function BeforeContinuePage() {
         </section>
 
         <section className="before-continue-chat" aria-label="ORB guidance">
-          <div className="before-continue-bubble-row before-continue-bubble-row-right">
-            <div className="before-continue-bubble-content before-continue-tail-right">
+          <div className="before-continue-bubble-content before-continue-tail-right">
+            <div>
               <p className="before-continue-bubble-lead">As we progress, I&apos;ll begin learning:</p>
               <ul className="before-continue-list">
                 <li>how you think</li>
@@ -84,22 +104,19 @@ export default function BeforeContinuePage() {
                 differentiated, and memorable with every step.
               </p>
             </div>
-            <div className="before-continue-orb-wrap">
-              <BrandOrb size="md" className="before-continue-chat-orb" />
+            <div className="before-continue-mini-signal" aria-hidden="true">
+              <span />
+              <span />
+              <span />
             </div>
           </div>
 
-          <div className="before-continue-bubble-row before-continue-bubble-row-left">
-            <div className="before-continue-orb-wrap">
-              <BrandOrb size="md" className="before-continue-chat-orb" />
-            </div>
-            <div className="before-continue-bubble-content before-continue-tail-left">
-              <h3>Remember:</h3>
-              <p className="before-continue-bubble-body">
-                There are no perfect answers here — only more honest, more strategic, and more
-                powerful ones. The more authentic you are, the more valuable this process becomes.
-              </p>
-            </div>
+          <div className="before-continue-remember-card">
+            <h3>Remember:</h3>
+            <p className="before-continue-bubble-body">
+              There are no perfect answers here — only more honest, more strategic, and more
+              powerful ones. The more authentic you are, the more valuable this process becomes.
+            </p>
           </div>
         </section>
 

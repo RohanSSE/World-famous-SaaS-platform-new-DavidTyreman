@@ -202,6 +202,42 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
+.journey-upgrade-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: 560px;
+  margin: -0.75rem auto 1.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(142, 229, 255, 0.26);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(192, 249, 255, 0.9);
+}
+
+.journey-upgrade-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #8ee5ff;
+  background: rgba(142, 229, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.journey-upgrade-panel p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.journey-upgrade-error {
+  color: #ffb3b3;
+}
+
 .journey-phases-cta:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 14px 48px rgba(142, 229, 255, 0.35);

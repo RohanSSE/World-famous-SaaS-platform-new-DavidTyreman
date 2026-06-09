@@ -8,9 +8,15 @@ import re
 from typing import Any, Dict, List, Tuple
 
 QUALITY_LABELS = {
-    "too_weak": "This is too weak",
-    "vendor_thought": "This is a vendor thought",
-    "strong": "This is strong",
+    "too_weak": "Good start — let's give it more soul",
+    "vendor_thought": "Nice direction — let's make it feel more ownable",
+    "strong": "This has a strong spark — let's sharpen it",
+}
+
+QUALITY_REASONS = {
+    "too_weak": "Good start. Add one real feeling, one specific reason, or one behavior so it feels more memorable.",
+    "vendor_thought": "You're on the right track. Let's shift it from service language into belief, behavior, and emotional truth.",
+    "strong": "This already has something useful. A sharper detail or vivid moment can make it land even better.",
 }
 
 GENERIC_BUZZWORDS = {
@@ -222,22 +228,22 @@ def score_answer_quality(question, answer_text: str) -> Dict[str, Any]:
 
     if wc < max(6, min_words - 4) or char_len < max(25, min_chars - 20):
         quality = "too_weak"
-        reason = f"Too short for {step_name} — add specific feeling, behavior, or proof (aim for {min_words}+ words)."
+        reason = f"Good start for {step_name}. Add one real feeling, behavior, or proof so it has more depth."
     elif vendor_hits >= 2 or (vendor_hits >= 1 and vendor_score >= vendor_cutoff and length_score < 0.75):
         quality = "vendor_thought"
-        reason = f"Sounds like a vendor pitch, not a brand truth for {step_name}. Lead with belief and behavior, not services."
+        reason = f"Nice direction for {step_name}. Let's move it from service language into belief, behavior, and emotional truth."
     elif generic_density >= 0.22 and length_score < 0.65:
         quality = "too_weak"
-        reason = f"Generic words without depth for {step_name} — replace buzzwords with something only your brand would say."
+        reason = f"Good direction for {step_name}. Now replace broad words with something only your brand would say."
     elif strength < weak_cutoff:
         quality = "too_weak"
-        reason = f"Needs more emotional truth and specificity for {step_name}."
+        reason = f"Good start for {step_name}. A bit more emotional truth and specificity will make it much sharper."
     elif vendor_score >= vendor_cutoff and specificity_hits == 0:
         quality = "vendor_thought"
-        reason = f"Feels transactional for {step_name} — show who you are, not what you sell."
+        reason = f"You're close for {step_name}. Let's show who you are, not just what you sell."
     else:
         quality = "strong"
-        reason = f"Solid direction for {step_name} — specific enough to build on."
+        reason = f"Strong spark for {step_name}. Add one vivid detail if you want it to land even harder."
 
     return {
         "quality": quality,
@@ -268,9 +274,9 @@ Heuristic reason: {heuristic.get('reason')}
 Score signals: {heuristic.get('scores')}
 
 Classify the user's draft into exactly one quality (you may override heuristic if clearly wrong):
-- too_weak → label "This is too weak"
-- vendor_thought → label "This is a vendor thought"
-- strong → label "This is strong"
+- too_weak → label "Good start — let's give it more soul"
+- vendor_thought → label "Nice direction — let's make it feel more ownable"
+- strong → label "This has a strong spark — let's sharpen it"
 
 Then give 2–3 items in "suggestions" — each must be ONLY the final answer sentence the user can paste into the form.
 - No coaching wrapper (never start with "Rewrite with", "Try this", or "like '...'").
@@ -311,9 +317,7 @@ def normalize_ai_quality_response(result: dict, heuristic: Dict[str, Any]) -> Di
     if quality not in QUALITY_LABELS:
         quality = heuristic.get("quality", "too_weak")
 
-    label = result.get("quality_label") or QUALITY_LABELS.get(quality, QUALITY_LABELS["too_weak"])
-    if label not in QUALITY_LABELS.values():
-        label = QUALITY_LABELS[quality]
+    label = QUALITY_LABELS[quality]
 
     suggestions = result.get("suggestions") or []
     if not isinstance(suggestions, list):
@@ -324,7 +328,18 @@ def normalize_ai_quality_response(result: dict, heuristic: Dict[str, Any]) -> Di
         if s and (t := sanitize_suggestion_text(str(s)))
     ]
 
-    reason = (result.get("reason") or heuristic.get("reason") or "").strip()
+    reason = (result.get("reason") or heuristic.get("reason") or QUALITY_REASONS.get(quality, "")).strip()
+    harsh_markers = [
+        "too short",
+        "too weak",
+        "lacks",
+        "generic words",
+        "vendor pitch",
+        "transactional",
+        "not a brand truth",
+    ]
+    if not reason or any(marker in reason.lower() for marker in harsh_markers):
+        reason = QUALITY_REASONS.get(quality, reason)
 
     return {
         "quality": quality,
