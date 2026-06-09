@@ -203,6 +203,7 @@ const ChatNavbar = ({
   canGenerate = false,
   saveDisabled = false,
   phaseStatus = null,
+  leadingAction = null,
 }) => {
   const navigate = useNavigate();
   const { logout, auth } = useAuth();
@@ -309,6 +310,7 @@ const ChatNavbar = ({
   return (
     <>
       <header className="chat-header">
+        {leadingAction && <div className="chat-leading-action">{leadingAction}</div>}
         <div
           className="chat-logo-wrap"
           onClick={() => navigate("/intro-ductory")}

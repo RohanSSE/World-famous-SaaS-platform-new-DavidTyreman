@@ -195,6 +195,27 @@ export function getPhaseAnswersStorageKey(sessionId, phaseId) {
     : `phaseAnswers_p${phaseId}`;
 }
 
+export function getCurrentQuestionStorageKey(sessionId, phaseId) {
+  return sessionId
+    ? `phaseCurrentQuestion_${sessionId}_p${phaseId}`
+    : `phaseCurrentQuestion_p${phaseId}`;
+}
+
+export function resetActiveJourneyState() {
+  try {
+    localStorage.removeItem("session");
+    localStorage.removeItem("sessionId");
+    localStorage.setItem(UNLOCK_STORAGE_KEY, JSON.stringify([1]));
+
+    for (let phase = 1; phase <= JOURNEY_PHASES.length; phase += 1) {
+      localStorage.removeItem(getPhaseAnswersStorageKey(null, phase));
+      localStorage.removeItem(getCurrentQuestionStorageKey(null, phase));
+    }
+  } catch {
+    /* ignore localStorage failures */
+  }
+}
+
 /** Count non-empty answers stored locally across all journey phases. */
 export function countStoredJourneyAnswers(sessionId) {
   let total = 0;

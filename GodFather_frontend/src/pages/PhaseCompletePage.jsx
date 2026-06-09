@@ -61,6 +61,9 @@ export default function PhaseCompletePage() {
   };
   const nextPhaseNeedsSubscription = hasNextPhase && doesPhaseRequireSubscription(nextPhaseId, billing || undefined);
   const needsUpgrade = nextPhaseNeedsSubscription && !billing?.has_active_subscription;
+  const unlockedRewards = complete.minimal
+    ? ["Brand Book foundation", "Strategic clarity", "Expansion path"]
+    : (complete.bullets || []).slice(0, 3);
 
   useEffect(() => {
     if (!hasNextPhase) return;
@@ -156,6 +159,11 @@ export default function PhaseCompletePage() {
     <div className="phase-complete-page">
       <div className="phase-complete-vignette" aria-hidden="true" />
       <div className="phase-complete-glow" aria-hidden="true" />
+      <div className="phase-complete-bubble-field" aria-hidden="true">
+        {Array.from({ length: 14 }).map((_, index) => (
+          <span key={index} className={`phase-complete-ai-bubble phase-complete-ai-bubble--${index + 1}`} />
+        ))}
+      </div>
 
       <ChatNavbar showSaveButton={false} showDownloadButton={false} showLogoutButton phaseStatus={phaseStatus} />
 
@@ -168,9 +176,21 @@ export default function PhaseCompletePage() {
       <main className="phase-complete-main">
         <article className="phase-complete-card">
           <SparkleIcon />
+          <div className="phase-complete-level-badge">
+            {isDiscoveryComplete ? "Discovery complete" : `Level ${phase.id} complete`}
+          </div>
 
           <h1 className="phase-complete-title">{complete.title}</h1>
           <p className="phase-complete-subtitle">{complete.subtitle}</p>
+
+          <div className="phase-complete-unlocks" aria-label="Unlocked rewards">
+            {unlockedRewards.map((item, index) => (
+              <div key={item} className="phase-complete-unlock-card" style={{ "--unlock-index": index }}>
+                <span>Unlocked</span>
+                <strong>{item}</strong>
+              </div>
+            ))}
+          </div>
 
           {!complete.minimal && (
             <div className="phase-complete-body">

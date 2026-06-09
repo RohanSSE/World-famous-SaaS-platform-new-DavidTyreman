@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import "../components/AgencyDashboard.css";
 import authService from "../services/authService";
 import ChatNavbar from "./ChatNavbar";
+import { resetActiveJourneyState } from "../constants/journeyPhases";
 import {
   Users,
   FolderOpen,
@@ -11,6 +13,7 @@ import {
   AlertTriangle,
   BarChart3,
   Menu,
+  X,
   Search,
   Bell,
   Settings,
@@ -23,6 +26,7 @@ import {
   Shield,
   Star,
   CreditCard,
+  Plus,
 } from "lucide-react";
 import PaymentHistoryCard from "../components/PaymentHistoryCard";
 
@@ -33,18 +37,21 @@ const SIDEBAR_ITEMS = [
 ];
 
 // ── Sidebar ──
-function Sidebar({ activeTab, onTabChange, collapsed, onToggleCollapse }) {
+function Sidebar({ activeTab, onTabChange, collapsed, onToggleCollapse, mobileOpen, onClose, onNewSession, creatingSession }) {
   return (
-    <aside className={`agency-sidebar ${collapsed ? "collapsed" : ""}`}>
+    <aside className={`agency-sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="agency-sidebar-inner">
         <div className="agency-sidebar-header">
           <div className="agency-sidebar-label-row">
-            <button className="agency-sidebar-toggle" onClick={onToggleCollapse} title={collapsed ? "Expand menu" : "Collapse menu"}>
+            <button className="agency-sidebar-toggle agency-sidebar-toggle-desktop" onClick={onToggleCollapse} title={collapsed ? "Expand menu" : "Collapse menu"}>
               <Menu size={18} />
             </button>
-            {!collapsed && <span className="agency-sidebar-label">Menu</span>}
+            <button className="agency-sidebar-toggle agency-sidebar-close" onClick={onClose} title="Close menu">
+              <X size={18} />
+            </button>
+            {(!collapsed || mobileOpen) && <span className="agency-sidebar-label">Menu</span>}
           </div>
-          {!collapsed && <h3 className="agency-sidebar-title">Agency Panel</h3>}
+          {(!collapsed || mobileOpen) && <h3 className="agency-sidebar-title">Agency Panel</h3>}
         </div>
 
         <nav className="agency-sidebar-nav">
@@ -54,22 +61,31 @@ function Sidebar({ activeTab, onTabChange, collapsed, onToggleCollapse }) {
               <button
                 key={item.key}
                 className={`agency-sidebar-item ${activeTab === item.key ? "active" : ""}`}
-                onClick={() => onTabChange(item.key)}
+                onClick={() => {
+                  onTabChange(item.key);
+                  onClose?.();
+                }}
                 title={collapsed ? item.label : ""}
               >
                 <Icon size={18} />
-                {!collapsed && <span>{item.label}</span>}
+                {(!collapsed || mobileOpen) && <span>{item.label}</span>}
               </button>
             );
           })}
         </nav>
 
-        {!collapsed && (
-          <div className="agency-sidebar-search" aria-label="Search">
-            <Search size={10} />
-            <span>Search</span>
-          </div>
-        )}
+        <div className="agency-sidebar-new">
+          <button
+            type="button"
+            className="agency-sidebar-new-btn"
+            onClick={onNewSession}
+            disabled={creatingSession}
+            title={collapsed ? "New Session" : ""}
+          >
+            <Plus size={16} />
+            {(!collapsed || mobileOpen) && <span>{creatingSession ? "Starting..." : "New Session"}</span>}
+          </button>
+        </div>
       </div>
     </aside>
   );
@@ -419,9 +435,11 @@ export default function AgencyDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dashboardData, setDashboardData] = useState(null);
+  const [creatingSession, setCreatingSession] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -461,6 +479,15 @@ export default function AgencyDashboard() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    if (!mobileSidebarOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setMobileSidebarOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileSidebarOpen]);
+
   const stats = dashboardData?.stats || {};
   const sessions = dashboardData?.sessions || [];
 
@@ -487,6 +514,25 @@ export default function AgencyDashboard() {
     localStorage.setItem("session", JSON.stringify(session));
     if (session.id) localStorage.setItem("sessionId", session.id);
     navigate("/manifesto");
+  };
+
+  const handleNewSession = async () => {
+    if (creatingSession) return;
+    setCreatingSession(true);
+    try {
+      const title = `Brand Discovery ${new Date().toLocaleDateString()}`;
+      const data = await authService.createSession({ title });
+      const sessionObj = data?.session || data;
+      resetActiveJourneyState();
+      localStorage.setItem("session", JSON.stringify(sessionObj));
+      if (sessionObj.id) localStorage.setItem("sessionId", String(sessionObj.id));
+      toast.success("New session started!");
+      navigate("/phase-questions/1");
+    } catch (err) {
+      toast.error(err?.message || "Failed to start session");
+    } finally {
+      setCreatingSession(false);
+    }
   };
 
   // ── Render content based on active tab ──
@@ -518,7 +564,17 @@ export default function AgencyDashboard() {
       case "clients":
         return (
           <>
-            <h2 className="agency-tab-title">Assigned Clients</h2>
+            <div className="agency-tab-heading-row">
+              <h2 className="agency-tab-title">Assigned Clients</h2>
+              <button
+                type="button"
+                className="agency-start-session-btn"
+                onClick={handleNewSession}
+                disabled={creatingSession}
+              >
+                <Plus size={16} /> {creatingSession ? "Starting..." : "New Session"}
+              </button>
+            </div>
             <SessionsTable sessions={sessions} onOpenSession={() => navigate("/manifesto")} />
           </>
         );
@@ -606,13 +662,43 @@ export default function AgencyDashboard() {
 
   return (
     <div className="adb-root" style={{ overflow: "hidden", height: "100vh" }}>
-      <ChatNavbar showSaveButton={false} showDownloadButton={false} showLogoutButton={true} />
+      <ChatNavbar
+        showSaveButton={false}
+        showDownloadButton={false}
+        showLogoutButton={true}
+        leadingAction={
+          <button
+            type="button"
+            className="agency-navbar-menu-btn"
+            onClick={() => setMobileSidebarOpen((open) => !open)}
+            aria-label={mobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
+            aria-expanded={mobileSidebarOpen}
+          >
+            {mobileSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        }
+      />
       <div className="adb-background">
         <div className="adb-glow-left" />
         <div className="adb-glow-right" />
       </div>
       <div className="adb-layout" style={{ height: "calc(100vh - 45px)" }}>
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} />
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          collapsed={sidebarCollapsed}
+          mobileOpen={mobileSidebarOpen}
+          onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+          onClose={() => setMobileSidebarOpen(false)}
+          onNewSession={handleNewSession}
+          creatingSession={creatingSession}
+        />
+        <button
+          type="button"
+          className={`agency-sidebar-backdrop ${mobileSidebarOpen ? "open" : ""}`}
+          aria-label="Close sidebar"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
         <main className="adb-main-content">
           <div className="adb-content-wrapper">
             <h1 className="adb-page-title">Agency Dashboard</h1>

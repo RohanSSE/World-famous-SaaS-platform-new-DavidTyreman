@@ -1,7 +1,9 @@
 .journey-phases-page {
   min-height: 100vh;
   background: #030508;
-  background-image: radial-gradient(ellipse 100% 80% at 50% 0%, #0c2248 0%, #050a18 45%, #020408 100%);
+  background-image:
+    radial-gradient(ellipse 88% 58% at 50% 2%, rgba(19, 48, 98, 0.92) 0%, rgba(7, 13, 32, 0.78) 42%, rgba(2, 4, 8, 0.98) 100%),
+    linear-gradient(135deg, rgba(57, 89, 229, 0.12), transparent 28%, rgba(142, 229, 255, 0.08) 68%, transparent);
   color: #fff;
   font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
   position: relative;
@@ -9,17 +11,47 @@
   padding-bottom: 3rem;
 }
 
+.journey-phases-page::before,
+.journey-phases-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.journey-phases-page::before {
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(142, 229, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(142, 229, 255, 0.045) 1px, transparent 1px);
+  background-size: 86px 86px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent 72%);
+  animation: journeyGridDrift 18s linear infinite;
+}
+
+.journey-phases-page::after {
+  z-index: 0;
+  background: linear-gradient(115deg, transparent 16%, rgba(142, 229, 255, 0.1) 36%, transparent 54%);
+  opacity: 0.42;
+  transform: translateX(-35%);
+  animation: journeyLightSweep 9s ease-in-out infinite;
+}
+
 .journey-phases-bg-orb {
   position: absolute;
-  width: 500px;
-  height: 500px;
-  top: 5%;
+  width: min(860px, 84vw);
+  height: 360px;
+  top: 4%;
   left: 50%;
   transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(91, 108, 255, 0.25) 0%, transparent 70%);
-  filter: blur(60px);
+  border-radius: 45% 55% 50% 50%;
+  background:
+    radial-gradient(ellipse at 48% 22%, rgba(91, 108, 255, 0.24) 0%, transparent 58%),
+    linear-gradient(90deg, transparent, rgba(142, 229, 255, 0.08), transparent);
+  filter: blur(52px);
+  opacity: 0.92;
   pointer-events: none;
+  animation: journeyAmbientPulse 7s ease-in-out infinite;
 }
 
 .journey-phases-page .onboarding-header {
@@ -42,15 +74,74 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.6rem;
+  animation: journeyIntroIn 0.75s ease both;
 }
 
 .journey-phases-orb-wrap {
   position: relative;
-  margin: 0 auto 1.25rem;
+  margin: 0 auto 1.45rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  filter: drop-shadow(0 22px 58px rgba(58, 112, 255, 0.42));
+  animation: journeyOrbFloat 5.5s ease-in-out infinite;
+}
+
+.journey-phases-orb-wrap .brand-orb--md {
+  width: 182px;
+  height: 182px;
+}
+
+.journey-phases-orb-wrap .brand-orb::before {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  z-index: 4;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 54% 42%, rgba(255, 255, 255, 0.28), transparent 20%),
+    radial-gradient(circle at 48% 58%, rgba(142, 229, 255, 0.18), transparent 48%),
+    conic-gradient(from 120deg, transparent, rgba(142, 229, 255, 0.16), transparent 36%, rgba(102, 116, 255, 0.18), transparent 68%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: journeyOrbCoreGlow 4.8s ease-in-out infinite;
+}
+
+.journey-phases-orb-wrap::before,
+.journey-phases-orb-wrap::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.journey-phases-orb-wrap::before {
+  inset: -58px -120px -52px;
+  border: 0;
+  border-radius: 42% 58% 64% 36% / 44% 34% 66% 56%;
+  background:
+    radial-gradient(ellipse at 26% 56%, rgba(57, 89, 229, 0.34) 0%, transparent 38%),
+    radial-gradient(ellipse at 76% 38%, rgba(142, 229, 255, 0.24) 0%, transparent 34%),
+    linear-gradient(102deg, transparent 15%, rgba(142, 229, 255, 0.14) 42%, rgba(91, 108, 255, 0.12) 58%, transparent 82%);
+  filter: blur(24px);
+  opacity: 0.72;
+  box-shadow:
+    0 0 62px rgba(57, 89, 229, 0.2),
+    inset 0 0 34px rgba(142, 229, 255, 0.08);
+  transform: rotate(-8deg) skewX(-7deg);
+  animation: journeyOrbAura 5.8s ease-in-out infinite;
+}
+
+.journey-phases-orb-wrap::after {
+  inset: 22px -132px 18px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(57, 89, 229, 0.18) 28%, rgba(142, 229, 255, 0.18) 50%, rgba(104, 89, 255, 0.12) 70%, transparent 100%),
+    radial-gradient(ellipse at 50% 50%, rgba(142, 229, 255, 0.16) 0%, transparent 58%);
+  filter: blur(18px);
+  opacity: 0.58;
+  transform: rotate(15deg) skewX(-14deg);
+  animation: journeyOrbEnergyWash 7s ease-in-out infinite;
 }
 
 /* Figma: left-aligned, smaller, medium weight */
@@ -64,6 +155,7 @@
   line-height: 1.35;
   text-align: left;
   color: #fff;
+  text-shadow: 0 8px 28px rgba(0, 0, 0, 0.34);
 }
 
 .journey-phases-cards {
@@ -73,6 +165,7 @@
   margin-bottom: 2rem;
   text-align: left;
   width: 100%;
+  perspective: 1100px;
 }
 
 @media (max-width: 900px) {
@@ -85,33 +178,87 @@
 }
 
 .journey-phase-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   padding: 1.15rem 1.15rem 1.25rem;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(8, 14, 28, 0.55);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018)),
+    rgba(8, 14, 28, 0.66);
+  backdrop-filter: blur(14px);
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 54px rgba(0, 0, 0, 0.18);
+  transform: translateY(18px) scale(0.98);
+  animation: journeyCardIn 0.68s cubic-bezier(0.19, 1, 0.22, 1) both;
+  animation-delay: calc(var(--phase-index, 0) * 110ms + 180ms);
+  transition: border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease, opacity 0.22s ease;
+}
+
+.journey-phase-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(120deg, transparent 0%, rgba(142, 229, 255, 0.13) 42%, transparent 64%);
+  opacity: 0;
+  transform: translateX(-70%);
+  transition: opacity 0.22s ease;
+}
+
+.journey-phase-card::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(142, 229, 255, 0.8), transparent);
+  opacity: 0;
+  transform: scaleX(0.55);
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
 .journey-phase-card:hover {
   border-color: rgba(100, 140, 255, 0.35);
+  transform: translateY(-8px) scale(1.012);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 22px 58px rgba(24, 61, 160, 0.24);
+}
+
+.journey-phase-card:hover::before {
+  opacity: 1;
+  animation: journeyCardShine 1.1s ease forwards;
+}
+
+.journey-phase-card:hover::after,
+.journey-phase-card.active::after {
+  opacity: 1;
+  transform: scaleX(1);
 }
 
 .journey-phase-card.active {
   border-color: rgba(59, 130, 246, 0.9);
-  background: rgba(12, 24, 52, 0.7);
-  box-shadow: 0 0 24px rgba(37, 99, 235, 0.2);
+  background:
+    linear-gradient(145deg, rgba(57, 89, 229, 0.22), rgba(142, 229, 255, 0.055)),
+    rgba(12, 24, 52, 0.78);
+  box-shadow: 0 0 0 1px rgba(142, 229, 255, 0.08), 0 22px 70px rgba(37, 99, 235, 0.28);
 }
 
 .journey-phase-card.locked {
   border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(6, 10, 22, 0.65);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012)),
+    rgba(6, 10, 22, 0.72);
   cursor: not-allowed;
   opacity: 0.85;
 }
 
 .journey-phase-card.locked:hover {
   border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(0) scale(1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 54px rgba(0, 0, 0, 0.18);
 }
 
 .journey-phase-card.locked.active {
@@ -137,11 +284,15 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
+  box-shadow: inset 0 0 14px rgba(142, 229, 255, 0.06);
+  transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease;
 }
 
 .journey-phase-card.active .journey-phase-num {
   border-color: rgba(142, 229, 255, 0.55);
   background: rgba(57, 89, 229, 0.3);
+  transform: scale(1.08);
+  box-shadow: 0 0 18px rgba(142, 229, 255, 0.24), inset 0 0 16px rgba(142, 229, 255, 0.1);
 }
 
 .journey-phase-meta {
@@ -158,6 +309,12 @@
   font-weight: 600;
   line-height: 1.3;
   color: #fff;
+  transition: color 0.22s ease;
+}
+
+.journey-phase-card:hover h2,
+.journey-phase-card.active h2 {
+  color: #eef8ff;
 }
 
 .journey-phase-card p {
@@ -169,6 +326,8 @@
 
 .journey-phases-cta {
   display: block;
+  position: relative;
+  overflow: hidden;
   margin: 0 auto;
   padding: 0.9rem 2.75rem;
   min-width: 280px;
@@ -199,7 +358,23 @@
     #8ee5ff 100%
   );
   box-shadow: 0 10px 40px rgba(57, 89, 229, 0.45);
-  transition: transform 0.2s, box-shadow 0.2s;
+  background-size: 200% 100%;
+  animation: journeyCtaGradient 5s ease-in-out infinite;
+  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+}
+
+.journey-phases-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.38) 44%, transparent 58%);
+  transform: translateX(-130%);
+  opacity: 0;
+}
+
+.journey-phases-cta:hover::before {
+  opacity: 1;
+  animation: journeyCtaShine 0.9s ease forwards;
 }
 
 .journey-upgrade-panel {
@@ -214,6 +389,7 @@
   border: 1px solid rgba(142, 229, 255, 0.26);
   background: rgba(255, 255, 255, 0.05);
   color: rgba(192, 249, 255, 0.9);
+  animation: journeyPanelIn 0.36s ease both;
 }
 
 .journey-upgrade-icon {
@@ -241,6 +417,7 @@
 .journey-phases-cta:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 14px 48px rgba(142, 229, 255, 0.35);
+  filter: saturate(1.08);
 }
 
 .journey-phases-cta:disabled {
@@ -259,5 +436,178 @@
   .journey-phases-cta {
     width: 100%;
     min-width: 0;
+  }
+}
+
+@keyframes journeyGridDrift {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 86px 86px, 86px 86px;
+  }
+}
+
+@keyframes journeyLightSweep {
+  0%, 38% {
+    transform: translateX(-42%);
+    opacity: 0;
+  }
+  58% {
+    opacity: 0.46;
+  }
+  100% {
+    transform: translateX(42%);
+    opacity: 0;
+  }
+}
+
+@keyframes journeyAmbientPulse {
+  0%, 100% {
+    opacity: 0.72;
+    transform: translateX(-50%) scale(0.98);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateX(-50%) scale(1.04);
+  }
+}
+
+@keyframes journeyIntroIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes journeyOrbFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes journeyOrbCoreGlow {
+  0%, 100% {
+    opacity: 0.46;
+    transform: scale(0.96) rotate(0deg);
+  }
+  50% {
+    opacity: 0.78;
+    transform: scale(1.04) rotate(8deg);
+  }
+}
+
+@keyframes journeyOrbAura {
+  0%, 100% {
+    opacity: 0.58;
+    transform: rotate(-8deg) skewX(-7deg) translate3d(-8px, 2px, 0) scale(0.96);
+  }
+  50% {
+    opacity: 0.86;
+    transform: rotate(-3deg) skewX(-4deg) translate3d(8px, -6px, 0) scale(1.05);
+  }
+}
+
+@keyframes journeyOrbEnergyWash {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translate3d(-16px, 6px, 0) rotate(15deg) skewX(-14deg) scaleX(0.92);
+  }
+  50% {
+    opacity: 0.82;
+    transform: translate3d(18px, -8px, 0) rotate(9deg) skewX(-18deg) scaleX(1.06);
+  }
+}
+
+@keyframes journeyOrbRing {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.04);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes journeyCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes journeyCardShine {
+  from {
+    transform: translateX(-70%);
+  }
+  to {
+    transform: translateX(80%);
+  }
+}
+
+@keyframes journeyCtaGradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes journeyCtaShine {
+  from {
+    transform: translateX(-130%);
+  }
+  to {
+    transform: translateX(130%);
+  }
+}
+
+@keyframes journeyPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-phases-page::before,
+  .journey-phases-page::after,
+  .journey-phases-bg-orb,
+  .journey-phases-intro,
+  .journey-phases-orb-wrap,
+  .journey-phases-orb-wrap .brand-orb::before,
+  .journey-phases-orb-wrap::before,
+  .journey-phases-orb-wrap::after,
+  .journey-phase-card,
+  .journey-phase-card:hover::before,
+  .journey-phases-cta,
+  .journey-phases-cta:hover::before,
+  .journey-upgrade-panel {
+    animation: none;
+  }
+
+  .journey-phase-card,
+  .journey-phase-card:hover,
+  .journey-phase-card.locked:hover,
+  .journey-phases-cta:hover:not(:disabled) {
+    transform: none;
   }
 }

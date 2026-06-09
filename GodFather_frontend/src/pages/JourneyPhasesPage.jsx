@@ -104,6 +104,7 @@ export default function JourneyPhasesPage() {
               <article
                 key={phase.id}
                 className={`journey-phase-card ${isSelected ? "active" : ""} ${isLocked ? "locked" : ""}`}
+                style={{ "--phase-index": phase.id - 1 }}
                 onClick={() => {
                   if (isLocked && !isSubscriptionLocked) return;
                   setSelectedPhase(phase.id);

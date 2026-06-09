@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams, Navigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Menu, X } from "lucide-react";
 import ChatNavbar from "./ChatNavbar";
 import BrandOrb from "../components/orb/BrandOrb";
 import OrbPresence from "../components/orb/OrbPresence";
@@ -16,6 +17,7 @@ import {
   PHASE_1_MANIFESTO_STEPS,
   TOTAL_JOURNEY_QUESTIONS,
   countStoredJourneyAnswers,
+  getCurrentQuestionStorageKey,
   getPhaseAnswersStorageKey,
 } from "../constants/journeyPhases";
 import chatIcon1 from "../assets/chat-icon1.png";
@@ -26,12 +28,6 @@ import {
   scoreAnswerQualityLocal,
 } from "../utils/answerQuality";
 import "./PhaseQuestionPage.css";
-
-function getCurrentQuestionStorageKey(sessionId, phaseId) {
-  return sessionId
-    ? `phaseCurrentQuestion_${sessionId}_p${phaseId}`
-    : `phaseCurrentQuestion_p${phaseId}`;
-}
 
 function SessionTitleModal({
   open,
@@ -152,8 +148,11 @@ export default function PhaseQuestionPage() {
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [answerReward, setAnswerReward] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const nudgesDebounceRef = useRef(null);
   const nudgePickedRef = useRef(false);
+  const answerRewardTimeoutRef = useRef(null);
   const questionIndexRestoredRef = useRef(false);
   const shouldForceQuestionRefineRef = useRef(
     typeof performance !== "undefined" &&
@@ -173,6 +172,19 @@ export default function PhaseQuestionPage() {
   useEffect(() => {
     if (session) setShowTitleModal(false);
   }, [session]);
+
+  useEffect(() => {
+    return () => window.clearTimeout(answerRewardTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!sidebarOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setSidebarOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [sidebarOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -580,6 +592,19 @@ export default function PhaseQuestionPage() {
   const allJourneyAnswered = journeyAnsweredCount >= TOTAL_JOURNEY_QUESTIONS;
   const isFinalPhase = Number(phaseId) === 3;
 
+  const triggerAnswerReward = (phaseComplete = false, savedCount = 0) => {
+    window.clearTimeout(answerRewardTimeoutRef.current);
+    setAnswerReward({
+      id: Date.now(),
+      title: phaseComplete ? "Boss cleared" : "+120 XP",
+      text: phaseComplete ? "All answers locked. Complete the level now." : "Clarity +1 · Originality +1",
+      streak: Math.max(1, savedCount),
+    });
+    answerRewardTimeoutRef.current = window.setTimeout(() => {
+      setAnswerReward(null);
+    }, 1700);
+  };
+
   const saveCurrentAnswer = async () => {
     const currentQuestion = questions[currentIdx];
     if (!currentQuestion) return null;
@@ -616,6 +641,9 @@ export default function PhaseQuestionPage() {
       const phaseComplete =
         questions.length > 0 &&
         questions.every((q) => String(nextAnswers[q.key] ?? "").trim());
+
+      const savedCount = questions.filter((q) => String(nextAnswers[q.key] ?? "").trim()).length;
+      triggerAnswerReward(phaseComplete, savedCount);
 
       if (!phaseComplete && currentIdx < questions.length - 1) {
         setCurrentIdx((i) => i + 1);
@@ -769,6 +797,26 @@ export default function PhaseQuestionPage() {
     totalQuestions > 0
       ? Math.round(((currentIdx + 1) / totalQuestions) * 100)
       : 0;
+  const answeredInPhaseCount = questions.filter((q) => String(answers[q.key] ?? "").trim()).length;
+  const levelXpPercent = totalQuestions > 0 ? Math.round((answeredInPhaseCount / totalQuestions) * 100) : 0;
+  const streakCount = Math.max(0, answeredInPhaseCount);
+  const remainingQuestions = Math.max(0, totalQuestions - answeredInPhaseCount);
+  const isBossQuestion = totalQuestions > 0 && currentIdx === totalQuestions - 1;
+  const missionLabel = isBossQuestion
+    ? "Boss Question"
+    : `Mission ${Math.min(currentIdx + 1, totalQuestions)}/${totalQuestions}`;
+  const missionHint = allPhaseAnswered
+    ? `Level ${phaseNumber} is ready to clear.`
+    : remainingQuestions === 1
+      ? "1 answer away from Level Clear."
+      : `${remainingQuestions} answers away from Level Clear.`;
+  const submitLabel = submitting
+    ? "Saving…"
+    : isFinalPhase && allPhaseAnswered
+      ? "Save to Finish"
+      : allPhaseAnswered
+        ? `Complete Level ${phaseNumber}`
+        : "Submit";
 
   return (
     <div className="pq-page">
@@ -795,10 +843,21 @@ export default function PhaseQuestionPage() {
         showDownloadButton={false}
         showLogoutButton
         phaseStatus={phaseStatus}
+        leadingAction={
+          <button
+            type="button"
+            className="pq-navbar-menu-btn"
+            onClick={() => setSidebarOpen((open) => !open)}
+            aria-label={sidebarOpen ? "Close question menu" : "Open question menu"}
+            aria-expanded={sidebarOpen}
+          >
+            {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        }
       />
 
       <div className="pq-body">
-        <aside className="pq-sidebar" aria-hidden={showTitleModal}>
+        <aside className={`pq-sidebar${sidebarOpen ? " open" : ""}`} aria-hidden={showTitleModal}>
           <h2 className="pq-sidebar-title">Brand Manifesto</h2>
           <div className="pq-sidebar-divider" />
           <nav className="pq-sidebar-nav">
@@ -807,12 +866,16 @@ export default function PhaseQuestionPage() {
                 const label = item.shortLabel || sidebarLabels[i] || `Step ${i + 1}`;
                 const isActive = i === currentIdx;
                 const isAnswered = item.key && answers[item.key]?.trim();
+                const isBossStep = i === totalQuestions - 1;
                 return (
                   <button
                     key={item.id ?? i}
                     type="button"
-                    className={`pq-sidebar-item ${isActive ? "active" : ""} ${isAnswered ? "answered" : ""}`}
-                    onClick={() => setCurrentIdx(i)}
+                    className={`pq-sidebar-item ${isActive ? "active" : ""} ${isAnswered ? "answered" : ""} ${isBossStep ? "boss" : ""}`}
+                    onClick={() => {
+                      setCurrentIdx(i);
+                      setSidebarOpen(false);
+                    }}
                     disabled={i >= questions.length && questions.length > 0}
                   >
                     <span className="pq-sidebar-num">{String(i + 1).padStart(2, "0")}</span>
@@ -823,6 +886,12 @@ export default function PhaseQuestionPage() {
             )}
           </nav>
         </aside>
+        <button
+          type="button"
+          className={`pq-sidebar-backdrop${sidebarOpen ? " open" : ""}`}
+          aria-label="Close question menu"
+          onClick={() => setSidebarOpen(false)}
+        />
 
         <main className="pq-main" aria-hidden={showTitleModal}>
           {loading ? (
@@ -856,6 +925,44 @@ export default function PhaseQuestionPage() {
             </div>
           ) : (
             <>
+              <section className="pq-game-hud" aria-label="Journey level progress">
+                <div className="pq-level-chip">
+                  <span>Level {phaseNumber}</span>
+                  <strong>{phase?.title || "Brand discovery"}</strong>
+                </div>
+                <div className={`pq-mission-chip${isBossQuestion ? " pq-mission-chip--boss" : ""}`}>
+                  <span>{missionLabel}</span>
+                  <strong>{missionHint}</strong>
+                </div>
+                <div className="pq-xp-meter" aria-hidden="true">
+                  <div className="pq-xp-meter-top">
+                    <span>XP</span>
+                    <strong>{levelXpPercent}%</strong>
+                  </div>
+                  <div className="pq-xp-track">
+                    <span style={{ width: `${levelXpPercent}%` }} />
+                  </div>
+                </div>
+                <div className="pq-streak-chip">
+                  <span>{streakCount}</span>
+                  Answer streak
+                </div>
+              </section>
+
+              {answerReward && (
+                <div className="pq-answer-reward" key={answerReward.id} aria-live="polite">
+                  <span className="pq-answer-reward-orb" aria-hidden="true" />
+                  <div>
+                    <strong>{answerReward.title}</strong>
+                    <p>{answerReward.text}</p>
+                    <small>Streak x{answerReward.streak}</small>
+                  </div>
+                  <span className="pq-reward-bubble pq-reward-bubble--1" aria-hidden="true" />
+                  <span className="pq-reward-bubble pq-reward-bubble--2" aria-hidden="true" />
+                  <span className="pq-reward-bubble pq-reward-bubble--3" aria-hidden="true" />
+                </div>
+              )}
+
               <div className="pq-progress-wrap">
                 <div className="pq-progress-track">
                   <div className="pq-progress-fill" style={{ width: `${progressPercent}%` }} />
@@ -920,7 +1027,10 @@ export default function PhaseQuestionPage() {
               <div className="pq-chat">
                 <div className="pq-bubble pq-bubble--bot">
                   <img src="/Group%2021.svg" alt="" className="pq-bot-avatar" />
-                  <div className="pq-bubble-text">{questionLabel}</div>
+                  <div className="pq-bubble-text">
+                    {isBossQuestion && <span className="pq-boss-label">Boss Question</span>}
+                    {questionLabel}
+                  </div>
                 </div>
               </div>
 
@@ -1012,11 +1122,11 @@ export default function PhaseQuestionPage() {
                       isFinalPhase && allPhaseAnswered
                         ? "Hit save button"
                         : allPhaseAnswered
-                        ? "Submit this phase"
+                        ? `Complete Level ${phaseNumber}`
                         : `Answer all ${totalQuestions} questions to submit`
                     }
                   >
-                    {submitting ? "Saving…" : "Submit"}
+                    {submitLabel}
                   </button>
                 </div>
               </div>

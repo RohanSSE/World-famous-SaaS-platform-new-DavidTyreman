@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import authService from "../services/authService";
 import PaymentHistoryCard from "../components/PaymentHistoryCard";
+import { resetActiveJourneyState } from "../constants/journeyPhases";
 
 // ── Sidebar Menu Items ──
 const USER_SIDEBAR_ITEMS = [
@@ -383,6 +384,7 @@ export default function UserDashboard() {
     try {
       const data = await authService.createSession(payload);
       const sessionObj = data?.session || data;
+      resetActiveJourneyState();
       localStorage.setItem("session", JSON.stringify(sessionObj));
       if (sessionObj.id) localStorage.setItem("sessionId", String(sessionObj.id));
       toast.success("Session created successfully!");

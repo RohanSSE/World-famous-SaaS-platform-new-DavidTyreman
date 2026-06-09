@@ -1895,6 +1895,16 @@ body {
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.adb-root .agency-navbar-menu-btn,
+.adb-root .agency-sidebar-close,
+.adb-root .agency-sidebar-backdrop {
+  display: none;
+}
+
+.adb-root .chat-leading-action {
+  display: none;
+}
+
 .adb-root .agency-sidebar-inner {
   height: 100%;
   padding: 16px 10px 16px;
@@ -1961,6 +1971,7 @@ body {
   width: 140px;
   height: 24px;
   margin-top: auto;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1971,6 +1982,64 @@ body {
   color: rgba(255, 255, 255, 0.45);
   font-size: 10px;
   line-height: 1;
+}
+
+.adb-root .agency-sidebar-new {
+  width: 100%;
+  margin-top: auto;
+}
+
+.adb-root .agency-sidebar-new-btn,
+.adb-root .agency-start-session-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3959e5 0%, #507fec 58%, #8ee5ff 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(57, 89, 229, 0.24);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.adb-root .agency-sidebar-new-btn {
+  width: 100%;
+  min-height: 34px;
+  padding: 9px 10px;
+}
+
+.adb-root .agency-start-session-btn {
+  min-height: 36px;
+  padding: 9px 14px;
+}
+
+.adb-root .agency-sidebar-new-btn:hover:not(:disabled),
+.adb-root .agency-start-session-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(57, 89, 229, 0.34);
+}
+
+.adb-root .agency-sidebar-new-btn:disabled,
+.adb-root .agency-start-session-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.adb-root .agency-sidebar.collapsed .agency-sidebar-new-btn {
+  min-height: 34px;
+  padding: 8px;
+}
+
+.adb-root .agency-tab-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .adb-root .adb-main-content {
@@ -2270,5 +2339,407 @@ body {
 
   .adb-root .agency-dashboard-table-card .adb-table {
     min-width: 900px;
+  }
+}
+
+/* ==========================
+   Agency Responsive Fixes
+   ========================== */
+.adb-root,
+.adb-root .adb-layout,
+.adb-root .adb-main-content,
+.adb-root .adb-content-wrapper,
+.adb-root .agency-bg-animate,
+.adb-root .agency-dashboard-overview,
+.adb-root .agency-section-card,
+.adb-root .adb-table-container,
+.adb-root .adb-table-wrapper {
+  min-width: 0;
+}
+
+.adb-root .adb-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1180px) {
+  .adb-root .agency-sidebar {
+    width: 148px;
+    min-width: 148px;
+  }
+
+  .adb-root .adb-main-content {
+    padding: 20px 22px 24px 16px;
+  }
+
+  .adb-root .agency-dashboard-overview {
+    width: 100%;
+  }
+
+  .adb-root .agency-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .adb-root {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .adb-root .agency-navbar-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    cursor: pointer;
+  }
+
+  .adb-root .chat-leading-action {
+    display: inline-flex;
+  }
+
+  .adb-root .adb-layout {
+    height: auto !important;
+    min-height: calc(100dvh - 45px);
+    flex-direction: column;
+  }
+
+  .adb-root .agency-sidebar,
+  .adb-root .agency-sidebar.collapsed {
+    position: fixed;
+    top: 45px;
+    left: 0;
+    bottom: 0;
+    z-index: 2600;
+    display: block;
+    width: min(82vw, 286px);
+    min-width: 0;
+    height: calc(100dvh - 45px);
+    border-right: 1px solid rgba(142, 229, 255, 0.12);
+    border-bottom: 0;
+    box-shadow: 20px 0 46px rgba(0, 0, 0, 0.34);
+    overflow: hidden;
+    transform: translateX(-104%);
+    transition: transform 0.24s ease, box-shadow 0.24s ease;
+  }
+
+  .adb-root .agency-sidebar.mobile-open,
+  .adb-root .agency-sidebar.collapsed.mobile-open {
+    transform: translateX(0);
+  }
+
+  .adb-root .agency-sidebar-inner,
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-inner {
+    min-width: 0;
+    height: 100%;
+    padding: 18px 16px 20px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  .adb-root .agency-sidebar-header,
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-header,
+  .adb-root .agency-sidebar-label-row,
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-label-row {
+    margin: 0 0 4px;
+    padding: 0;
+  }
+
+  .adb-root .agency-sidebar-label-row,
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-label-row {
+    justify-content: space-between;
+  }
+
+  .adb-root .agency-sidebar-toggle-desktop {
+    display: none;
+  }
+
+  .adb-root .agency-sidebar-close {
+    display: inline-flex;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .adb-root .agency-sidebar-title,
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-title {
+    display: block;
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .adb-root .agency-sidebar-label {
+    display: block;
+  }
+
+  .adb-root .agency-sidebar-nav {
+    flex-direction: column;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .adb-root .agency-sidebar-item,
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-item {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    justify-content: flex-start;
+    gap: 10px;
+    white-space: nowrap;
+  }
+
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-item span,
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-label {
+    display: inline;
+  }
+
+  .adb-root .agency-sidebar-new {
+    display: none;
+  }
+
+  .adb-root .agency-sidebar-new-btn,
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-new-btn {
+    min-height: 38px;
+    padding: 9px 13px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .adb-root .agency-sidebar-backdrop {
+    position: fixed;
+    inset: 45px 0 0;
+    z-index: 2500;
+    display: block;
+    border: 0;
+    background: rgba(0, 0, 0, 0.48);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .adb-root .agency-sidebar-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .adb-root .adb-main-content {
+    width: 100%;
+    padding: 18px 16px 36px;
+    overflow: visible;
+  }
+
+  .adb-root .agency-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .adb-root .agency-tab-heading-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .adb-root .agency-start-session-btn {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .adb-root .agency-table-toolbar {
+    padding: 14px 16px 0;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) {
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .agency-table-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 0 12px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .agency-table-search {
+    width: 100%;
+    height: 34px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .agency-table-count {
+    white-space: normal;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table-container {
+    width: 100%;
+    max-height: none;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table-wrapper {
+    max-height: none;
+    overflow-x: auto !important;
+    overflow-y: auto;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table {
+    min-width: 860px;
+    table-layout: fixed;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table thead th,
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table tbody td {
+    padding: 12px 14px;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table th:nth-child(1),
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table td:nth-child(1) {
+    width: 64px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table th:nth-child(2),
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table td:nth-child(2) {
+    width: 170px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table th:nth-child(3),
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table td:nth-child(3) {
+    width: 140px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table th:nth-child(4),
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table td:nth-child(4) {
+    width: 260px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table th:nth-child(5),
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table td:nth-child(5) {
+    width: 130px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table th:nth-child(6),
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table td:nth-child(6) {
+    width: 110px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table th:nth-child(7),
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table td:nth-child(7) {
+    width: 120px;
+  }
+
+  .adb-root .agency-dashboard-table-card .adb-table-container,
+  .adb-root .agency-dashboard-table-card .adb-table-wrapper {
+    min-height: 0;
+    max-height: none;
+  }
+
+  .adb-root .agency-dashboard-table-card .adb-table {
+    min-width: 860px;
+  }
+}
+
+@media (max-width: 640px) {
+  .adb-root .chat-header {
+    padding: 0 10px;
+  }
+
+  .adb-root .chat-logo {
+    height: 22px;
+  }
+
+  .adb-root .adb-main-content {
+    padding: 14px 12px 32px;
+  }
+
+  .adb-root .adb-page-title,
+  .adb-root .agency-tab-title {
+    font-size: 20px;
+  }
+
+  .adb-root .agency-section-card,
+  .adb-root .agency-stat-card,
+  .adb-root .agency-dashboard-table-card {
+    border-radius: 12px;
+  }
+
+  .adb-root .agency-stat-card {
+    min-height: 82px;
+    padding: 16px;
+  }
+
+  .adb-root .agency-stat-value {
+    font-size: 30px;
+  }
+
+  .adb-root .agency-stat-icon-wrap,
+  .adb-root .agency-stat-icon {
+    width: 58px;
+    height: 52px;
+  }
+
+  .adb-root .agency-table-toolbar {
+    gap: 10px;
+    padding: 12px 12px 0;
+  }
+
+  .adb-root .agency-table-count {
+    white-space: normal;
+  }
+
+  .adb-root .agency-dashboard-table-card .adb-table {
+    min-width: 780px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) {
+    padding: 12px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table {
+    min-width: 780px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table thead th,
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table tbody td {
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 390px) {
+  .adb-root .adb-main-content {
+    padding: 12px 10px 28px;
+  }
+
+  .adb-root .agency-sidebar-inner,
+  .adb-root .agency-sidebar.collapsed .agency-sidebar-inner {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .adb-root .agency-sidebar-item,
+  .adb-root .agency-sidebar-new-btn {
+    font-size: 10px;
+  }
+
+  .adb-root .agency-dashboard-table-card .adb-table {
+    min-width: 720px;
+  }
+
+  .adb-root .agency-section-card:not(.agency-dashboard-table-card) .adb-table {
+    min-width: 740px;
   }
 }
