@@ -150,9 +150,11 @@ QUESTIONS & ANSWERS:
     retrieval = retrieve_context(
         "brand summary synthesis emotional truth authentic identity",
         user=user,
+        session=session,
         include_knowledge=True,
+        agent_id="manifesto",
         top_k=5,
-        max_chars=3000,
+        max_chars=4000,
     )
 
     david_system_prompt = """You are THE BRAND GODFATHER — speaking with David's voice and wisdom.
@@ -228,9 +230,11 @@ QUESTIONS & ANSWERS:
     retrieval = retrieve_context(
         "foundation brand identity emotional truth",
         user=user,
+        session=session,
         include_knowledge=True,
+        agent_id="manifesto",
         top_k=5,
-        max_chars=3000,
+        max_chars=4000,
     )
     if retrieval["context"]:
         david_system_prompt += "\n\nReference:\n" + retrieval["context"]

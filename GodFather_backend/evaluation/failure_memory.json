@@ -41,16 +41,16 @@
         "unsupported_claim",
         "low_confidence_overclaim"
       ],
-      "frequency": 19,
+      "frequency": 20,
       "severity": 1.0,
       "recommended_fix": "full_verify_and_hedge",
-      "last_seen": "2026-05-25T07:57:35.439534+00:00",
+      "last_seen": "2026-06-10T07:58:27.258539+00:00",
       "example_queries": [
-        "Our messaging feels generic. How do we differentiate?",
         "Help position us against cheaper competitors.",
         "How do we position a B2B SaaS as category leader?",
         "How do we make competitors irrelevant?",
-        "How do we understand audience psychology for positioning?"
+        "How do we understand audience psychology for positioning?",
+        "suggest me some instagram hastag"
       ]
     },
     {
@@ -174,12 +174,13 @@
         "unsupported_claim",
         "low_confidence_overclaim"
       ],
-      "frequency": 1,
-      "severity": 0.33,
+      "frequency": 2,
+      "severity": 0.5,
       "recommended_fix": "tighten_strategic_specificity",
-      "last_seen": "2026-05-25T05:56:35.550225+00:00",
+      "last_seen": "2026-06-10T07:57:08.182117+00:00",
       "example_queries": [
-        "Help position us against cheaper competitors."
+        "Help position us against cheaper competitors.",
+        "instagram suggetion what to do"
       ]
     },
     {

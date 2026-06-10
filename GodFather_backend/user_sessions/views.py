@@ -1004,10 +1004,16 @@ def session_add_comment(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_answers(request, pk):
-    if not request.user.has_perm_codename('answers.view'):
-        return Response({"detail": "No permission"}, status=403)
-    
     session = get_object_or_404(Session, pk=pk)
+
+    role_name = (request.user.get_role_name() or '').lower()
+    can_view_answers = (
+        request.user.has_perm_codename('answers.view')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_view_answers:
+        return Response({"detail": "No permission"}, status=403)
     
     if not session.has_access(request.user):
         return Response({"detail": "Access denied"}, status=403)
@@ -1028,10 +1034,16 @@ def session_answers(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_conversations(request, pk):
-    if not request.user.has_perm_codename('answers.view'):
-        return Response({"detail": "No permission"}, status=403)
-    
     session = get_object_or_404(Session, pk=pk)
+
+    role_name = (request.user.get_role_name() or '').lower()
+    can_view_answers = (
+        request.user.has_perm_codename('answers.view')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_view_answers:
+        return Response({"detail": "No permission"}, status=403)
     
     if not session.has_access(request.user):
         return Response({"detail": "Access denied"}, status=403)
@@ -1056,10 +1068,16 @@ def session_conversations(request, pk):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_answer_create(request, pk):
-    if not request.user.has_perm_codename('answers.create'):
-        return Response({"detail": "No permission"}, status=403)
-    
     session = get_object_or_404(Session, pk=pk)
+
+    role_name = (request.user.get_role_name() or '').lower()
+    can_submit_answer = (
+        request.user.has_perm_codename('answers.create')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_submit_answer:
+        return Response({"detail": "No permission"}, status=403)
     
     if not session.can_edit_answers(request.user):
         return Response({"detail": "Session is locked."}, status=403)
@@ -1082,6 +1100,9 @@ def session_answer_create(request, pk):
         }, status=400)
 
     answer_text = serializer.validated_data['answer_text']
+    is_ai_accepted_provided = 'is_ai_accepted' in serializer.validated_data
+    is_ai_accepted = bool(serializer.validated_data.get('is_ai_accepted', False))
+    ai_suggestion_text = (serializer.validated_data.get('ai_suggestion') or '').strip()
 
     prior_ai = None
     try:
@@ -1090,15 +1111,23 @@ def session_answer_create(request, pk):
     except Answer.DoesNotExist:
         pass
 
+    answer_defaults = {'answer_text': answer_text, 'answered_by': request.user}
+    if is_ai_accepted_provided:
+        answer_defaults['is_ai_accepted'] = is_ai_accepted
+    if is_ai_accepted:
+        answer_defaults['ai_suggestion'] = ai_suggestion_text or answer_text
+    elif ai_suggestion_text:
+        answer_defaults['ai_suggestion'] = ai_suggestion_text
+
     answer, created = Answer.objects.update_or_create(
         session=session,
         question=question,
-        defaults={'answer_text': answer_text, 'answered_by': request.user}
+        defaults=answer_defaults
     )
 
     feedback_result = None
     original_ai = (request.data.get("original_ai_text") or prior_ai or "").strip()
-    if original_ai and answer_text.strip() and original_ai != answer_text.strip():
+    if original_ai and answer_text.strip() and original_ai != answer_text.strip() and not answer.is_ai_accepted:
         try:
             from user_sessions.services.feedback_learning import learn_from_human_edit
             feedback_result = learn_from_human_edit(
@@ -1111,6 +1140,14 @@ def session_answer_create(request, pk):
         except Exception:
             feedback_result = None
 
+    memory_result = None
+    if answer.is_ai_accepted:
+        try:
+            from user_sessions.services.brand_memory import record_answer_acceptance_memory
+            memory_result = record_answer_acceptance_memory(answer, user=request.user)
+        except Exception:
+            memory_result = None
+
     if not created:
         ReviewComment.objects.filter(session=session, answer=answer, is_resolved=False).update(is_resolved=True, resolved_at=timezone.now())
 
@@ -1121,6 +1158,8 @@ def session_answer_create(request, pk):
             "preferred": (feedback_result.get("feedback_delta") or {}).get("preferred_phrases", [])[:5],
             "rejected": (feedback_result.get("feedback_delta") or {}).get("rejected_phrases", [])[:5],
         }
+    if memory_result and memory_result.get("recorded"):
+        payload["memory"] = memory_result
     return Response(payload, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
@@ -1150,10 +1189,17 @@ def session_answer_create(request, pk):
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_answers_batch(request, pk):
     """POST /api/sessions/{session_id}/answers/batch/ — upsert multiple answers."""
-    if not request.user.has_perm_codename('answers.create'):
+    session = get_object_or_404(Session, pk=pk)
+
+    role_name = (request.user.get_role_name() or '').lower()
+    can_submit_answer = (
+        request.user.has_perm_codename('answers.create')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_submit_answer:
         return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
 
-    session = get_object_or_404(Session, pk=pk)
     if not session.can_edit_answers(request.user):
         return Response({"detail": "Session is locked."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -3116,7 +3162,13 @@ def rag_query(request, pk=None):
     POST /api/sessions/rag-query/  or  /api/sessions/<pk>/rag-query/
     Phase 1–3: retrieval → GPT with citations.
     """
-    if not request.user.has_perm_codename('answers.ai_suggest'):
+    role_name = (request.user.get_role_name() or '').lower()
+    can_use_ai_suggestions = (
+        request.user.has_perm_codename('answers.ai_suggest')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_use_ai_suggestions:
         return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
 
     from user_sessions.services.rag_rate_limit import check_rate_limit
@@ -3198,7 +3250,13 @@ def rag_query(request, pk=None):
 @permission_classes([IsAuthenticated, HasRolePermission])
 def rag_query_stream(request, pk=None):
     """POST — Server-Sent Events stream: sources → tokens → done."""
-    if not request.user.has_perm_codename('answers.ai_suggest'):
+    role_name = (request.user.get_role_name() or '').lower()
+    can_use_ai_suggestions = (
+        request.user.has_perm_codename('answers.ai_suggest')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_use_ai_suggestions:
         return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
 
     user_query = (request.data.get("query") or "").strip()
@@ -3522,6 +3580,18 @@ def session_generate_social_content(request, pk):
     for answer in answers:
         qa_text += f"Q: {answer.question.text.strip()}\n"
         qa_text += f"A: {answer.answer_text.strip()}\n\n"
+
+    memory_context = ""
+    try:
+        from user_sessions.services.brand_memory import format_memory_context_block
+        memory_context = format_memory_context_block(
+            session.id,
+            "social content generation brand voice guidance",
+            agent_id="content",
+            limit=4,
+        )
+    except Exception:
+        memory_context = ""
     
     # 5. Build comprehensive prompt
     prompt = f"""
@@ -3541,6 +3611,9 @@ Based on the brand Q&A below, generate comprehensive social media content.
 
 BRAND Q&A:
 {qa_text}
+
+ACCEPTED BRAND MEMORY / GUIDANCE:
+{memory_context or "No accepted brand memory recorded yet."}
 
 REQUIRED OUTPUT (JSON format):
 {{
@@ -3648,8 +3721,15 @@ The JSON must match the exact structure requested."""
         # Parse JSON response
         content = completion.choices[0].message.content.strip()
         social_content = json.loads(content)
+
+        memory_result = None
+        try:
+            from user_sessions.services.brand_memory import record_content_generation_memory
+            memory_result = record_content_generation_memory(session.id, social_content, user=request.user)
+        except Exception:
+            memory_result = None
         
-        return Response({
+        response_payload = {
             "brand_voice": social_content.get("brand_voice", {}),
             "social_captions": social_content.get("social_captions", []),
             "post_ideas": social_content.get("post_ideas", []),
@@ -3658,7 +3738,10 @@ The JSON must match the exact structure requested."""
             "hashtags": social_content.get("hashtags", {}),
             "content_calendar": social_content.get("content_calendar", {}),
             "total_answers_used": answers.count(),
-        }, status=status.HTTP_200_OK)
+        }
+        if memory_result and memory_result.get("recorded"):
+            response_payload["memory"] = memory_result
+        return Response(response_payload, status=status.HTTP_200_OK)
     
     except json.JSONDecodeError as e:
         logger.error(f"Invalid JSON from OpenAI: {e}")

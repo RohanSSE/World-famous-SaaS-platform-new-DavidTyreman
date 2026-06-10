@@ -4,6 +4,7 @@ Long-term brand memory with prioritized retrieval layers (Phase 15).
 from __future__ import annotations
 
 import logging
+import json
 from typing import Any, Dict, List, Optional
 
 from django.conf import settings
@@ -194,6 +195,131 @@ def upsert_memory(
         BrandMemory.objects.update_or_create(session_id=session_id, key=key, defaults=defaults)
     except Exception as e:
         logger.warning("Brand memory upsert failed: %s", e)
+
+
+def record_answer_acceptance_memory(answer, user=None, embedding_service=None) -> Dict[str, Any]:
+    if not answer or not getattr(answer, "is_ai_accepted", False):
+        return {"recorded": False}
+
+    question_text = (getattr(answer.question, "text", "") or "").strip()
+    answer_text = (answer.answer_text or "").strip()
+    if not question_text or not answer_text:
+        return {"recorded": False}
+
+    value = {
+        "answer_id": answer.id,
+        "question_id": answer.question_id,
+        "question": question_text,
+        "answer": answer_text,
+        "ai_suggestion": answer.ai_suggestion or answer_text,
+        "source": "accepted_ai_answer",
+    }
+    gist = f"Episodic Q&A gist: Q: {question_text} A: {answer_text}"
+
+    upsert_memory(
+        answer.session_id,
+        "brand_fact",
+        f"episodic:answer:{answer.question_id}",
+        gist,
+        weight=1.6,
+        importance_score=0.88,
+        confidence=0.9,
+        value=value,
+        agent_id="manifesto",
+        user=user,
+        embedding_service=embedding_service,
+    )
+    upsert_memory(
+        answer.session_id,
+        "decision",
+        f"accepted_ai_answer:{answer.question_id}",
+        f"Client accepted AI answer for '{question_text}': {answer_text}",
+        weight=1.8,
+        importance_score=0.92,
+        confidence=0.9,
+        value=value,
+        agent_id="strategist",
+        user=user,
+        embedding_service=embedding_service,
+    )
+    update_accepted_qa_gist(answer.session_id, user=user, embedding_service=embedding_service)
+    return {"recorded": True, "keys": [f"episodic:answer:{answer.question_id}", f"accepted_ai_answer:{answer.question_id}"]}
+
+
+def update_accepted_qa_gist(session_id: int, user=None, embedding_service=None) -> Optional[str]:
+    try:
+        from user_sessions.models import Answer
+
+        answers = (
+            Answer.objects.filter(session_id=session_id, is_ai_accepted=True)
+            .select_related("question")
+            .order_by("question__order", "question_id")
+        )
+        if not answers.exists():
+            return None
+
+        items = []
+        for answer in answers:
+            question_text = (answer.question.text or "").strip()
+            answer_text = (answer.answer_text or "").strip()
+            if question_text and answer_text:
+                items.append({"question": question_text, "answer": answer_text})
+
+        content = "Accepted AI Q&A memory gist:\n" + "\n".join(
+            f"- {item['question']}: {item['answer']}" for item in items
+        )
+        upsert_memory(
+            session_id,
+            "manifesto_evolution",
+            "accepted_qa_gist",
+            content[:4000],
+            weight=2.0,
+            importance_score=0.96,
+            confidence=0.92,
+            value={"accepted_answers": items, "source": "accepted_ai_qna"},
+            agent_id="manifesto",
+            user=user,
+            embedding_service=embedding_service,
+        )
+        return content
+    except Exception as e:
+        logger.warning("Accepted Q&A gist update failed: %s", e)
+        return None
+
+
+def record_content_generation_memory(session_id: int, social_content: Dict[str, Any], user=None, embedding_service=None) -> Dict[str, Any]:
+    if not session_id or not isinstance(social_content, dict):
+        return {"recorded": False}
+
+    brand_voice = social_content.get("brand_voice") or {}
+    captions = social_content.get("social_captions") or []
+    post_ideas = social_content.get("post_ideas") or []
+    preview_parts = []
+    if brand_voice:
+        preview_parts.append(f"Brand voice: {json.dumps(brand_voice, ensure_ascii=False)[:900]}")
+    if captions:
+        preview_parts.append("Caption direction: " + " | ".join(str(c.get("hook_line") or c.get("caption") or "")[:160] for c in captions[:3] if isinstance(c, dict)))
+    if post_ideas:
+        preview_parts.append("Post ideas: " + " | ".join(str(p.get("title") or p.get("description") or "")[:120] for p in post_ideas[:5] if isinstance(p, dict)))
+
+    content = "Content generation guidance from accepted brand memory:\n" + "\n".join(p for p in preview_parts if p)
+    if not content.strip():
+        return {"recorded": False}
+
+    upsert_memory(
+        session_id,
+        "brand_voice",
+        "content_generation_guidance",
+        content[:4000],
+        weight=1.5,
+        importance_score=0.82,
+        confidence=0.78,
+        value={"source": "content_generation", "brand_voice": brand_voice},
+        agent_id="content",
+        user=user,
+        embedding_service=embedding_service,
+    )
+    return {"recorded": True, "key": "content_generation_guidance"}
 
 
 def learn_from_rag_interaction(

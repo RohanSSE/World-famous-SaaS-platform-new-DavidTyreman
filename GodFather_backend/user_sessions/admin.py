@@ -179,8 +179,82 @@ class AIOutputAdmin(admin.ModelAdmin):
     
 admin.site.register(FoundationSummary)
 
-from .models import Conversation, RAGQueryLog, AIUsageLog, EvaluationRun, EvaluationResult
+from .models import Conversation, RAGQueryLog, AIUsageLog, EvaluationRun, EvaluationResult, BrandMemory
 admin.site.register(Conversation)
+
+BrandMemory._meta.verbose_name = "Episodic memory"
+BrandMemory._meta.verbose_name_plural = "Episodic memories"
+
+
+class EpisodicMemoryFilter(admin.SimpleListFilter):
+    title = "episodic source"
+    parameter_name = "episodic_source"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("accepted_ai", "Accepted AI answers"),
+            ("content_guidance", "Content guidance"),
+            ("all_memory", "All brand memory"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "accepted_ai":
+            return queryset.filter(key__in=["accepted_qa_gist"]) | queryset.filter(key__startswith="episodic:answer:") | queryset.filter(key__startswith="accepted_ai_answer:")
+        if self.value() == "content_guidance":
+            return queryset.filter(key="content_generation_guidance")
+        return queryset
+
+
+@admin.register(BrandMemory)
+class BrandMemoryAdmin(admin.ModelAdmin):
+    list_display = (
+        "id", "session_owner", "session_title", "memory_type", "key",
+        "content_preview", "agent_id", "importance_score", "is_pinned", "updated_at",
+    )
+    list_filter = (EpisodicMemoryFilter, "memory_type", "agent_id", "is_pinned", "created_at", "updated_at")
+    search_fields = (
+        "key", "content", "session__title", "session__created_by__email", "created_by__email",
+    )
+    readonly_fields = (
+        "session", "session_owner", "session_title", "memory_type", "key",
+        "content", "value", "confidence", "agent_id", "importance_score", "weight",
+        "is_pinned", "retrieval_count", "created_by", "created_at", "updated_at",
+    )
+    ordering = ("-updated_at",)
+    list_display_links = ("id", "key", "content_preview")
+
+    fieldsets = (
+        ("User / Session", {"fields": ("session", "session_owner", "session_title", "created_by")} ),
+        ("Memory", {"fields": ("memory_type", "key", "content", "value")} ),
+        ("Scoring", {"fields": ("agent_id", "importance_score", "weight", "confidence", "is_pinned", "retrieval_count")} ),
+        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)} ),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("session", "session__created_by", "created_by")
+
+    def has_add_permission(self, request):
+        return False
+
+    def content_preview(self, obj):
+        text = (obj.content or "").replace("\n", " ").strip()
+        return text[:160] + ("..." if len(text) > 160 else "")
+    content_preview.short_description = "What is stored"
+
+    def session_owner(self, obj):
+        return obj.session.created_by.email if obj.session and obj.session.created_by else "-"
+    session_owner.short_description = "User / Session Owner"
+    session_owner.admin_order_field = "session__created_by__email"
+
+    def session_title(self, obj):
+        return obj.session.title if obj.session else "-"
+    session_title.short_description = "Session"
+    session_title.admin_order_field = "session__title"
+
+    def created_by_email(self, obj):
+        return obj.created_by.email if obj.created_by else "-"
+    created_by_email.short_description = "Memory Created By"
+    created_by_email.admin_order_field = "created_by__email"
 
 
 @admin.register(AIUsageLog)

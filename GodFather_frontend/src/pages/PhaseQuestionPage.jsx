@@ -152,6 +152,7 @@ export default function PhaseQuestionPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const nudgesDebounceRef = useRef(null);
   const nudgePickedRef = useRef(false);
+  const currentInputAiDraftRef = useRef(false);
   const answerRewardTimeoutRef = useRef(null);
   const questionIndexRestoredRef = useRef(false);
   const shouldForceQuestionRefineRef = useRef(
@@ -427,6 +428,7 @@ export default function PhaseQuestionPage() {
     const q = questions[currentIdx];
     if (!q) return;
     const saved = answers[q.key];
+    currentInputAiDraftRef.current = false;
     setInputValue(saved != null ? String(saved) : "");
     setNudges([]);
     setNudgeQuality(null);
@@ -515,6 +517,7 @@ export default function PhaseQuestionPage() {
 
   const applyNudge = (text) => {
     nudgePickedRef.current = true;
+    currentInputAiDraftRef.current = true;
     const cleaned = extractApplicableNudgeText(text);
     setInputValue(cleaned);
     setNudgeIndex(0);
@@ -622,11 +625,15 @@ export default function PhaseQuestionPage() {
     const apiQuestionId = currentQuestion.raw?.id ?? currentQuestion.id;
 
     if (sid && apiQuestionId) {
+      const wasAiAccepted = currentInputAiDraftRef.current;
       await authService.createAnswer(sid, {
         question: Number(apiQuestionId),
         answer_text: value,
+        is_ai_accepted: wasAiAccepted,
+        ai_suggestion: wasAiAccepted ? value : undefined,
       });
     }
+    currentInputAiDraftRef.current = false;
     await refreshJourneyAnswerCount();
     return nextAnswers;
   };
@@ -715,10 +722,14 @@ export default function PhaseQuestionPage() {
       const apiQuestionId = q.raw?.id ?? q.id;
       if (sid && apiQuestionId) {
         try {
+          const wasAiAccepted = currentInputAiDraftRef.current;
           await authService.createAnswer(sid, {
             question: Number(apiQuestionId),
             answer_text: value,
+            is_ai_accepted: wasAiAccepted,
+            ai_suggestion: wasAiAccepted ? value : undefined,
           });
+          currentInputAiDraftRef.current = false;
         } catch {
           /* non-fatal for local save */
         }
@@ -1047,7 +1058,10 @@ export default function PhaseQuestionPage() {
                     rows={1}
                     className="pq-input"
                     value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
+                    onChange={(e) => {
+                      currentInputAiDraftRef.current = false;
+                      setInputValue(e.target.value);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();

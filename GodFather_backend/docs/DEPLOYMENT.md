@@ -83,6 +83,17 @@ uvicorn project.asgi:application --host 0.0.0.0 --port 8000
 
 Use a process manager (systemd, Supervisor, or Docker) so the app restarts on failure.
 
+### Supervisor example
+
+A ready-to-edit Supervisor config is available at `deploy/supervisor/godfather.conf.example`.
+
+This repo uses these default supervised ports:
+
+- Backend API: `0.0.0.0:8001`
+- Frontend static preview: `0.0.0.0:3003`
+
+On the server, replace `/srv/godfather` in the example with the absolute repo path, ensure `/var/log/godfather` exists, then load it with Supervisor.
+
 ---
 
 ## 6. Celery Worker
