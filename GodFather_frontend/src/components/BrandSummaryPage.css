@@ -892,73 +892,60 @@
    ========================================================== */
 .bsp-book-screen {
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background: radial-gradient(circle at 18% 80%, rgba(121, 185, 255, 0.18), transparent 30%),
     linear-gradient(135deg, #01092a 0%, #020738 42%, #030545 100%);
   color: #d6e8ff;
-  padding: 10px 10px 14px;
-}
-
-.bsp-book-topbar {
-  height: 44px;
+  padding: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(14, 20, 58, 0.75);
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.bsp-book-logo {
-  height: 24px;
-  width: auto;
+.bsp-book-screen .chat-header {
+  flex-shrink: 0;
+  min-height: 58px;
+  padding: 10px 28px;
+  box-sizing: border-box;
+  background: rgba(7, 12, 44, 0.72);
+  border-bottom: 1px solid rgba(142, 229, 255, 0.12);
 }
 
-.bsp-book-top-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.bsp-book-screen .chat-logo {
+  height: 34px;
 }
 
-.bsp-export-btn {
-  border: 1px solid rgba(192, 249, 255, 0.4);
-  background: #f4f6fa;
-  color: #3d5bd5;
+.bsp-book-screen .btn-gradient {
+  min-height: 34px;
+  padding: 7px 18px;
   border-radius: 999px;
-  padding: 6px 16px;
-  font-size: 12px;
-  cursor: pointer;
 }
 
-.bsp-export-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.bsp-avatar-btn {
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: 50%;
-  color: #fff;
-  background: #3f63ec;
-  font-size: 11px;
-  cursor: default;
+.bsp-book-screen .chat-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
 }
 
 .bsp-book-frame {
   display: grid;
   grid-template-columns: 210px 1fr;
-  min-height: calc(100vh - 72px);
+  flex: 1;
+  min-height: 0;
+  height: auto;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-top: none;
+  overflow: hidden;
 }
 
 .bsp-book-rail {
   border-right: 1px solid rgba(255, 255, 255, 0.16);
-  padding: 24px 20px;
+  padding: 20px 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-height: 0;
 }
 
 .bsp-back-btn {
@@ -1004,11 +991,12 @@
 }
 
 .bsp-book-content {
-  padding: 28px 46px 24px;
+  padding: 22px 340px 16px 52px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  min-height: 0;
 }
 
 .bsp-top-cta-wrap {
@@ -1035,15 +1023,15 @@
 }
 
 .bsp-overview h2 {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: #81d6ff;
-  font-size: 30px;
+  font-size: 27px;
 }
 
 .bsp-meta-grid {
   display: grid;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .bsp-meta-label {
@@ -1055,19 +1043,20 @@
 .bsp-meta-value {
   margin: 2px 0 0;
   color: #f3f8ff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .bsp-content-flow {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   max-width: 760px;
   padding-right: 6px;
+  min-height: 0;
 }
 
 .bsp-structured-section {
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 
 .bsp-dna-list,
@@ -1085,7 +1074,7 @@
 .bsp-three-col {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 
 .bsp-content-flow .bsp-main-title,
@@ -1104,10 +1093,13 @@
 .bsp-content-flow .bsp-body-text,
 .bsp-content-flow .bsp-list-item {
   color: #d8e9ff;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .bsp-book-pager {
-  margin-top: 18px;
+  margin-top: 8px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1116,12 +1108,12 @@
 
 .bsp-corner-orb {
   position: fixed;
-  right: 160px;
-  bottom: 180px;
-  width: 68px;
-  height: 68px;
+  right: 76px;
+  bottom: 72px;
+  width: 150px;
+  height: 150px;
   pointer-events: none;
-  opacity: 0.88;
+  opacity: 0.9;
   z-index: 6;
   overflow: visible;
 }
@@ -1135,11 +1127,12 @@
 
 .bsp-orb-insight {
   position: absolute;
-  right: 50%;
-  bottom: calc(100% + 14px);
-  transform: translateX(50%);
-  width: min(360px, 44vw);
-  padding: 12px 14px;
+  right: -18px;
+  bottom: calc(100% + 12px);
+  transform: none;
+  width: 280px;
+  max-width: calc(100vw - 28px);
+  padding: 10px 12px;
   border-radius: 14px;
   background: linear-gradient(135deg, rgba(108, 123, 255, 0.42), rgba(86, 104, 232, 0.35));
   border: 1px solid rgba(157, 188, 255, 0.68);
@@ -1152,7 +1145,7 @@
   content: "";
   position: absolute;
   top: 100%;
-  right: 42px;
+  right: 38px;
   width: 10px;
   height: 10px;
   transform: rotate(45deg) translateY(-5px);
@@ -1164,7 +1157,7 @@
 .bsp-orb-insight-title {
   margin: 0 0 6px;
   color: #f4f8ff;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1173,9 +1166,9 @@
 .bsp-orb-insight-text {
   margin: 0;
   color: #e8f0ff;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.42;
 }
 
 .bsp-pager-btn {

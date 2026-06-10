@@ -1,14 +1,36 @@
 .omp-page {
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background: radial-gradient(circle at 30% 22%, rgba(86, 122, 255, 0.22), transparent 36%),
     linear-gradient(140deg, #030826 0%, #04063f 100%);
   color: #eaf1ff;
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .omp-topbar {
   width: 100%;
+  flex-shrink: 0;
+}
+
+.omp-page .chat-header {
+  min-height: 58px;
+  padding: 10px 32px;
+  box-sizing: border-box;
+  background: rgba(7, 12, 44, 0.7);
+}
+
+.omp-page .chat-logo {
+  height: 34px;
+}
+
+.omp-page .chat-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
 }
 
 .omp-logo { height: 24px; }
@@ -23,54 +45,67 @@
 }
 
 .omp-main {
+  flex: 1;
+  min-height: 0;
   max-width: 900px;
   margin: 0 auto;
   text-align: center;
-  padding: 28px 20px 54px;
+  padding: 78px 20px 28px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .omp-back {
   position: fixed;
-  left: 22px;
-  top: 84px;
+  left: 28px;
+  top: 76px;
   border: 1px solid rgba(141, 170, 255, 0.45);
   border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 11px;
+  padding: 8px 18px;
+  font-size: 13px;
   color: #dae9ff;
   background: rgba(82, 104, 200, 0.26);
-  z-index: 8;
+  z-index: 12;
   cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.omp-back:hover {
+  background: rgba(57, 89, 229, 0.36);
+  border-color: rgba(142, 229, 255, 0.55);
+  transform: translateY(-1px);
 }
 
 .omp-main h1 {
-  margin: 12px 0 10px;
-  font-size: clamp(44px, 5.2vw, 64px);
-  line-height: 1.1;
+  margin: 0 0 10px;
+  font-size: clamp(34px, 4.4vw, 48px);
+  line-height: 1.05;
 }
 
 .omp-main p {
-  margin: 0 auto 24px;
-  max-width: 760px;
+  margin: 0 auto 22px;
+  max-width: 690px;
   color: rgba(220, 233, 255, 0.9);
-  font-size: 17px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.35;
 }
 
 .omp-pill-wrap {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px 10px;
-  max-width: 900px;
-  margin: 0 auto 34px;
+  gap: 10px 10px;
+  max-width: 820px;
+  margin: 0 auto 28px;
 }
 
 .omp-pill {
   border: 1px solid rgba(141, 170, 255, 0.45);
   border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 15px;
+  padding: 7px 15px;
+  font-size: 13px;
   color: #dceaff;
   background: rgba(21, 32, 86, 0.46);
   white-space: nowrap;
@@ -79,22 +114,35 @@
 .omp-cta {
   border: none;
   border-radius: 999px;
-  padding: 13px 38px;
+  padding: 11px 34px;
   color: #fff;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
   background: linear-gradient(90deg, #3f63ec 0%, #7ce7ff 100%);
   box-shadow: 0 10px 24px rgba(63, 99, 236, 0.36);
   cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+}
+
+.omp-cta:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 14px 30px rgba(63, 99, 236, 0.44);
+}
+
+.omp-cta:active {
+  transform: translateY(0);
 }
 
 .omp-orb {
   position: fixed;
-  right: 152px;
-  bottom: 142px;
-  width: 84px;
-  height: 84px;
-  z-index: 4;
+  right: 86px;
+  bottom: 62px;
+  width: 150px;
+  height: 150px;
+  z-index: 0;
+  opacity: 0.82;
+  pointer-events: none;
 }
 
 @media (max-width: 980px) {
@@ -116,7 +164,7 @@
 
 @media (max-width: 760px) {
   .omp-main {
-    padding: 20px 14px 44px;
+    padding: 70px 14px 44px;
   }
 
   .omp-back {

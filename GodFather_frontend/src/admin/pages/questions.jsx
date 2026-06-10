@@ -127,7 +127,7 @@ export default function AdminQuestionsPage() {
       <Stack spacing={2}>
         <Typography variant="h4">Questions Manager</Typography>
         <Typography variant="body2" color="text.secondary">
-          Admin sets question texts per stage. Users will see these questions in their Phase pages.
+          Admin sets source question texts per stage. Users and agencies see AI-refined versions in their Phase pages.
         </Typography>
 
         {error && <Alert severity="error">{error}</Alert>}

@@ -29,6 +29,11 @@ const navData = [
     icon: icon("ic-lock"),
   },
   {
+    title: "Subscription",
+    path: "/admin/subscription",
+    icon: icon("ic-lock"),
+  },
+  {
     title: "Questions",
     path: "/admin/questions",
     icon: icon("ic-blog"),

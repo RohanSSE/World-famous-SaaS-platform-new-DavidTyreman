@@ -1,20 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthProvider";
 import OnboardingNavBar from "../components/onboarding/OnboardingNavBar";
 import BrandOrb from "../components/orb/BrandOrb";
 import "./WelcomePage.css";
 
 export default function WelcomePage() {
   const navigate = useNavigate();
-  const { auth } = useAuth();
-
-  const isAgency = auth.user?.role === 3 || auth.user?.role_name === "agency";
 
   const handleBegin = () => {
-    if (isAgency) {
-      navigate("/agency-dashboard");
-      return;
-    }
     navigate("/brand-intro");
   };
 
@@ -34,6 +26,12 @@ export default function WelcomePage() {
         onLogoClick={() => navigate("/welcome")}
         onBack={handleBack}
         onNext={handleNext}
+        showNext={false}
+        phaseStatus={{
+          title: "Welcome",
+          subtitle: "Brand journey ready",
+          progress: 5,
+        }}
       />
 
       <main className="welcome-main">

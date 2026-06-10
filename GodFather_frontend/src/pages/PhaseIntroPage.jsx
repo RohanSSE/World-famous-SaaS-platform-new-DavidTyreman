@@ -27,6 +27,11 @@ export default function PhaseIntroPage() {
         onLogoClick={() => navigate("/welcome")}
         onBack={handleBack}
         onNext={handleNext}
+        phaseStatus={{
+          title: `Phase ${phase.id} intro`,
+          subtitle: phase.title,
+          progress: Math.max(25, (phase.id - 1) * 33),
+        }}
       />
 
       <main className="phase-intro-main">

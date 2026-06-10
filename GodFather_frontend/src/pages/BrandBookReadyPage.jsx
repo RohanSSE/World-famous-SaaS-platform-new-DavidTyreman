@@ -47,6 +47,11 @@ export default function BrandBookReadyPage() {
           showSaveButton={false}
           showDownloadButton={false}
           showLogoutButton
+          phaseStatus={{
+            title: "Brand Book ready",
+            subtitle: "Discovery complete · Output mode is ready",
+            progress: 100,
+          }}
         />
       </header>
 

@@ -1005,6 +1005,15 @@ def session_add_comment(request, pk):
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_answers(request, pk):
     session = get_object_or_404(Session, pk=pk)
+
+    role_name = (request.user.get_role_name() or '').lower()
+    can_view_answers = (
+        request.user.has_perm_codename('answers.view')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_view_answers:
+        return Response({"detail": "No permission"}, status=403)
     
     if not session.has_access(request.user):
         return Response({"detail": "Access denied"}, status=403)
@@ -1026,6 +1035,15 @@ def session_answers(request, pk):
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_conversations(request, pk):
     session = get_object_or_404(Session, pk=pk)
+
+    role_name = (request.user.get_role_name() or '').lower()
+    can_view_answers = (
+        request.user.has_perm_codename('answers.view')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_view_answers:
+        return Response({"detail": "No permission"}, status=403)
     
     if not session.has_access(request.user):
         return Response({"detail": "Access denied"}, status=403)
@@ -1051,6 +1069,15 @@ def session_conversations(request, pk):
 @permission_classes([IsAuthenticated, HasRolePermission])
 def session_answer_create(request, pk):
     session = get_object_or_404(Session, pk=pk)
+
+    role_name = (request.user.get_role_name() or '').lower()
+    can_submit_answer = (
+        request.user.has_perm_codename('answers.create')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_submit_answer:
+        return Response({"detail": "No permission"}, status=403)
     
     if not session.has_access(request.user):
         return Response({"detail": "Access denied"}, status=403)
@@ -1064,12 +1091,21 @@ def session_answer_create(request, pk):
     question = serializer.validated_data['question']
 
     # ADD STAGE VALIDATION HERE
-    if not session.can_access_stage(question.stage):
+    if not session.can_access_stage(question.stage, request.user):
+        if question.stage > 1:
+            return Response({
+                "detail": "Please upgrade your plan to continue after Phase 1.",
+                "code": "subscription_required",
+                "stage": question.stage,
+            }, status=402)
         return Response({
             "detail": f"Please complete Stage {session.get_current_stage()} questions first before accessing Stage {question.stage}"
         }, status=400)
 
     answer_text = serializer.validated_data['answer_text']
+    is_ai_accepted_provided = 'is_ai_accepted' in serializer.validated_data
+    is_ai_accepted = bool(serializer.validated_data.get('is_ai_accepted', False))
+    ai_suggestion_text = (serializer.validated_data.get('ai_suggestion') or '').strip()
 
     prior_ai = None
     try:
@@ -1078,15 +1114,23 @@ def session_answer_create(request, pk):
     except Answer.DoesNotExist:
         pass
 
+    answer_defaults = {'answer_text': answer_text, 'answered_by': request.user}
+    if is_ai_accepted_provided:
+        answer_defaults['is_ai_accepted'] = is_ai_accepted
+    if is_ai_accepted:
+        answer_defaults['ai_suggestion'] = ai_suggestion_text or answer_text
+    elif ai_suggestion_text:
+        answer_defaults['ai_suggestion'] = ai_suggestion_text
+
     answer, created = Answer.objects.update_or_create(
         session=session,
         question=question,
-        defaults={'answer_text': answer_text, 'answered_by': request.user}
+        defaults=answer_defaults
     )
 
     feedback_result = None
     original_ai = (request.data.get("original_ai_text") or prior_ai or "").strip()
-    if original_ai and answer_text.strip() and original_ai != answer_text.strip():
+    if original_ai and answer_text.strip() and original_ai != answer_text.strip() and not answer.is_ai_accepted:
         try:
             from user_sessions.services.feedback_learning import learn_from_human_edit
             feedback_result = learn_from_human_edit(
@@ -1099,6 +1143,14 @@ def session_answer_create(request, pk):
         except Exception:
             feedback_result = None
 
+    memory_result = None
+    if answer.is_ai_accepted:
+        try:
+            from user_sessions.services.brand_memory import record_answer_acceptance_memory
+            memory_result = record_answer_acceptance_memory(answer, user=request.user)
+        except Exception:
+            memory_result = None
+
     if not created:
         ReviewComment.objects.filter(session=session, answer=answer, is_resolved=False).update(is_resolved=True, resolved_at=timezone.now())
 
@@ -1109,6 +1161,8 @@ def session_answer_create(request, pk):
             "preferred": (feedback_result.get("feedback_delta") or {}).get("preferred_phrases", [])[:5],
             "rejected": (feedback_result.get("feedback_delta") or {}).get("rejected_phrases", [])[:5],
         }
+    if memory_result and memory_result.get("recorded"):
+        payload["memory"] = memory_result
     return Response(payload, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
@@ -1140,7 +1194,13 @@ def session_answers_batch(request, pk):
     """POST /api/sessions/{session_id}/answers/batch/ — upsert multiple answers."""
     session = get_object_or_404(Session, pk=pk)
 
-    if not session.has_access(request.user):
+    role_name = (request.user.get_role_name() or '').lower()
+    can_submit_answer = (
+        request.user.has_perm_codename('answers.create')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not session.has_access(request.user) and not can_submit_answer:
         return Response({"detail": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
 
     if not session.can_edit_answers(request.user):
@@ -1162,7 +1222,7 @@ def session_answers_batch(request, pk):
             question = Question.objects.get(id=qid, is_active=True)
         except Question.DoesNotExist:
             continue
-        if not session.can_access_stage(question.stage):
+        if not session.can_access_stage(question.stage, request.user):
             continue
         answer, _ = Answer.objects.update_or_create(
             session=session,
@@ -1251,7 +1311,8 @@ def answer_detail(request, pk, answer_id):
     operation_description="List all active questions visible to user with stage progression",
     manual_parameters=[
         openapi.Parameter('category', openapi.IN_QUERY, type=openapi.TYPE_STRING),
-        openapi.Parameter('session_id', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Session ID for stage checking')
+        openapi.Parameter('session_id', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Session ID for stage checking'),
+        openapi.Parameter('stage', openapi.IN_QUERY, type=openapi.TYPE_INTEGER, description='Requested stage number')
     ],
     responses={200: QuestionSerializer(many=True)}
 )
@@ -1259,6 +1320,7 @@ def answer_detail(request, pk, answer_id):
 @permission_classes([IsAuthenticated])
 def question_list(request):
     session_id = request.query_params.get('session_id')
+    force_refine = str(request.query_params.get('force_refine', '')).strip().lower() in ('1', 'true', 'yes', 'on')
 
     # If no session context, return all questions (admin / debug use)
     if not session_id:
@@ -1274,6 +1336,42 @@ def question_list(request):
         return Response({"detail": "Access denied"}, status=403)
 
     current_stage = session.get_current_stage()
+    requested_stage = request.query_params.get('stage')
+
+    if requested_stage:
+        try:
+            requested_stage = int(requested_stage)
+        except (TypeError, ValueError):
+            return Response({"detail": "stage must be a number"}, status=400)
+
+        if not session.can_access_stage(requested_stage, request.user):
+            payload = {
+                "detail": "Please upgrade your plan to continue after Phase 1.",
+                "code": "subscription_required" if requested_stage > 1 else "stage_locked",
+                "stage": requested_stage,
+                "current_stage": current_stage,
+            }
+            return Response(payload, status=402 if requested_stage > 1 else 400)
+
+        questions = Question.objects.filter(
+            stage=requested_stage,
+            is_active=True
+        ).order_by('order')
+
+        visible_questions = [q for q in questions if q.is_visible_to(request.user)]
+        return Response({
+            "stage": requested_stage,
+            "stage_name": dict(Question.STAGE_CHOICES).get(requested_stage),
+            "mode": "bulk",
+            "questions": _serialize_user_facing_questions(visible_questions, force_refine=force_refine),
+        })
+
+    if current_stage > 1 and not session.can_access_stage(current_stage, request.user):
+        return Response({
+            "detail": "Please upgrade your plan to continue after Phase 1.",
+            "code": "subscription_required",
+            "stage": current_stage,
+        }, status=402)
 
     # =========================
     # ✅ STAGE 1: BASIC → return ALL questions at once
@@ -1287,42 +1385,45 @@ def question_list(request):
         user = request.user
         visible_questions = [q for q in questions if q.is_visible_to(user)]
 
-        serializer = QuestionSerializer(visible_questions, many=True)
         return Response({
             "stage": 1,
             "stage_name": "Basic",
             "mode": "bulk",  # frontend can use this to show form
-            "questions": serializer.data
+            "questions": _serialize_user_facing_questions(visible_questions, force_refine=force_refine)
         })
 
     # =========================
     # ✅ STAGE 2,3,4 → return ONE question at a time (existing flow)
     # =========================
-    answered_ids = session.answers.values_list('question_id', flat=True)
+    answered_ids = set(session.answers.values_list('question_id', flat=True))
 
-    next_question = Question.objects.filter(
+    stage_questions = Question.objects.filter(
         stage=current_stage,
         is_active=True
-    ).exclude(
-        id__in=answered_ids
-    ).order_by('order').first()
+    ).order_by('order')
 
-    if not next_question:
+    visible_stage_questions = [
+        question for question in stage_questions if question.is_visible_to(request.user)
+    ]
+    refined_stage_questions = _serialize_user_facing_questions(visible_stage_questions, force_refine=force_refine)
+
+    next_question_data = None
+    for question, question_data in zip(visible_stage_questions, refined_stage_questions):
+        if question.id not in answered_ids:
+            next_question_data = question_data
+            break
+
+    if not next_question_data:
         return Response({
             "detail": "No more questions in this stage",
             "stage": current_stage
         })
 
-    if not next_question.is_visible_to(request.user):
-        return Response({"detail": "No visible question"}, status=404)
-
-    serializer = QuestionSerializer(next_question)
-
     return Response({
         "stage": current_stage,
         "stage_name": dict(Question.STAGE_CHOICES).get(current_stage),
         "mode": "single",  # frontend shows one question screen
-        "question": serializer.data
+        "question": next_question_data
     })
 
 
@@ -1344,6 +1445,19 @@ def _is_question_admin(user):
         return True
     role_name = (getattr(getattr(user, "role", None), "name", None) or "").lower()
     return "admin" in role_name
+
+
+def _serialize_user_facing_questions(questions, many=True, force_refine=False):
+    from user_sessions.services.question_refinement import (
+        ensure_refined_questions,
+        user_facing_question_text,
+    )
+
+    question_list = ensure_refined_questions(questions if many else [questions], force=force_refine)
+    data = list(QuestionSerializer(question_list, many=True).data)
+    for item, question in zip(data, question_list):
+        item["text"] = user_facing_question_text(question)
+    return data if many else data[0]
 
 
 @swagger_auto_schema(
@@ -3040,7 +3154,13 @@ def rag_query(request, pk=None):
     POST /api/sessions/rag-query/  or  /api/sessions/<pk>/rag-query/
     Phase 1–3: retrieval → GPT with citations.
     """
-    if not request.user.has_perm_codename('answers.ai_suggest'):
+    role_name = (request.user.get_role_name() or '').lower()
+    can_use_ai_suggestions = (
+        request.user.has_perm_codename('answers.ai_suggest')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_use_ai_suggestions:
         return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
 
     from user_sessions.services.rag_rate_limit import check_rate_limit
@@ -3127,7 +3247,13 @@ def rag_query(request, pk=None):
 @permission_classes([IsAuthenticated, HasRolePermission])
 def rag_query_stream(request, pk=None):
     """POST — Server-Sent Events stream: sources → tokens → done."""
-    if not request.user.has_perm_codename('answers.ai_suggest'):
+    role_name = (request.user.get_role_name() or '').lower()
+    can_use_ai_suggestions = (
+        request.user.has_perm_codename('answers.ai_suggest')
+        or request.user.is_superuser
+        or role_name in ('admin', 'client', 'agency')
+    )
+    if not can_use_ai_suggestions:
         return Response({"detail": "No permission"}, status=status.HTTP_403_FORBIDDEN)
 
     user_query = (request.data.get("query") or "").strip()
@@ -3452,6 +3578,18 @@ def session_generate_social_content(request, pk):
     for answer in answers:
         qa_text += f"Q: {answer.question.text.strip()}\n"
         qa_text += f"A: {answer.answer_text.strip()}\n\n"
+
+    memory_context = ""
+    try:
+        from user_sessions.services.brand_memory import format_memory_context_block
+        memory_context = format_memory_context_block(
+            session.id,
+            "social content generation brand voice guidance",
+            agent_id="content",
+            limit=4,
+        )
+    except Exception:
+        memory_context = ""
     
     # 5. Build comprehensive prompt
     prompt = f"""
@@ -3471,6 +3609,9 @@ Based on the brand Q&A below, generate comprehensive social media content.
 
 BRAND Q&A:
 {qa_text}
+
+ACCEPTED BRAND MEMORY / GUIDANCE:
+{memory_context or "No accepted brand memory recorded yet."}
 
 REQUIRED OUTPUT (JSON format):
 {{
@@ -3578,8 +3719,15 @@ The JSON must match the exact structure requested."""
         # Parse JSON response
         content = completion.choices[0].message.content.strip()
         social_content = json.loads(content)
+
+        memory_result = None
+        try:
+            from user_sessions.services.brand_memory import record_content_generation_memory
+            memory_result = record_content_generation_memory(session.id, social_content, user=request.user)
+        except Exception:
+            memory_result = None
         
-        return Response({
+        response_payload = {
             "brand_voice": social_content.get("brand_voice", {}),
             "social_captions": social_content.get("social_captions", []),
             "post_ideas": social_content.get("post_ideas", []),
@@ -3588,7 +3736,10 @@ The JSON must match the exact structure requested."""
             "hashtags": social_content.get("hashtags", {}),
             "content_calendar": social_content.get("content_calendar", {}),
             "total_answers_used": answers.count(),
-        }, status=status.HTTP_200_OK)
+        }
+        if memory_result and memory_result.get("recorded"):
+            response_payload["memory"] = memory_result
+        return Response(response_payload, status=status.HTTP_200_OK)
     
     except json.JSONDecodeError as e:
         logger.error(f"Invalid JSON from OpenAI: {e}")
@@ -4178,8 +4329,7 @@ def session_update_foundation_summary(request, pk):
 def answer_ai_suggestions(request, pk):
     """
     Called while user is typing.
-    Classifies draft as too_weak / vendor_thought / strong (per question profile),
-    then returns tailored recommendations.
+    Classifies draft internally, then returns warm coaching recommendations.
     """
     from user_sessions.services.answer_quality import (
         build_quality_prompt_context,
@@ -4206,12 +4356,13 @@ def answer_ai_suggestions(request, pk):
 You evaluate a user's partial or full answer draft against the specific question they are answering.
 
 Your job:
-1) Classify the draft into exactly ONE quality tier:
-   - too_weak → quality_label must be "This is too weak"
-   - vendor_thought → quality_label must be "This is a vendor thought"
-   - strong → quality_label must be "This is strong"
+1) Classify the draft into exactly ONE internal quality tier:
+    - too_weak → quality_label must be "Good start — let's give it more soul"
+    - vendor_thought → quality_label must be "Nice direction — let's make it feel more ownable"
+    - strong → quality_label must be "This has a strong spark — let's sharpen it"
 
-2) Give a one-sentence reason (direct, warm, no jargon).
+2) Give a one-sentence reason that feels like a supportive strategist, not a harsh judge.
+    Never say "weak", "too weak", "bad", "lacks", or "vendor pitch" in user-facing copy.
 
 3) Give 2–3 strings in "suggestions" — each MUST be only the final answer text the user pastes in (one sentence).
    Never wrap with "Rewrite with...", "Try this instead:", or "like '...'".
@@ -4225,7 +4376,7 @@ Rules:
 Output JSON only:
 {
   "quality": "too_weak|vendor_thought|strong",
-  "quality_label": "This is too weak|This is a vendor thought|This is strong",
+    "quality_label": "Good start — let's give it more soul|Nice direction — let's make it feel more ownable|This has a strong spark — let's sharpen it",
   "reason": "...",
   "suggestions": ["...", "..."]
 }"""

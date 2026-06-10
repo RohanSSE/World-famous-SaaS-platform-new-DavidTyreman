@@ -25,6 +25,11 @@ export default function OutputModePage() {
           showSaveButton={false}
           showDownloadButton={false}
           showLogoutButton
+          phaseStatus={{
+            title: "Output mode",
+            subtitle: "Brand Book complete · Growth mode active",
+            progress: 100,
+          }}
         />
       </header>
 

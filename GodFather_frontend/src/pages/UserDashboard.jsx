@@ -5,46 +5,30 @@ import ChatNavbar from "../pages/ChatNavbar";
 import { toast } from "react-toastify";
 import {
   Plus,
-  Search,
   Menu,
   BarChart3,
   FolderOpen,
-  Layers,
-  MessageCircle,
-  Compass,
-  FileUp,
-  Sparkles,
   FileText,
   Share2,
-  MessageSquare,
-  Bell,
-  Settings,
   ArrowRight,
   Activity,
-  AlertTriangle,
   TrendingUp,
   Download,
+  CreditCard,
   Edit3,
   Star,
-  CheckCircle,
 } from "lucide-react";
 import authService from "../services/authService";
-import CommentsModal from "./CommentsModal";
+import PaymentHistoryCard from "../components/PaymentHistoryCard";
+import { resetActiveJourneyState } from "../constants/journeyPhases";
 
 // ── Sidebar Menu Items ──
 const USER_SIDEBAR_ITEMS = [
   { key: "dashboard", label: "Dashboard", icon: BarChart3 },
   { key: "sessions", label: "My Projects / Sessions", icon: FolderOpen },
-  { key: "foundation", label: "Foundation Questions", icon: Layers },
-  { key: "discovery", label: "Brand Discovery Chat", icon: MessageCircle },
-  { key: "deepdive", label: "Deep Dive", icon: Compass },
-  { key: "documents", label: "Documents", icon: FileUp },
-  { key: "ai-suggestions", label: "AI Suggestions", icon: Sparkles },
-  { key: "manifesto", label: "Manifesto", icon: FileText },
+  { key: "manifesto", label: "Brand Book", icon: FileText },
   { key: "social", label: "Social Content", icon: Share2 },
-  { key: "feedback", label: "Comments & Reviews", icon: MessageSquare },
-  { key: "notifications", label: "Notifications", icon: Bell },
-  { key: "settings", label: "Profile & Settings", icon: Settings },
+  { key: "billing", label: "Billing & Invoices", icon: CreditCard },
 ];
 
 // ── User Sidebar ──
@@ -140,26 +124,6 @@ function JourneyProgress({ items }) {
   );
 }
 
-// ── AI Suggestions ──
-function AISuggestions({ suggestions }) {
-  if (!suggestions || suggestions.length === 0) return null;
-  return (
-    <div className="ud-section-card">
-      <h3 className="ud-section-heading">
-        <Sparkles size={20} /> AI Suggestions
-      </h3>
-      <div className="ud-suggestions-list">
-        {suggestions.map((s, i) => (
-          <div key={i} className={`ud-suggestion-item ${s.type}`}>
-            {s.type === "warning" ? <AlertTriangle size={16} /> : <Sparkles size={16} />}
-            <p>{s.message}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ── Continue Session CTA ──
 function ContinueSessionCTA({ latestSessionId, sessions, onContinue }) {
   if (!latestSessionId) return null;
@@ -177,37 +141,13 @@ function ContinueSessionCTA({ latestSessionId, sessions, onContinue }) {
   );
 }
 
-// ── Agency Feedback ──
-function AgencyFeedback({ feedback }) {
-  if (!feedback || feedback.length === 0) return null;
-  return (
-    <div className="ud-section-card">
-      <h3 className="ud-section-heading">
-        <MessageSquare size={20} /> Agency Feedback
-      </h3>
-      <div className="ud-feedback-list">
-        {feedback.map((f, i) => (
-          <div key={i} className={`ud-feedback-item ${f.is_resolved ? "resolved" : ""}`}>
-            <div className="ud-feedback-quote">"{f.comment}"</div>
-            <div className="ud-feedback-meta">
-              <span>{f.session_title}</span>
-              <span className="ud-feedback-by">— {f.by}</span>
-              {f.is_resolved && <CheckCircle size={14} className="ud-feedback-resolved" />}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Manifesto Preview ──
+// ── Brand Book Preview ──
 function ManifestoPreview({ preview, onView, onDownload }) {
   if (!preview) return null;
   return (
     <div className="ud-section-card">
       <h3 className="ud-section-heading">
-        <FileText size={20} /> Manifesto Preview
+        <FileText size={20} /> Brand Book Preview
       </h3>
       <div className="ud-manifesto-preview">
         <div className="ud-manifesto-status">
@@ -217,7 +157,7 @@ function ManifestoPreview({ preview, onView, onDownload }) {
         {preview.has_content && (
           <div className="ud-manifesto-actions">
             <button className="ud-btn-outline" onClick={onView}>
-              <Edit3 size={14} /> View / Edit
+              <Edit3 size={14} /> Open Brand Book
             </button>
             <button className="ud-btn-outline" onClick={onDownload}>
               <Download size={14} /> Download PDF
@@ -273,7 +213,7 @@ function RecentActivities({ activities }) {
 }
 
 // ── Sessions Table ──
-function SessionsTable({ sessions, onView, onContinue, onToggleLock, onLoadComments }) {
+function SessionsTable({ sessions, onView, onContinue, onToggleLock }) {
   const getStatusDisplay = (session) => {
     switch ((session.status || "").toLowerCase()) {
       case "draft": return "Draft";
@@ -299,7 +239,6 @@ function SessionsTable({ sessions, onView, onContinue, onToggleLock, onLoadComme
               <th>Brand Stage</th>
               <th>Locked</th>
               <th>Action</th>
-              <th>Comments</th>
             </tr>
           </thead>
           <tbody>
@@ -334,11 +273,6 @@ function SessionsTable({ sessions, onView, onContinue, onToggleLock, onLoadComme
                     ) : (
                       <button className="ud-btn-sm-v2 continue" onClick={() => onContinue(session)}>Continue</button>
                     )}
-                  </td>
-                  <td>
-                    <button className="ud-btn-sm-v2 view" onClick={() => onLoadComments(session.id)} disabled={!isCompleted}>
-                      Comments
-                    </button>
                   </td>
                 </tr>
               );
@@ -411,11 +345,6 @@ export default function UserDashboard() {
   const [agenciesLoading, setAgenciesLoading] = useState(false);
   const [agenciesError, setAgenciesError] = useState("");
 
-  // Comments modal
-  const [commentsModalOpen, setCommentsModalOpen] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [commentsLoading, setCommentsLoading] = useState(false);
-
   useEffect(() => {
     fetchDashboard();
   }, []);
@@ -449,22 +378,13 @@ export default function UserDashboard() {
     }
   };
 
-  const loadComments = async (sessionId) => {
-    setCommentsLoading(true);
-    try {
-      const fetched = await authService.getComments(sessionId);
-      setComments(fetched);
-      setCommentsModalOpen(true);
-    } catch { toast.error("Failed to load comments"); }
-    finally { setCommentsLoading(false); }
-  };
-
   const handleCreateSession = async (payload) => {
     setModalLoading(true);
     setModalError("");
     try {
       const data = await authService.createSession(payload);
       const sessionObj = data?.session || data;
+      resetActiveJourneyState();
       localStorage.setItem("session", JSON.stringify(sessionObj));
       if (sessionObj.id) localStorage.setItem("sessionId", String(sessionObj.id));
       toast.success("Session created successfully!");
@@ -483,7 +403,7 @@ export default function UserDashboard() {
   const handleViewSession = (session) => {
     localStorage.setItem("session", JSON.stringify(session));
     if (session.id) localStorage.setItem("sessionId", String(session.id));
-    navigate("/manifesto");
+    navigate("/brand-summary");
   };
 
   const handleContinueSession = (session) => {
@@ -508,7 +428,7 @@ export default function UserDashboard() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "manifesto.pdf";
+      a.download = "brand-book.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) { toast.error("Download failed"); }
@@ -516,14 +436,12 @@ export default function UserDashboard() {
 
   const stats = dashboardData?.stats || {};
   const sessions = dashboardData?.sessions || [];
+  const dashboardProgress = Math.max(0, Math.min(100, Number(stats.completion_pct ?? 0)));
 
   const statCards = [
-    { title: "Current Stage", value: stats.current_stage ?? "—", icon: Layers, color: "rgba(57, 89, 229, 0.8)" },
+    { title: "Current Stage", value: stats.current_stage ?? "—", icon: Activity, color: "rgba(57, 89, 229, 0.8)" },
     { title: "Completion", value: `${stats.completion_pct ?? 0}%`, icon: TrendingUp, color: "rgba(142, 229, 255, 0.8)" },
-    { title: "AI Quality Score", value: `${stats.ai_quality_score ?? 0}%`, icon: Sparkles, color: "rgba(168, 130, 255, 0.8)" },
-    { title: "Pending Feedback", value: stats.pending_feedback ?? 0, icon: MessageSquare, color: "rgba(255, 195, 134, 0.8)" },
-    { title: "Uploaded Documents", value: stats.uploaded_documents ?? 0, icon: FileUp, color: "rgba(134, 227, 100, 0.8)" },
-    { title: "Manifesto Status", value: stats.manifesto_status ?? "—", icon: FileText, color: "rgba(255, 107, 107, 0.8)" },
+    { title: "Brand Book Status", value: stats.manifesto_status ?? "—", icon: FileText, color: "rgba(255, 107, 107, 0.8)" },
   ];
 
   // ── Tab content rendering ──
@@ -539,6 +457,7 @@ export default function UserDashboard() {
               {statCards.map((s) => <StatsCard key={s.title} {...s} />)}
             </div>
             <ContinueSessionCTA latestSessionId={dashboardData?.latest_session_id} sessions={sessions} onContinue={handleContinueSession} />
+            <PaymentHistoryCard />
             <div
               className="ud-redirect-card"
               style={{ marginTop: "1rem" }}
@@ -564,10 +483,6 @@ export default function UserDashboard() {
             </div>
             <div className="ud-two-col">
               <JourneyProgress items={dashboardData?.journey_progress} />
-              <AISuggestions suggestions={dashboardData?.ai_suggestions} />
-            </div>
-            <AgencyFeedback feedback={dashboardData?.agency_feedback} />
-            <div className="ud-two-col">
               <ManifestoPreview
                 preview={dashboardData?.manifesto_preview}
                 onView={() => { if (dashboardData?.latest_session_id) handleViewSession({ id: dashboardData.latest_session_id }); }}
@@ -581,55 +496,13 @@ export default function UserDashboard() {
         return (
           <>
             <h2 className="ud-tab-title">My Projects / Sessions</h2>
-            <SessionsTable sessions={sessions} onView={handleViewSession} onContinue={handleContinueSession} onToggleLock={handleToggleLock} onLoadComments={loadComments} />
-          </>
-        );
-      case "foundation":
-        return (
-          <div className="ud-redirect-card" onClick={() => {
-            const s = sessions[0];
-            if (s) { localStorage.setItem("session", JSON.stringify(s)); localStorage.setItem("sessionId", String(s.id)); }
-            navigate("/phase-questions/1");
-          }}>
-            <Layers size={32} />
-            <h3>Foundation Questions</h3>
-            <p>Answer the foundation questions to build your brand identity.</p>
-            <ArrowRight size={20} />
-          </div>
-        );
-      case "discovery":
-        return (
-          <div className="ud-redirect-card" onClick={() => navigate("/ChatKickoffPage")}>
-            <MessageCircle size={32} />
-            <h3>Brand Discovery Chat</h3>
-            <p>Start an AI-powered conversation to discover your brand voice.</p>
-            <ArrowRight size={20} />
-          </div>
-        );
-      case "deepdive":
-        return (
-          <div className="ud-redirect-card" onClick={() => navigate("/DeepDivePage")}>
-            <Compass size={32} />
-            <h3>Deep Dive</h3>
-            <p>Advanced branding questions to refine your positioning.</p>
-            <ArrowRight size={20} />
-          </div>
-        );
-      case "documents":
-        return (
-          <div className="ud-placeholder-v2"><FileUp size={48} /><p>Document management coming soon.</p></div>
-        );
-      case "ai-suggestions":
-        return (
-          <>
-            <h2 className="ud-tab-title">AI Suggestions</h2>
-            <AISuggestions suggestions={dashboardData?.ai_suggestions} />
+            <SessionsTable sessions={sessions} onView={handleViewSession} onContinue={handleContinueSession} onToggleLock={handleToggleLock} />
           </>
         );
       case "manifesto":
         return (
           <>
-            <h2 className="ud-tab-title">Manifesto</h2>
+            <h2 className="ud-tab-title">Brand Book</h2>
             <ManifestoPreview
               preview={dashboardData?.manifesto_preview}
               onView={() => { if (dashboardData?.latest_session_id) handleViewSession({ id: dashboardData.latest_session_id }); }}
@@ -641,13 +514,6 @@ export default function UserDashboard() {
         return (
           <div className="ud-placeholder-v2"><Share2 size={48} /><p>AI-generated social content coming soon.</p></div>
         );
-      case "feedback":
-        return (
-          <>
-            <h2 className="ud-tab-title">Comments & Reviews</h2>
-            <AgencyFeedback feedback={dashboardData?.agency_feedback} />
-          </>
-        );
       case "notifications":
         return (
           <>
@@ -655,9 +521,12 @@ export default function UserDashboard() {
             <RecentActivities activities={dashboardData?.recent_activities} />
           </>
         );
-      case "settings":
+      case "billing":
         return (
-          <div className="ud-placeholder-v2"><Settings size={48} /><p>Profile & Settings coming soon.</p></div>
+          <>
+            <h2 className="ud-tab-title">Billing & Invoices</h2>
+            <PaymentHistoryCard />
+          </>
         );
       default:
         return null;
@@ -667,7 +536,18 @@ export default function UserDashboard() {
   return (
     <div className="ud-root-v2">
       <div className="ud-bg-v2"><div className="ud-bg-orb-v2" /></div>
-      <ChatNavbar showSaveButton={false} showDownloadButton={false} showLogoutButton={true} />
+      <ChatNavbar
+        showSaveButton={false}
+        showDownloadButton={false}
+        showLogoutButton={true}
+        showNotificationButton
+        onNotificationClick={() => setActiveTab("notifications")}
+        phaseStatus={{
+          title: "User dashboard",
+          subtitle: `${stats.current_stage || "Brand journey"} · ${stats.manifesto_status || "In progress"}`,
+          progress: dashboardProgress,
+        }}
+      />
       <div className="ud-page-v2">
         <UserSidebar activeTab={activeTab} onTabChange={setActiveTab} sessions={sessions} onNewProject={handleNewSession} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} />
         <main className="ud-main-v2">
@@ -695,7 +575,6 @@ export default function UserDashboard() {
         hasExistingSessions={sessions.length > 0}
       />
 
-      <CommentsModal isOpen={commentsModalOpen} onClose={() => setCommentsModalOpen(false)} comments={comments} loading={commentsLoading} />
     </div>
   );
 }

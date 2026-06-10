@@ -32,9 +32,13 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
 class AnswerCreateSerializer(serializers.ModelSerializer):
+    is_ai_accepted = serializers.BooleanField(required=False)
+    ai_suggestion = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    original_ai_text = serializers.CharField(required=False, allow_blank=True, write_only=True)
+
     class Meta:
         model = Answer
-        fields = ['question', 'answer_text']
+        fields = ['question', 'answer_text', 'is_ai_accepted', 'ai_suggestion', 'original_ai_text']
     
     # def validate_answer_text(self, value):
     #     if not value or len(value.strip()) < 3:
@@ -68,12 +72,21 @@ class SessionListSerializer(serializers.ModelSerializer):
     total_questions = serializers.SerializerMethodField()
     pending_feedback = serializers.SerializerMethodField()
     is_locked_display = serializers.SerializerMethodField()
+    current_stage = serializers.SerializerMethodField()
+    current_stage_label = serializers.SerializerMethodField()
+    stage_answered_questions = serializers.SerializerMethodField()
+    stage_total_questions = serializers.SerializerMethodField()
+    stage_progress = serializers.SerializerMethodField()
+    completed_stage_count = serializers.SerializerMethodField()
+    total_stage_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Session
         fields = ['id', 'title', 'created_by', 'created_by_email', 'created_by_role', 'agency', 'agency_name',
           'status', 'is_locked', 'is_locked_display', 'locked_by', 'locked_at', 
-          'progress', 'answered_questions', 'total_questions', 'pending_feedback', 
+                    'progress', 'answered_questions', 'total_questions', 'pending_feedback',
+                    'current_stage', 'current_stage_label', 'stage_answered_questions', 'stage_total_questions',
+                    'stage_progress', 'completed_stage_count', 'total_stage_count',
           'is_active', 'completed_at', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
     
@@ -96,6 +109,59 @@ class SessionListSerializer(serializers.ModelSerializer):
         if obj.is_locked:
             return f"Locked by {obj.locked_by.email} on {obj.locked_at.strftime('%Y-%m-%d %H:%M')}" if obj.locked_by else "Locked"
         return "Unlocked"
+
+    def _stage_labels(self):
+        return dict(Question.STAGE_CHOICES)
+
+    def _active_stage_numbers(self):
+        return list(
+            Question.objects.filter(is_active=True)
+            .values_list('stage', flat=True)
+            .distinct()
+            .order_by('stage')
+        )
+
+    def _stage_counts(self, obj, stage):
+        total = Question.objects.filter(is_active=True, stage=stage).count()
+        answered = obj.answers.filter(question__is_active=True, question__stage=stage).count()
+        return answered, total
+
+    def get_current_stage(self, obj):
+        return obj.get_current_stage()
+
+    def get_current_stage_label(self, obj):
+        current_stage = obj.get_current_stage()
+        if current_stage > max(self._active_stage_numbers() or [0]):
+            return 'Complete'
+        return self._stage_labels().get(current_stage, 'Stage')
+
+    def get_stage_answered_questions(self, obj):
+        current_stage = obj.get_current_stage()
+        answered, _ = self._stage_counts(obj, current_stage)
+        return answered
+
+    def get_stage_total_questions(self, obj):
+        current_stage = obj.get_current_stage()
+        _, total = self._stage_counts(obj, current_stage)
+        return total
+
+    def get_stage_progress(self, obj):
+        current_stage = obj.get_current_stage()
+        answered, total = self._stage_counts(obj, current_stage)
+        if total == 0:
+            return 100 if self.get_current_stage_label(obj) == 'Complete' else 0
+        return round((answered / total) * 100, 1)
+
+    def get_completed_stage_count(self, obj):
+        completed = 0
+        for stage in self._active_stage_numbers():
+            answered, total = self._stage_counts(obj, stage)
+            if total > 0 and answered >= total:
+                completed += 1
+        return completed
+
+    def get_total_stage_count(self, obj):
+        return len(self._active_stage_numbers())
 
 class SessionDetailSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)

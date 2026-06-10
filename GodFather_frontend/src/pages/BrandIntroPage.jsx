@@ -5,7 +5,11 @@ import "./BrandIntroPage.css";
 
 const TACTICS = ["Social posts", "Advertising", "Promotions", "Websites", "Funnels"];
 
-const GROUP_139_IMAGE = "/Group_139.svg";
+const ORB_PROMPTS = [
+  "Sometimes I'll challenge your thinking",
+  "Sometimes I'll help you dig deeper",
+  "Sometimes I'll recognize an insight worth building around",
+];
 
 export default function BrandIntroPage() {
   const navigate = useNavigate();
@@ -20,22 +24,28 @@ export default function BrandIntroPage() {
     }, 120);
   };
   const handleBack = () => navigate("/welcome");
-  const handleNext = () => handleReady();
-
   return (
     <div className="brand-intro-page">
       <OnboardingNavBar
         onLogoClick={() => navigate("/welcome")}
         onBack={handleBack}
-        onNext={handleNext}
         logoPath="/welcome"
         backPath="/welcome"
-        nextPath="/before-continue"
+        showNext={false}
+        phaseStatus={{
+          title: "Brand discovery",
+          subtitle: "Orientation in progress",
+          progress: 10,
+        }}
       />
 
       <main className="brand-intro-main">
+        <div className="brand-intro-ambient brand-intro-ambient-left" aria-hidden="true" />
+        <div className="brand-intro-ambient brand-intro-ambient-right" aria-hidden="true" />
+
         <section className="brand-intro-hero">
           <div className="brand-intro-orb-wrap" aria-hidden="true">
+            <span className="brand-intro-orb-ring" />
             <BrandOrb size="hero" />
           </div>
           <h1 className="brand-intro-heading">Hi, I am The Brand Godfather</h1>
@@ -51,12 +61,29 @@ export default function BrandIntroPage() {
           </div>
         </section>
 
-        <section className="brand-intro-cards-row">
-          <img
-            src={GROUP_139_IMAGE}
-            alt="Brand journey overview"
-            className="brand-intro-group-image"
-          />
+        <section className="brand-intro-discovery-grid" aria-label="Brand discovery orientation">
+          <article className="brand-intro-principle-card brand-intro-reveal-card">
+            <span className="brand-intro-card-kicker">Discovery starts here</span>
+            <p>
+              But long-term success starts with mindset. Strong brands think differently from the
+              very beginning.
+            </p>
+            <strong>That’s why this experience starts with discovery.</strong>
+          </article>
+
+          <article className="brand-intro-orb-card brand-intro-reveal-card">
+            <span className="brand-intro-card-kicker">How the ORB works</span>
+            <p>
+              Over the next 30 questions, we&apos;ll explore the emotional identity, positioning,
+              meaning, and strategic opportunity behind your brand.
+            </p>
+            <strong>The ORB is how we communicate throughout this journey.</strong>
+            <div className="brand-intro-orb-prompts" aria-label="ORB guidance examples">
+              {ORB_PROMPTS.map((prompt) => (
+                <span key={prompt}>{prompt}</span>
+              ))}
+            </div>
+          </article>
         </section>
 
         <section className="brand-intro-footer">

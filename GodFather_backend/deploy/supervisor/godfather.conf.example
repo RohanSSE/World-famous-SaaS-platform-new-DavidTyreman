@@ -1,0 +1,42 @@
+; Supervisor config for the GodFather stack.
+; Copy to /etc/supervisor/conf.d/godfather.conf after replacing /srv/godfather
+; with the absolute repo path on the server, then run:
+;   sudo supervisorctl reread
+;   sudo supervisorctl update
+;   sudo supervisorctl restart godfather-backend godfather-celery godfather-frontend
+
+[program:godfather-backend]
+directory=/srv/godfather/GodFather_backend
+command=/srv/godfather/GodFather_backend/venv/bin/gunicorn project.wsgi:application --bind 0.0.0.0:8001 --workers 3 --timeout 180
+environment=DJANGO_SETTINGS_MODULE="project.settings",DJANGO_SKIP_KNOWLEDGE_AUTO="1"
+autostart=true
+autorestart=true
+startsecs=5
+stopasgroup=true
+killasgroup=true
+stdout_logfile=/var/log/godfather/backend.log
+stderr_logfile=/var/log/godfather/backend.err.log
+
+[program:godfather-celery]
+directory=/srv/godfather/GodFather_backend
+command=/srv/godfather/GodFather_backend/venv/bin/celery -A project worker -l info --concurrency=2
+environment=DJANGO_SETTINGS_MODULE="project.settings",DJANGO_SKIP_KNOWLEDGE_AUTO="1"
+autostart=true
+autorestart=true
+startsecs=5
+stopasgroup=true
+killasgroup=true
+stdout_logfile=/var/log/godfather/celery.log
+stderr_logfile=/var/log/godfather/celery.err.log
+
+[program:godfather-frontend]
+directory=/srv/godfather/GodFather_frontend
+command=/usr/bin/npm start
+environment=PORT="3003"
+autostart=true
+autorestart=true
+startsecs=5
+stopasgroup=true
+killasgroup=true
+stdout_logfile=/var/log/godfather/frontend.log
+stderr_logfile=/var/log/godfather/frontend.err.log

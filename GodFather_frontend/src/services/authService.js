@@ -24,6 +24,56 @@ export function formatApiError(error, fallback = "Request failed") {
   return fallback;
 }
 
+function normalizeSessionId(session) {
+  return session?.id ?? session?.pk ?? session?.session_id ?? null;
+}
+
+function isCompletedSession(session) {
+  const status = String(session?.status || "").toLowerCase();
+  const progress = Number(session?.progress ?? session?.completion_pct ?? 0);
+  return status === "completed" || status === "locked" || progress >= 100;
+}
+
+function clampPhase(value) {
+  const phase = Number(value);
+  if (!Number.isFinite(phase)) return 1;
+  return Math.max(1, Math.min(3, phase));
+}
+
+function resolveAgencyOnboardingRedirect(dashboard = {}) {
+  const sessions = Array.isArray(dashboard.sessions) ? dashboard.sessions : [];
+  const journey = Array.isArray(dashboard.journey_progress) ? dashboard.journey_progress : [];
+  const completed = sessions.some(isCompletedSession) || journey.some(isCompletedSession);
+
+  if (completed) {
+    return { route: "/agency-dashboard", completed: true, session: null };
+  }
+
+  const latestSessionId = dashboard.latest_session_id ?? normalizeSessionId(sessions[0]);
+  const session = sessions.find((item) => String(normalizeSessionId(item)) === String(latestSessionId)) || sessions[0] || null;
+  const progress = journey.find((item) => String(item.session_id) === String(latestSessionId)) || journey[0] || null;
+  const sessionId = normalizeSessionId(session) ?? progress?.session_id ?? null;
+
+  if (sessionId) {
+    const sessionForStorage = session || {
+      id: sessionId,
+      title: progress?.title || "Agency Brand Discovery",
+      status: progress?.status || "in_progress",
+      progress: progress?.progress || 0,
+    };
+    try {
+      localStorage.setItem("session", JSON.stringify(sessionForStorage));
+      localStorage.setItem("sessionId", String(sessionId));
+    } catch {
+      /* ignore storage failures */
+    }
+    const nextPhase = clampPhase(progress?.current_stage_num || 1);
+    return { route: `/phase-questions/${nextPhase}`, completed: false, session: sessionForStorage };
+  }
+
+  return { route: "/welcome", completed: false, session: null };
+}
+
 const authService = {
   // Sign up new user
   signup: async (email, password, confirmPassword, userType) => {
@@ -392,11 +442,17 @@ const authService = {
     }
   },
 
-  // Get all questions
-  getQuestions: async () => {
+  // Get all questions, optionally scoped to a session/stage for progression checks
+  getQuestions: async (sessionId, stage, options = {}) => {
     try {
-      const response = await api.get("/sessions/questions/");
+      const params = {};
+      if (sessionId) params.session_id = sessionId;
+      if (stage) params.stage = stage;
+      if (options.forceRefine) params.force_refine = 1;
+      const response = await api.get("/sessions/questions/", { params });
       const body = response.data;
+
+      if (sessionId || stage) return body;
 
       // Handle different response shapes
       if (Array.isArray(body)) return body;
@@ -410,7 +466,73 @@ const authService = {
         error.response?.data?.message ||
         error.response?.data?.detail ||
         "Failed to load questions";
-      throw { message: msg };
+      throw {
+        message: msg,
+        code: error.response?.data?.code,
+        status: error.response?.status,
+      };
+    }
+  },
+
+  getBillingStatus: async () => {
+    try {
+      const response = await api.get("/auth/subscription/");
+      const currentUser = authService.getCurrentUser() || {};
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...currentUser,
+          has_active_subscription: !!response.data?.has_active_subscription,
+          active_subscription: response.data?.subscription || null,
+          subscription_plan: response.data?.plan || null,
+        })
+      );
+      return response.data;
+    } catch (error) {
+      const msg = formatApiError(error, "Failed to load subscription");
+      throw { message: msg, status: error.response?.status };
+    }
+  },
+
+  getBillingHistory: async () => {
+    try {
+      const response = await api.get("/auth/subscription/invoices/");
+      return response.data;
+    } catch (error) {
+      const msg = formatApiError(error, "Failed to load billing history");
+      throw { message: msg, status: error.response?.status };
+    }
+  },
+
+  createSubscriptionCheckout: async (payload = {}) => {
+    try {
+      const response = await api.post("/auth/subscription/checkout/", payload);
+      return response.data;
+    } catch (error) {
+      const msg = formatApiError(error, "Failed to start checkout");
+      throw { message: msg, status: error.response?.status };
+    }
+  },
+
+  verifySubscriptionCheckout: async (checkoutSessionId) => {
+    try {
+      const response = await api.post("/auth/subscription/verify/", {
+        checkout_session_id: checkoutSessionId,
+      });
+      const currentUser = authService.getCurrentUser() || {};
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...currentUser,
+          has_active_subscription: !!response.data?.has_active_subscription,
+          active_subscription: response.data?.subscription || null,
+          subscription_plan: response.data?.plan || null,
+        })
+      );
+      return response.data;
+    } catch (error) {
+      const msg = formatApiError(error, "Failed to verify checkout");
+      throw { message: msg, status: error.response?.status };
     }
   },
 
@@ -1311,6 +1433,11 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
         "Failed to load user dashboard";
       throw new Error(msg);
     }
+  },
+
+  getAgencyOnboardingRedirect: async () => {
+    const dashboard = await authService.getUserDashboard();
+    return resolveAgencyOnboardingRedirect(dashboard);
   },
 };
 

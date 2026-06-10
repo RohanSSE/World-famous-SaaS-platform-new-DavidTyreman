@@ -101,6 +101,10 @@ export function getUnlockedPhaseIds() {
 export function isPhaseUnlocked(phaseId) {
   const id = Number(phaseId);
   if (id === 1) return true;
+  if (id >= 2) {
+    if (isPhaseSubscriptionLocked(id)) return false;
+  }
+  if (id === 2) return true;
   return getUnlockedPhaseIds().includes(id);
 }
 
@@ -141,10 +145,75 @@ export const JOURNEY_STAGE_QUESTION_COUNTS = {
   3: 10,
 };
 
+export function getStoredBillingUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+export function getSubscriptionGateAfter(source) {
+  const plan = source?.plan || source?.subscription_plan || source?.active_subscription?.plan;
+  const value = Number(plan?.question_gate_after);
+  if (Number.isFinite(value)) return Math.max(0, Math.min(TOTAL_JOURNEY_QUESTIONS, value));
+  return 8;
+}
+
+export function hasActiveSubscription(source) {
+  return !!(source?.has_active_subscription || source?.active_subscription?.is_active);
+}
+
+export function getPhaseStartQuestion(phaseId) {
+  let start = 1;
+  for (let phase = 1; phase < Number(phaseId); phase += 1) {
+    start += JOURNEY_STAGE_QUESTION_COUNTS[phase] || 0;
+  }
+  return start;
+}
+
+export function getJourneyQuestionNumber(phaseId, questionIndex) {
+  return getPhaseStartQuestion(phaseId) + Number(questionIndex || 0);
+}
+
+export function isJourneyQuestionUnlocked(questionNumber, source = getStoredBillingUser()) {
+  if (hasActiveSubscription(source)) return true;
+  return Number(questionNumber) <= getSubscriptionGateAfter(source);
+}
+
+export function doesPhaseRequireSubscription(phaseId, source = getStoredBillingUser()) {
+  return getPhaseStartQuestion(phaseId) > getSubscriptionGateAfter(source);
+}
+
+export function isPhaseSubscriptionLocked(phaseId, source = getStoredBillingUser()) {
+  return doesPhaseRequireSubscription(phaseId, source) && !hasActiveSubscription(source);
+}
+
 export function getPhaseAnswersStorageKey(sessionId, phaseId) {
   return sessionId
     ? `phaseAnswers_${sessionId}_p${phaseId}`
     : `phaseAnswers_p${phaseId}`;
+}
+
+export function getCurrentQuestionStorageKey(sessionId, phaseId) {
+  return sessionId
+    ? `phaseCurrentQuestion_${sessionId}_p${phaseId}`
+    : `phaseCurrentQuestion_p${phaseId}`;
+}
+
+export function resetActiveJourneyState() {
+  try {
+    localStorage.removeItem("session");
+    localStorage.removeItem("sessionId");
+    localStorage.setItem(UNLOCK_STORAGE_KEY, JSON.stringify([1]));
+
+    for (let phase = 1; phase <= JOURNEY_PHASES.length; phase += 1) {
+      localStorage.removeItem(getPhaseAnswersStorageKey(null, phase));
+      localStorage.removeItem(getCurrentQuestionStorageKey(null, phase));
+    }
+  } catch {
+    /* ignore localStorage failures */
+  }
 }
 
 /** Count non-empty answers stored locally across all journey phases. */

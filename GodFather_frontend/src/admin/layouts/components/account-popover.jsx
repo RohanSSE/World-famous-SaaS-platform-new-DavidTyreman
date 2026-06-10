@@ -11,8 +11,10 @@ import MenuItem, { menuItemClasses } from "@mui/material/MenuItem";
 import { useRouter, usePathname } from "@admin/routes/hooks";
 import { _myAccount } from "@admin/_mock";
 import { clearAuthSession, getAuthSession } from "@admin/auth/session";
+import { useAuth } from "../../../context/AuthProvider";
 function AccountPopover({ data = [], sx, ...other }) {
   const router = useRouter();
+  const { logout } = useAuth();
   const pathname = usePathname();
   const authSession = getAuthSession();
   const [openPopover, setOpenPopover] = useState(null);
@@ -29,11 +31,16 @@ function AccountPopover({ data = [], sx, ...other }) {
     },
     [handleClosePopover, router]
   );
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
     handleClosePopover();
+    try {
+      await logout();
+    } catch {
+      /* ignore logout API failures; local session is cleared below */
+    }
     clearAuthSession();
-    router.replace("/admin/sign-in");
-  }, [handleClosePopover, router]);
+    router.replace("/intro-ductory");
+  }, [handleClosePopover, logout, router]);
   return <>
       <IconButton
     onClick={handleOpenPopover}

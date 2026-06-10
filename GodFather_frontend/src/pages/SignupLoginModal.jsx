@@ -3,6 +3,7 @@ import "../components/Signup.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 import { toast } from "react-toastify";
+import { Eye, EyeOff } from "lucide-react";
 import mailIcon from "../svg_assets/Email.svg";
 import lockIcon from "../svg_assets/Password.svg";
 import googleIcon from "../svg_assets/Google.svg";
@@ -10,6 +11,8 @@ import appleIcon from "../svg_assets/Apple.svg";
 import signupImg from "../assets/signup-bg.png";
 import authService from "../services/authService";
 import ForgotPasswordModal from "./ForgotPasswordModal";
+import { clearAdminAuthSession, isAdminUser, saveAuthSession } from "@admin/auth/session";
+
 const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
   const [showForgotForm, setShowForgotForm] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -29,6 +32,8 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,8 +42,15 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
       setFormData({ email: "", password: "", confirmPassword: "" });
       setError("");
       setSuccessMessage("");
+      setShowPassword(false);
+      setShowConfirmPassword(false);
     }
   }, [initialMode, isOpen]);
+
+  useEffect(() => {
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  }, [isLogin]);
 
   if (!isOpen) return null;
 
@@ -83,9 +95,17 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
   };
 
   // Post-login: Welcome first, then stepper journey (old: direct /stepper or /user-dashboard)
-  const getRedirectRoute = (userData) => {
+  const getRedirectRoute = async (userData) => {
+    if (isAdminUser(userData)) return "/admin";
     const roleName = userData?.role_name;
-    if (roleName === "agency") return "/agency-dashboard";
+    if (roleName === "agency") {
+      try {
+        const redirect = await authService.getAgencyOnboardingRedirect();
+        return redirect.route;
+      } catch {
+        return "/welcome";
+      }
+    }
     if (roleName === "client") {
       if (typeof localStorage !== "undefined" && localStorage.getItem("sessionId")) {
         return "/phase-questions/1";
@@ -93,7 +113,14 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
       return "/welcome";
     }
     const roleId = userData?.role;
-    if (roleId === 3) return "/agency-dashboard";
+    if (roleId === 3) {
+      try {
+        const redirect = await authService.getAgencyOnboardingRedirect();
+        return redirect.route;
+      } catch {
+        return "/welcome";
+      }
+    }
     // if (roleId === 2) return "/stepper";
     // return "/user-dashboard";
     return "/welcome";
@@ -113,6 +140,7 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
           // Attempt to log in
           const result = await login(formData.email, formData.password);
           const profile = await authService.getProfile();
+          const userData = profile || result.user || auth.user;
           const roleName = (profile || result.user)?.role_name;
           if (
             roleName === "agency" &&
@@ -125,9 +153,20 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
             });
             return;
           }
-          const redirectRoute = getRedirectRoute(
-            profile || result.user || auth.user
-          );
+          if (isAdminUser(userData)) {
+            saveAuthSession({
+              email: formData.email.trim().toLowerCase(),
+              name: userData.email || "Admin User",
+              mode: "normal-login",
+              role: userData.role_name,
+              is_staff: userData.is_staff,
+              is_superuser: userData.is_superuser,
+              loggedInAt: new Date().toISOString(),
+            });
+          } else {
+            clearAdminAuthSession();
+          }
+          const redirectRoute = await getRedirectRoute(userData);
           setSuccessMessage("Login successful! Redirecting...");
           setTimeout(() => {
             onClose();
@@ -341,26 +380,46 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
               <div className="input-group">
                 <img src={lockIcon} alt="password" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Password"
                   value={formData.password}
                   onChange={handleInputChange}
                   disabled={loading || isFormDisabled}
                 />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  disabled={loading || isFormDisabled}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
               </div>
 
               {!isLogin && (
                 <div className="input-group">
                   <img src={lockIcon} alt="confirm password" />
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
                     placeholder="Confirm Password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     disabled={loading || isFormDisabled}
                   />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    disabled={loading || isFormDisabled}
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  >
+                    {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
                 </div>
               )}
 

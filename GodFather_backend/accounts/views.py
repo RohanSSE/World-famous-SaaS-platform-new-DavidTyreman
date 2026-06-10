@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -11,10 +11,14 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.conf import settings
+from django.db import models
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.tokens import RefreshToken
+from datetime import datetime, timezone as datetime_timezone
+import json
 
 from .serializers import (
     RegisterSerializer,
@@ -25,9 +29,11 @@ from .serializers import (
     PasswordResetSerializer,
     PasswordResetConfirmSerializer,
     LoginSerializer,
-    ChangePasswordSerializer
+    ChangePasswordSerializer,
+    SubscriptionPlanSerializer,
+    UserSubscriptionSerializer,
 )
-from .models import Role, Permission, Agency
+from .models import Role, Permission, Agency, SubscriptionPlan, UserSubscription
 from .agency_utils import ensure_agency_for_user
 from .status_utils import is_user_effectively_active
 from .permissions import (
@@ -145,19 +151,30 @@ def login_with_email(request):
     email = serializer.validated_data['email']
     password = serializer.validated_data['password']
 
-    # Authenticate user
-    user = authenticate(request, username=email, password=password)
-    
-    if not user:
+    user = User.objects.filter(email__iexact=email).select_related("role", "agency").first()
+
+    if not user or not user.check_password(password):
         return Response(
             {"detail": "Invalid email or password"},
             status=status.HTTP_401_UNAUTHORIZED
         )
 
-    user = User.objects.select_related("role", "agency").get(pk=user.pk)
+    role_name = (user.role.name if user.role else "") or ""
+    if role_name.lower() == "agency" and user.agency and user.agency.is_active:
+        update_user_fields = []
+        update_agency_fields = []
+        if not user.is_active:
+            user.is_active = True
+            update_user_fields.append("is_active")
+        if user.agency.approved_at is None:
+            user.agency.approved_at = timezone.now()
+            update_agency_fields.append("approved_at")
+        if update_user_fields:
+            user.save(update_fields=update_user_fields)
+        if update_agency_fields:
+            user.agency.save(update_fields=update_agency_fields)
 
     if not is_user_effectively_active(user):
-        role_name = (user.role.name if user.role else "") or ""
         if role_name.lower() == "agency":
             return Response(
                 {
@@ -210,6 +227,554 @@ def me(request):
     serializer.save()
     
     return Response(serializer.data)
+
+
+def _frontend_url(path):
+    base = getattr(settings, 'FRONTEND_APP_URL', 'http://127.0.0.1:5173').rstrip('/')
+    return f"{base}{path}"
+
+
+def _env_file_value(name):
+    env_path = os.path.join(getattr(settings, 'BASE_DIR', ''), '.env')
+    if not os.path.exists(env_path):
+        return ''
+    try:
+        with open(env_path, encoding='utf-8-sig') as env_file:
+            for line in env_file:
+                raw = line.strip()
+                if not raw or raw.startswith('#') or '=' not in raw:
+                    continue
+                key, value = raw.split('=', 1)
+                if key.strip() == name:
+                    return value.strip().strip('"').strip("'")
+    except OSError:
+        return ''
+    return ''
+
+
+def _valid_stripe_secret_key(value):
+    return bool(value and value.startswith('sk_') and 'your_secret_key_here' not in value)
+
+
+def _stripe_client():
+    try:
+        import stripe
+    except ImportError as exc:
+        raise RuntimeError("Stripe package is not installed. Run pip install -r requirements.txt.") from exc
+
+    secret_key = getattr(settings, 'STRIPE_SECRET_KEY', '')
+    if not _valid_stripe_secret_key(secret_key):
+        secret_key = _env_file_value('STRIPE_SECRET_KEY')
+    if not _valid_stripe_secret_key(secret_key):
+        raise RuntimeError("STRIPE_SECRET_KEY is not configured in .env.")
+    stripe.api_key = secret_key
+    return stripe
+
+
+def _stripe_value(obj, key, default=None):
+    if obj is None:
+        return default
+    if hasattr(obj, 'get'):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
+def _timestamp_to_datetime(value):
+    if not value:
+        return None
+    return datetime.fromtimestamp(int(value), tz=datetime_timezone.utc)
+
+
+def _datetime_iso(value):
+    return value.isoformat() if value else None
+
+
+def _stripe_amount_display(amount, currency):
+    if amount in (None, ''):
+        return ''
+    try:
+        return f"{str(currency or '').upper()} {int(amount) / 100:.2f}"
+    except (TypeError, ValueError):
+        return ''
+
+
+def _account_type_for_user(user):
+    role_name = (user.get_role_name() or '').lower()
+    return 'agency' if role_name == 'agency' else 'user'
+
+
+def _stripe_payment_document(subscription, stripe=None):
+    document = {
+        'stripe_checkout_session_id': subscription.stripe_checkout_session_id,
+        'stripe_subscription_id': subscription.stripe_subscription_id,
+        'stripe_payment_intent_id': subscription.stripe_payment_intent_id,
+        'payment_status': '',
+        'amount_total': None,
+        'amount_paid': None,
+        'currency': subscription.plan.currency,
+        'amount_display': '',
+        'invoice_id': '',
+        'invoice_number': '',
+        'invoice_status': '',
+        'hosted_invoice_url': '',
+        'invoice_pdf': '',
+        'receipt_url': '',
+        'paid_at': None,
+        'stripe_error': '',
+    }
+
+    if not stripe:
+        return document
+
+    try:
+        checkout_session = None
+        if subscription.stripe_checkout_session_id:
+            checkout_session = stripe.checkout.Session.retrieve(
+                subscription.stripe_checkout_session_id,
+                expand=['invoice', 'payment_intent', 'payment_intent.latest_charge'],
+            )
+            document['payment_status'] = _stripe_value(checkout_session, 'payment_status', '') or ''
+            document['amount_total'] = _stripe_value(checkout_session, 'amount_total')
+            document['currency'] = _stripe_value(checkout_session, 'currency', document['currency']) or document['currency']
+            document['paid_at'] = _datetime_iso(_timestamp_to_datetime(_stripe_value(checkout_session, 'created')))
+
+        invoice = _stripe_value(checkout_session, 'invoice') if checkout_session else None
+        if isinstance(invoice, str):
+            invoice = stripe.Invoice.retrieve(invoice)
+        elif not invoice and subscription.stripe_subscription_id:
+            invoices = stripe.Invoice.list(subscription=subscription.stripe_subscription_id, limit=1)
+            invoice_items = _stripe_value(invoices, 'data', []) or []
+            invoice = invoice_items[0] if invoice_items else None
+
+        if invoice:
+            document['invoice_id'] = _stripe_value(invoice, 'id', '') or ''
+            document['invoice_number'] = _stripe_value(invoice, 'number', '') or ''
+            document['invoice_status'] = _stripe_value(invoice, 'status', '') or ''
+            document['hosted_invoice_url'] = _stripe_value(invoice, 'hosted_invoice_url', '') or ''
+            document['invoice_pdf'] = _stripe_value(invoice, 'invoice_pdf', '') or ''
+            document['amount_paid'] = _stripe_value(invoice, 'amount_paid')
+            document['currency'] = _stripe_value(invoice, 'currency', document['currency']) or document['currency']
+            status_transitions = _stripe_value(invoice, 'status_transitions', {}) or {}
+            document['paid_at'] = _datetime_iso(
+                _timestamp_to_datetime(_stripe_value(status_transitions, 'paid_at'))
+            ) or document['paid_at']
+
+        payment_intent = _stripe_value(checkout_session, 'payment_intent') if checkout_session else None
+        if isinstance(payment_intent, str):
+            payment_intent = stripe.PaymentIntent.retrieve(payment_intent, expand=['latest_charge'])
+        elif not payment_intent and subscription.stripe_payment_intent_id:
+            payment_intent = stripe.PaymentIntent.retrieve(subscription.stripe_payment_intent_id, expand=['latest_charge'])
+
+        if payment_intent:
+            document['stripe_payment_intent_id'] = _stripe_value(payment_intent, 'id', document['stripe_payment_intent_id']) or ''
+            document['payment_status'] = document['payment_status'] or _stripe_value(payment_intent, 'status', '') or ''
+            document['amount_total'] = document['amount_total'] or _stripe_value(payment_intent, 'amount')
+            document['amount_paid'] = document['amount_paid'] or _stripe_value(payment_intent, 'amount_received')
+            document['currency'] = _stripe_value(payment_intent, 'currency', document['currency']) or document['currency']
+            charge = _stripe_value(payment_intent, 'latest_charge')
+            if isinstance(charge, str):
+                charge = stripe.Charge.retrieve(charge)
+            if charge:
+                document['receipt_url'] = _stripe_value(charge, 'receipt_url', '') or ''
+                document['paid_at'] = document['paid_at'] or _datetime_iso(_timestamp_to_datetime(_stripe_value(charge, 'created')))
+
+        amount = document['amount_paid'] if document['amount_paid'] not in (None, '') else document['amount_total']
+        document['amount_display'] = _stripe_amount_display(amount, document['currency'])
+    except Exception as exc:
+        document['stripe_error'] = str(exc)
+
+    return document
+
+
+def _subscription_history_item(subscription, stripe=None, include_user=False):
+    document = _stripe_payment_document(subscription, stripe=stripe)
+    user = subscription.user
+    item = {
+        'id': subscription.id,
+        'status': subscription.status,
+        'is_active': subscription.is_active,
+        'plan': SubscriptionPlanSerializer(subscription.plan).data,
+        'current_period_end': _datetime_iso(subscription.current_period_end),
+        'created_at': _datetime_iso(subscription.created_at),
+        'updated_at': _datetime_iso(subscription.updated_at),
+        'payment': document,
+    }
+    if include_user:
+        item['user'] = {
+            'id': user.id,
+            'email': user.email,
+            'role_name': user.get_role_name(),
+            'account_type': _account_type_for_user(user),
+            'agency_id': user.agency_id,
+            'agency_name': user.agency.name if user.agency else None,
+        }
+    return item
+
+
+def _stripe_or_none():
+    try:
+        return _stripe_client(), ''
+    except RuntimeError as exc:
+        return None, str(exc)
+
+
+def _latest_active_subscription(user):
+    now = timezone.now()
+    return user.subscriptions.select_related('plan').filter(
+        status__in=[UserSubscription.STATUS_ACTIVE, UserSubscription.STATUS_TRIALING],
+    ).filter(
+        models.Q(current_period_end__isnull=True) | models.Q(current_period_end__gt=now)
+    ).order_by('-updated_at').first()
+
+
+def _subscription_payload(user):
+    plan = SubscriptionPlan.active_plan()
+    subscription = _latest_active_subscription(user)
+    return {
+        'has_active_subscription': bool(user.has_active_subscription()),
+        'plan': SubscriptionPlanSerializer(plan).data if plan else None,
+        'subscription': UserSubscriptionSerializer(subscription).data if subscription else None,
+        'stripe_publishable_key': getattr(settings, 'STRIPE_PUBLISHABLE_KEY', ''),
+    }
+
+
+def _can_manage_subscription_plans(user):
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_staff or user.is_superuser:
+        return True
+    return bool(user.has_role('admin') or user.has_perm_codename('billing.update'))
+
+
+@swagger_auto_schema(
+    methods=['get'],
+    responses={200: SubscriptionPlanSerializer(many=True)},
+    operation_description="List subscription plans for admin billing settings"
+)
+@swagger_auto_schema(
+    methods=['post'],
+    request_body=SubscriptionPlanSerializer,
+    responses={201: SubscriptionPlanSerializer},
+    operation_description="Create a subscription plan for Stripe checkout"
+)
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def subscription_plans(request):
+    if not _can_manage_subscription_plans(request.user):
+        return Response({'detail': 'You do not have permission to manage subscription plans.'}, status=status.HTTP_403_FORBIDDEN)
+
+    if request.method == 'GET':
+        plans = SubscriptionPlan.objects.all().order_by('display_order', 'id')
+        return Response(SubscriptionPlanSerializer(plans, many=True).data)
+
+    serializer = SubscriptionPlanSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@swagger_auto_schema(
+    methods=['get'],
+    responses={200: SubscriptionPlanSerializer},
+    operation_description="Get a subscription plan"
+)
+@swagger_auto_schema(
+    methods=['put', 'patch'],
+    request_body=SubscriptionPlanSerializer,
+    responses={200: SubscriptionPlanSerializer},
+    operation_description="Update a subscription plan"
+)
+@swagger_auto_schema(
+    methods=['delete'],
+    responses={204: 'Subscription plan deleted'},
+    operation_description="Delete a subscription plan"
+)
+@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def subscription_plan_detail(request, pk):
+    if not _can_manage_subscription_plans(request.user):
+        return Response({'detail': 'You do not have permission to manage subscription plans.'}, status=status.HTTP_403_FORBIDDEN)
+
+    plan = get_object_or_404(SubscriptionPlan, pk=pk)
+
+    if request.method == 'GET':
+        return Response(SubscriptionPlanSerializer(plan).data)
+
+    if request.method in ['PUT', 'PATCH']:
+        serializer = SubscriptionPlanSerializer(plan, data=request.data, partial=request.method == 'PATCH')
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    plan.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def _checkout_line_item(plan):
+    if plan.stripe_price_id:
+        return {'price': plan.stripe_price_id, 'quantity': 1}
+
+    price_data = {
+        'currency': plan.currency.lower(),
+        'unit_amount': int(plan.price * 100),
+        'product_data': {
+            'name': plan.name,
+            'description': plan.description or plan.name,
+        },
+    }
+    if plan.billing_interval != SubscriptionPlan.INTERVAL_ONE_TIME:
+        price_data['recurring'] = {'interval': plan.billing_interval}
+    return {'price_data': price_data, 'quantity': 1}
+
+
+def _sync_subscription_from_checkout_session(checkout_session):
+    metadata = _stripe_value(checkout_session, 'metadata', {}) or {}
+    user_id = metadata.get('user_id')
+    plan_id = metadata.get('plan_id')
+    checkout_session_id = _stripe_value(checkout_session, 'id', '')
+
+    subscription = UserSubscription.objects.filter(
+        stripe_checkout_session_id=checkout_session_id
+    ).select_related('user', 'plan').first()
+
+    if not subscription:
+        if not user_id or not plan_id:
+            return None
+        try:
+            user = User.objects.get(pk=user_id)
+            plan = SubscriptionPlan.objects.get(pk=plan_id)
+        except (User.DoesNotExist, SubscriptionPlan.DoesNotExist):
+            return None
+        subscription = UserSubscription.objects.create(
+            user=user,
+            plan=plan,
+            stripe_checkout_session_id=checkout_session_id,
+        )
+
+    stripe_subscription = _stripe_value(checkout_session, 'subscription')
+    stripe_payment_intent = _stripe_value(checkout_session, 'payment_intent')
+    payment_status = _stripe_value(checkout_session, 'payment_status', '')
+    mode = _stripe_value(checkout_session, 'mode', '')
+
+    status_value = subscription.status
+    current_period_end = subscription.current_period_end
+    stripe_subscription_id = ''
+
+    if isinstance(stripe_subscription, str):
+        stripe_subscription_id = stripe_subscription
+        try:
+            stripe = _stripe_client()
+            stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+        except Exception:
+            stripe_subscription = None
+
+    if stripe_subscription:
+        stripe_subscription_id = _stripe_value(stripe_subscription, 'id', stripe_subscription_id)
+        status_value = _stripe_value(stripe_subscription, 'status', UserSubscription.STATUS_ACTIVE)
+        current_period_end = _timestamp_to_datetime(_stripe_value(stripe_subscription, 'current_period_end'))
+    elif mode == 'payment' and payment_status == 'paid':
+        status_value = UserSubscription.STATUS_ACTIVE
+        current_period_end = None
+    elif payment_status == 'paid':
+        status_value = UserSubscription.STATUS_ACTIVE
+
+    subscription.status = status_value or UserSubscription.STATUS_INCOMPLETE
+    subscription.stripe_customer_id = _stripe_value(checkout_session, 'customer', '') or subscription.stripe_customer_id
+    subscription.stripe_subscription_id = stripe_subscription_id or subscription.stripe_subscription_id
+    subscription.stripe_payment_intent_id = (
+        stripe_payment_intent if isinstance(stripe_payment_intent, str) else _stripe_value(stripe_payment_intent, 'id', '')
+    ) or subscription.stripe_payment_intent_id
+    subscription.current_period_end = current_period_end
+    subscription.save()
+    return subscription
+
+
+@swagger_auto_schema(
+    method='get',
+    responses={200: openapi.Response('Current subscription status')},
+    operation_description="Get the active plan and current user's subscription status"
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def subscription_status(request):
+    user = User.objects.select_related('role').get(pk=request.user.pk)
+    return Response(_subscription_payload(user))
+
+
+@swagger_auto_schema(
+    method='get',
+    responses={200: openapi.Response('Current user subscription invoices and receipts')},
+    operation_description="List current user's subscription payments with Stripe invoice/receipt links"
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def subscription_invoices(request):
+    subscriptions = UserSubscription.objects.filter(user=request.user).select_related(
+        'user', 'user__role', 'user__agency', 'plan'
+    ).order_by('-updated_at')
+    stripe, stripe_error = _stripe_or_none()
+    payments = [_subscription_history_item(subscription, stripe=stripe) for subscription in subscriptions]
+    return Response({
+        'payments': payments,
+        'stripe_error': stripe_error,
+    })
+
+
+@swagger_auto_schema(
+    method='get',
+    responses={200: openapi.Response('Admin subscription subscribers with payment details')},
+    operation_description="Admin: list all subscribers and their Stripe invoice/receipt links"
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def subscription_subscribers(request):
+    if not _can_manage_subscription_plans(request.user):
+        return Response({'detail': 'You do not have permission to view subscribers.'}, status=status.HTTP_403_FORBIDDEN)
+
+    subscriptions = UserSubscription.objects.select_related(
+        'user', 'user__role', 'user__agency', 'plan'
+    ).order_by('-updated_at')[:200]
+    stripe, stripe_error = _stripe_or_none()
+    subscribers = [
+        _subscription_history_item(subscription, stripe=stripe, include_user=True)
+        for subscription in subscriptions
+    ]
+    return Response({
+        'subscribers': subscribers,
+        'total': len(subscribers),
+        'stripe_error': stripe_error,
+    })
+
+
+@swagger_auto_schema(
+    method='post',
+    responses={200: openapi.Response('Stripe checkout session')},
+    operation_description="Create a Stripe checkout session for the active subscription plan"
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_subscription_checkout(request):
+    user = User.objects.select_related('role').get(pk=request.user.pk)
+    if user.has_active_subscription():
+        return Response({'already_active': True, **_subscription_payload(user)})
+
+    plan = SubscriptionPlan.active_plan()
+    if not plan:
+        return Response({'detail': 'No active subscription plan is configured.'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        stripe = _stripe_client()
+    except RuntimeError as exc:
+        return Response({'detail': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    success_url = request.data.get('success_url') or _frontend_url('/phase-complete/1?checkout=success&session_id={CHECKOUT_SESSION_ID}')
+    cancel_url = request.data.get('cancel_url') or _frontend_url('/phase-complete/1?checkout=cancel')
+    checkout_mode = 'payment' if plan.billing_interval == SubscriptionPlan.INTERVAL_ONE_TIME else 'subscription'
+
+    checkout_kwargs = {
+        'mode': checkout_mode,
+        'line_items': [_checkout_line_item(plan)],
+        'success_url': success_url,
+        'cancel_url': cancel_url,
+        'customer_email': user.email,
+        'client_reference_id': str(user.id),
+        'metadata': {
+            'user_id': str(user.id),
+            'plan_id': str(plan.id),
+        },
+    }
+    if checkout_mode == 'subscription':
+        checkout_kwargs['subscription_data'] = {
+            'metadata': {
+                'user_id': str(user.id),
+                'plan_id': str(plan.id),
+            }
+        }
+
+    try:
+        checkout_session = stripe.checkout.Session.create(**checkout_kwargs)
+    except Exception as exc:
+        return Response({'detail': f'Stripe checkout failed: {exc}'}, status=status.HTTP_502_BAD_GATEWAY)
+
+    UserSubscription.objects.update_or_create(
+        user=user,
+        plan=plan,
+        stripe_checkout_session_id=checkout_session.id,
+        defaults={
+            'status': UserSubscription.STATUS_INCOMPLETE,
+            'stripe_customer_id': _stripe_value(checkout_session, 'customer', '') or '',
+        },
+    )
+
+    return Response({
+        'checkout_session_id': checkout_session.id,
+        'checkout_url': checkout_session.url,
+        'plan': SubscriptionPlanSerializer(plan).data,
+    })
+
+
+@swagger_auto_schema(
+    method='post',
+    responses={200: openapi.Response('Verified subscription status')},
+    operation_description="Verify a Stripe checkout session after redirect"
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def verify_subscription_checkout(request):
+    checkout_session_id = request.data.get('checkout_session_id') or request.data.get('session_id')
+    if not checkout_session_id:
+        return Response({'detail': 'checkout_session_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        stripe = _stripe_client()
+        checkout_session = stripe.checkout.Session.retrieve(
+            checkout_session_id,
+            expand=['subscription', 'payment_intent'],
+        )
+    except RuntimeError as exc:
+        return Response({'detail': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as exc:
+        return Response({'detail': f'Unable to verify checkout: {exc}'}, status=status.HTTP_502_BAD_GATEWAY)
+
+    subscription = _sync_subscription_from_checkout_session(checkout_session)
+    if not subscription or subscription.user_id != request.user.id:
+        return Response({'detail': 'Checkout session does not belong to this user.'}, status=status.HTTP_403_FORBIDDEN)
+
+    user = User.objects.select_related('role').get(pk=request.user.pk)
+    return Response(_subscription_payload(user))
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def stripe_webhook(request):
+    payload = request.body
+    signature = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+    webhook_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', '')
+
+    try:
+        stripe = _stripe_client()
+        if webhook_secret:
+            event = stripe.Webhook.construct_event(payload, signature, webhook_secret)
+        else:
+            event = json.loads(payload.decode('utf-8'))
+    except Exception as exc:
+        return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    event_type = _stripe_value(event, 'type')
+    data_object = _stripe_value(_stripe_value(event, 'data', {}), 'object', {})
+
+    if event_type in {'checkout.session.completed', 'checkout.session.async_payment_succeeded'}:
+        _sync_subscription_from_checkout_session(data_object)
+    elif event_type in {'customer.subscription.updated', 'customer.subscription.deleted'}:
+        stripe_subscription_id = _stripe_value(data_object, 'id', '')
+        subscription = UserSubscription.objects.filter(stripe_subscription_id=stripe_subscription_id).first()
+        if subscription:
+            subscription.status = _stripe_value(data_object, 'status', UserSubscription.STATUS_CANCELED)
+            subscription.current_period_end = _timestamp_to_datetime(_stripe_value(data_object, 'current_period_end'))
+            subscription.save(update_fields=['status', 'current_period_end', 'updated_at'])
+
+    return Response({'received': True})
 
 
 @swagger_auto_schema(

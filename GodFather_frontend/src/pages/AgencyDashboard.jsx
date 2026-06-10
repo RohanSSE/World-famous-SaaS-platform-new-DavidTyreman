@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import "../components/AgencyDashboard.css";
 import authService from "../services/authService";
 import ChatNavbar from "./ChatNavbar";
+import { resetActiveJourneyState } from "../constants/journeyPhases";
 import {
   Users,
   FolderOpen,
@@ -11,6 +13,7 @@ import {
   AlertTriangle,
   BarChart3,
   Menu,
+  X,
   Search,
   Bell,
   Settings,
@@ -22,36 +25,33 @@ import {
   Activity,
   Shield,
   Star,
+  CreditCard,
+  Plus,
 } from "lucide-react";
+import PaymentHistoryCard from "../components/PaymentHistoryCard";
 
 // ── Sidebar Menu Items ──
 const SIDEBAR_ITEMS = [
-  { key: "dashboard", label: "Dashboard", icon: BarChart3 },
-  { key: "clients", label: "Assigned Clients", icon: Users },
-  { key: "sessions", label: "Active Sessions", icon: FolderOpen },
-  { key: "review", label: "Review Queue", icon: ClipboardCheck },
-  { key: "ai-insights", label: "AI Insights", icon: AlertTriangle },
-  { key: "manifestos", label: "Manifestos", icon: FileText },
-  { key: "feedback", label: "Comments & Feedback", icon: MessageSquare },
-  { key: "unlock", label: "Brand Unlock Requests", icon: Unlock },
-  { key: "analytics", label: "Analytics", icon: TrendingUp },
-  { key: "notifications", label: "Notifications", icon: Bell },
-  { key: "settings", label: "Profile & Team", icon: Settings },
+  { key: "dashboard", label: "Agency Dashboard", icon: BarChart3 },
+  { key: "clients", label: "Start a Project", icon: FolderOpen },
 ];
 
 // ── Sidebar ──
-function Sidebar({ activeTab, onTabChange, collapsed, onToggleCollapse }) {
+function Sidebar({ activeTab, onTabChange, collapsed, onToggleCollapse, mobileOpen, onClose, onNewSession, creatingSession }) {
   return (
-    <aside className={`agency-sidebar ${collapsed ? "collapsed" : ""}`}>
+    <aside className={`agency-sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="agency-sidebar-inner">
         <div className="agency-sidebar-header">
           <div className="agency-sidebar-label-row">
-            <button className="agency-sidebar-toggle" onClick={onToggleCollapse} title={collapsed ? "Expand menu" : "Collapse menu"}>
+            <button className="agency-sidebar-toggle agency-sidebar-toggle-desktop" onClick={onToggleCollapse} title={collapsed ? "Expand menu" : "Collapse menu"}>
               <Menu size={18} />
             </button>
-            {!collapsed && <span className="agency-sidebar-label">Menu</span>}
+            <button className="agency-sidebar-toggle agency-sidebar-close" onClick={onClose} title="Close menu">
+              <X size={18} />
+            </button>
+            {(!collapsed || mobileOpen) && <span className="agency-sidebar-label">Menu</span>}
           </div>
-          {!collapsed && <h3 className="agency-sidebar-title">Agency Panel</h3>}
+          {(!collapsed || mobileOpen) && <h3 className="agency-sidebar-title">Agency Panel</h3>}
         </div>
 
         <nav className="agency-sidebar-nav">
@@ -61,33 +61,91 @@ function Sidebar({ activeTab, onTabChange, collapsed, onToggleCollapse }) {
               <button
                 key={item.key}
                 className={`agency-sidebar-item ${activeTab === item.key ? "active" : ""}`}
-                onClick={() => onTabChange(item.key)}
+                onClick={() => {
+                  onTabChange(item.key);
+                  onClose?.();
+                }}
                 title={collapsed ? item.label : ""}
               >
                 <Icon size={18} />
-                {!collapsed && <span>{item.label}</span>}
+                {(!collapsed || mobileOpen) && <span>{item.label}</span>}
               </button>
             );
           })}
         </nav>
+
+        <div className="agency-sidebar-new">
+          <button
+            type="button"
+            className="agency-sidebar-new-btn"
+            onClick={onNewSession}
+            disabled={creatingSession}
+            title={collapsed ? "New Session" : ""}
+          >
+            <Plus size={16} />
+            {(!collapsed || mobileOpen) && <span>{creatingSession ? "Starting..." : "New Session"}</span>}
+          </button>
+        </div>
       </div>
     </aside>
   );
 }
 
+const AGENCY_CARD_ICONS = {
+  totalClients: "/Agency_icon_completed_project.png",
+  projectInProgress: "/Agency_icon_project_in_progress.png",
+  completedProject: "/Agency_icon_total_clinet.png",
+};
+
 // ── Stats Card ──
-function StatsCard({ title, value, icon: Icon, color }) {
+function StatsCard({ title, value, imageSrc }) {
   return (
     <div className="agency-stat-card">
       <div className="agency-stat-content">
         <p className="agency-stat-title">{title}</p>
         <h2 className="agency-stat-value">{value}</h2>
       </div>
-      <div className="agency-stat-icon-wrap" style={{ background: color }}>
-        <Icon size={24} color="#fff" />
+      <div className="agency-stat-icon-wrap">
+        <img src={imageSrc} alt="" className="agency-stat-icon" aria-hidden="true" />
       </div>
     </div>
   );
+}
+
+function getSessionStatusLabel(status) {
+  const normalized = String(status || "").toLowerCase();
+  if (normalized.includes("complete") || normalized.includes("locked")) return "Completed";
+  return "In Progress";
+}
+
+function getSessionBrandStage(session) {
+  if (session?.current_stage_label) return session.current_stage_label;
+  if (session?.stage) return session.stage;
+  const statusLabel = getSessionStatusLabel(session?.status);
+  if (statusLabel === "Completed") return "PDF Generated";
+  const progress = Number(session?.progress ?? 0);
+  if (progress >= 75) return "Brand Visual";
+  if (progress >= 50) return "Brand Discipline";
+  if (progress >= 25) return "Emotional Anchor";
+  return "Foundation";
+}
+
+function getSessionStageProgress(session) {
+  const stageProgress = Number(session?.stage_progress);
+  if (Number.isFinite(stageProgress)) return Math.max(0, Math.min(stageProgress, 100));
+  return Math.max(0, Math.min(Number(session?.progress ?? 0), 100));
+}
+
+function getSessionStageMeta(session) {
+  const answered = Number(session?.stage_answered_questions ?? 0);
+  const total = Number(session?.stage_total_questions ?? 0);
+  if (total > 0) return `${answered}/${total} questions`;
+
+  const completedStages = Number(session?.completed_stage_count ?? 0);
+  const totalStages = Number(session?.total_stage_count ?? 0);
+  if (totalStages > 0) return `${completedStages}/${totalStages} stages`;
+
+  return `${Math.round(getSessionStageProgress(session))}% done`;
 }
 
 // ── Review Queue Section ──
@@ -247,15 +305,54 @@ function RecentActivities({ activities }) {
 }
 
 // ── Sessions Table ──
-function SessionsTable({ sessions, onOpenSession }) {
+function SessionsTable({ sessions = [], onOpenSession, heading = "All Sessions", showProgress = true, limit }) {
+  const [searchQuery, setSearchQuery] = useState("");
   const getStatusDot = (status) =>
-    String(status ?? "").toLowerCase().includes("complete") ? "completed" : "progress";
+    getSessionStatusLabel(status) === "Completed" ? "completed" : "progress";
+  const filteredRows = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return sessions;
+
+    return sessions.filter((session) => {
+      const searchable = [
+        session.title,
+        session.name,
+        session.created_by_email,
+        getSessionStatusLabel(session.status),
+        getSessionBrandStage(session),
+        getSessionStageMeta(session),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(query);
+    });
+  }, [searchQuery, sessions]);
+  const rows = typeof limit === "number" ? filteredRows.slice(0, limit) : filteredRows;
 
   return (
-    <div className="agency-section-card">
-      <h3 className="agency-section-heading">
-        <FolderOpen size={20} /> All Sessions
-      </h3>
+    <div className={`agency-section-card ${!heading ? "agency-dashboard-table-card" : ""}`}>
+      {heading && (
+        <h3 className="agency-section-heading">
+          <FolderOpen size={20} /> {heading}
+        </h3>
+      )}
+      <div className="agency-table-toolbar">
+        <div className="agency-table-search">
+          <Search size={14} />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search client, status, or stage"
+            aria-label="Search client projects"
+          />
+        </div>
+        <span className="agency-table-count">
+          {rows.length} of {sessions.length} clients
+        </span>
+      </div>
       <div className="adb-table-container">
         <div className="adb-table-wrapper">
           <table className="adb-table" role="table">
@@ -264,23 +361,45 @@ function SessionsTable({ sessions, onOpenSession }) {
                 <th>Sr.No.</th>
                 <th>Client Name</th>
                 <th>Status</th>
-                <th>Progress</th>
                 <th>Brand Stage</th>
+                {showProgress && <th>Progress</th>}
                 <th style={{ width: "160px", textAlign: "right" }}>Action</th>
               </tr>
             </thead>
             <tbody>
-              {sessions.map((session, index) => (
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={showProgress ? 6 : 5} className="adb-empty-row">
+                    No client projects found
+                  </td>
+                </tr>
+              )}
+              {rows.map((session, index) => (
                 <tr key={session.id ?? index}>
                   <td className="adb-td-index">{index + 1}</td>
                   <td className="adb-td-name">{session.title ?? session.name}</td>
                   <td>
                     <div className="adb-status">
                       <span className={`adb-dot ${getStatusDot(session.status)}`} />
-                      <span className="adb-status-text">{session.status || "Draft"}</span>
+                      <span className="adb-status-text">{getSessionStatusLabel(session.status)}</span>
                     </div>
                   </td>
-                  <td>
+                  <td className="adb-td-stage">
+                    <div className="agency-stage-cell">
+                      <div className="agency-stage-line">
+                        <span>{getSessionBrandStage(session)}</span>
+                        <strong>{Math.round(getSessionStageProgress(session))}%</strong>
+                      </div>
+                      <div className="agency-stage-progress-track">
+                        <div
+                          className="agency-stage-progress-fill"
+                          style={{ width: `${getSessionStageProgress(session)}%` }}
+                        />
+                      </div>
+                      <span className="agency-stage-meta">{getSessionStageMeta(session)}</span>
+                    </div>
+                  </td>
+                  {showProgress && <td>
                     <div className="agency-mini-progress">
                       <div
                         className="agency-mini-progress-fill"
@@ -288,8 +407,7 @@ function SessionsTable({ sessions, onOpenSession }) {
                       />
                       <span>{Math.round(session.progress ?? 0)}%</span>
                     </div>
-                  </td>
-                  <td className="adb-td-stage">{session.stage ?? "Foundation"}</td>
+                  </td>}
                   <td className="adb-td-action">
                     <button
                       className="adb-btn-view"
@@ -317,9 +435,11 @@ export default function AgencyDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dashboardData, setDashboardData] = useState(null);
+  const [creatingSession, setCreatingSession] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -327,6 +447,15 @@ export default function AgencyDashboard() {
       setLoading(true);
       setError("");
       try {
+        const currentUser = authService.getCurrentUser() || {};
+        const isAgencyUser = currentUser.role === 3 || currentUser.role_name === "agency";
+        if (isAgencyUser) {
+          const redirect = await authService.getAgencyOnboardingRedirect();
+          if (redirect.route !== "/agency-dashboard") {
+            navigate(redirect.route, { replace: true });
+            return;
+          }
+        }
         const data = await authService.getAgencyDashboard();
         if (!cancelled) setDashboardData(data);
       } catch (err) {
@@ -350,16 +479,34 @@ export default function AgencyDashboard() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    if (!mobileSidebarOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setMobileSidebarOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileSidebarOpen]);
+
   const stats = dashboardData?.stats || {};
   const sessions = dashboardData?.sessions || [];
 
   const statCards = [
-    { title: "Assigned Clients", value: stats.assigned_clients ?? 0, icon: Users, color: "rgba(57, 89, 229, 0.8)" },
-    { title: "In Progress Projects", value: stats.in_progress_projects ?? 0, icon: FolderOpen, color: "rgba(255, 195, 134, 0.8)" },
-    { title: "Pending Reviews", value: stats.pending_reviews ?? 0, icon: ClipboardCheck, color: "rgba(142, 229, 255, 0.8)" },
-    { title: "Approved Manifestos", value: stats.approved_manifestos ?? 0, icon: FileText, color: "rgba(134, 227, 100, 0.8)" },
-    { title: "Weak AI Sessions", value: stats.weak_ai_sessions ?? 0, icon: AlertTriangle, color: "rgba(255, 107, 107, 0.8)" },
-    { title: "Avg Brand Score", value: `${stats.avg_brand_score ?? 0}%`, icon: Star, color: "rgba(168, 130, 255, 0.8)" },
+    {
+      title: "Total Clients",
+      value: stats.assigned_clients ?? sessions.length,
+      imageSrc: AGENCY_CARD_ICONS.totalClients,
+    },
+    {
+      title: "Project in Progress",
+      value: stats.in_progress_projects ?? sessions.filter((s) => getSessionStatusLabel(s.status) === "In Progress").length,
+      imageSrc: AGENCY_CARD_ICONS.projectInProgress,
+    },
+    {
+      title: "Completed Project",
+      value: stats.completed_projects ?? stats.pending_reviews ?? sessions.filter((s) => getSessionStatusLabel(s.status) === "Completed").length,
+      imageSrc: AGENCY_CARD_ICONS.completedProject,
+    },
   ];
 
   const handleViewSession = (item) => {
@@ -367,6 +514,25 @@ export default function AgencyDashboard() {
     localStorage.setItem("session", JSON.stringify(session));
     if (session.id) localStorage.setItem("sessionId", session.id);
     navigate("/manifesto");
+  };
+
+  const handleNewSession = async () => {
+    if (creatingSession) return;
+    setCreatingSession(true);
+    try {
+      const title = `Brand Discovery ${new Date().toLocaleDateString()}`;
+      const data = await authService.createSession({ title });
+      const sessionObj = data?.session || data;
+      resetActiveJourneyState();
+      localStorage.setItem("session", JSON.stringify(sessionObj));
+      if (sessionObj.id) localStorage.setItem("sessionId", String(sessionObj.id));
+      toast.success("New session started!");
+      navigate("/phase-questions/1");
+    } catch (err) {
+      toast.error(err?.message || "Failed to start session");
+    } finally {
+      setCreatingSession(false);
+    }
   };
 
   // ── Render content based on active tab ──
@@ -381,24 +547,34 @@ export default function AgencyDashboard() {
     switch (activeTab) {
       case "dashboard":
         return (
-          <>
+          <div className="agency-dashboard-overview">
             <div className="agency-stats-grid">
               {statCards.map((s) => (
                 <StatsCard key={s.title} {...s} />
               ))}
             </div>
-            <div className="agency-two-col">
-              <ReviewQueue items={dashboardData?.review_queue} onView={handleViewSession} />
-              <AIAlerts alerts={dashboardData?.ai_alerts} />
-            </div>
-            <ClientProgress clients={dashboardData?.client_progress} />
-            <RecentActivities activities={dashboardData?.recent_activities} />
-          </>
+            <SessionsTable
+              sessions={sessions}
+              onOpenSession={() => navigate("/manifesto")}
+              heading={null}
+              showProgress={false}
+            />
+          </div>
         );
       case "clients":
         return (
           <>
-            <h2 className="agency-tab-title">Assigned Clients</h2>
+            <div className="agency-tab-heading-row">
+              <h2 className="agency-tab-title">Assigned Clients</h2>
+              <button
+                type="button"
+                className="agency-start-session-btn"
+                onClick={handleNewSession}
+                disabled={creatingSession}
+              >
+                <Plus size={16} /> {creatingSession ? "Starting..." : "New Session"}
+              </button>
+            </div>
             <SessionsTable sessions={sessions} onOpenSession={() => navigate("/manifesto")} />
           </>
         );
@@ -467,6 +643,13 @@ export default function AgencyDashboard() {
             <RecentActivities activities={dashboardData?.recent_activities} />
           </>
         );
+      case "billing":
+        return (
+          <>
+            <h2 className="agency-tab-title">Billing & Invoices</h2>
+            <PaymentHistoryCard />
+          </>
+        );
       default:
         return (
           <div className="agency-placeholder">
@@ -479,13 +662,43 @@ export default function AgencyDashboard() {
 
   return (
     <div className="adb-root" style={{ overflow: "hidden", height: "100vh" }}>
-      <ChatNavbar showSaveButton={false} showDownloadButton={false} showLogoutButton={true} />
+      <ChatNavbar
+        showSaveButton={false}
+        showDownloadButton={false}
+        showLogoutButton={true}
+        leadingAction={
+          <button
+            type="button"
+            className="agency-navbar-menu-btn"
+            onClick={() => setMobileSidebarOpen((open) => !open)}
+            aria-label={mobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
+            aria-expanded={mobileSidebarOpen}
+          >
+            {mobileSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        }
+      />
       <div className="adb-background">
         <div className="adb-glow-left" />
         <div className="adb-glow-right" />
       </div>
-      <div className="adb-layout" style={{ height: "calc(100vh - 60px)" }}>
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} />
+      <div className="adb-layout" style={{ height: "calc(100vh - 45px)" }}>
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          collapsed={sidebarCollapsed}
+          mobileOpen={mobileSidebarOpen}
+          onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+          onClose={() => setMobileSidebarOpen(false)}
+          onNewSession={handleNewSession}
+          creatingSession={creatingSession}
+        />
+        <button
+          type="button"
+          className={`agency-sidebar-backdrop ${mobileSidebarOpen ? "open" : ""}`}
+          aria-label="Close sidebar"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
         <main className="adb-main-content">
           <div className="adb-content-wrapper">
             <h1 className="adb-page-title">Agency Dashboard</h1>

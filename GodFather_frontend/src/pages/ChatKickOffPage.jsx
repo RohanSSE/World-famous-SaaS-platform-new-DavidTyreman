@@ -1063,6 +1063,8 @@ export default function ChatKickOffPage() {
               qId: question.id,
               question: question.text,
               answer: answerText,
+              isAiAccepted: Boolean(answer?.is_ai_accepted),
+              aiSuggestion: answer?.ai_suggestion || "",
             };
           }
         });
@@ -1676,6 +1678,7 @@ export default function ChatKickOffPage() {
 
       const improved = (aiResp?.improved_answer || trimmed).trim();
       const followUp = (aiResp?.follow_up_question || "").trim();
+      const acceptedAiDraft = improved !== trimmed || isAiDraft;
 
       // Update per-question latest answer
       setMessages((prev) => {
@@ -1687,12 +1690,18 @@ export default function ChatKickOffPage() {
             ...updated[idx],
             question: q.text,
             answer: improved,
+            isAiAccepted: acceptedAiDraft,
+            aiSuggestion: acceptedAiDraft ? improved : "",
+            originalAnswer: acceptedAiDraft ? trimmed : "",
           };
         } else {
           updated.push({
             qId: q.id,
             question: q.text,
             answer: improved,
+            isAiAccepted: acceptedAiDraft,
+            aiSuggestion: acceptedAiDraft ? improved : "",
+            originalAnswer: acceptedAiDraft ? trimmed : "",
           });
         }
 
@@ -1920,12 +1929,16 @@ export default function ChatKickOffPage() {
     }
 
     const finalText = latestForQuestion.answer.trim();
+    const wasAiAccepted = Boolean(latestForQuestion.isAiAccepted);
 
     try {
       // 3. Save answer to backend
       await authService.createAnswer(sessionId, {
         question: Number(q.id),
         answer_text: finalText,
+        is_ai_accepted: wasAiAccepted,
+        ai_suggestion: wasAiAccepted ? latestForQuestion.aiSuggestion || finalText : undefined,
+        original_ai_text: latestForQuestion.originalAnswer || "",
       });
 
       // 4. Reload all answers from backend to refresh the entire component
@@ -2857,7 +2870,7 @@ export default function ChatKickOffPage() {
                                     suggestionSelectedRef.current = true;
                                     setInputValue(suggestion);
                                     setSuggestions([]);
-                                    setIsAiDraft(false);
+                                    setIsAiDraft(true);
                                     setHoveredSuggestionIdx(null);
                                   }}
                                   onMouseEnter={() => {

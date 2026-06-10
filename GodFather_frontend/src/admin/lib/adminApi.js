@@ -4,6 +4,14 @@ function adminGet(path, params = {}) {
   return api.get(path, { params }).then((r) => r.data);
 }
 
+function adminPost(path, data = {}) {
+  return api.post(path, data).then((r) => r.data);
+}
+
+function adminPatch(path, data = {}) {
+  return api.patch(path, data).then((r) => r.data);
+}
+
 export const adminApi = {
   cognitionDashboard: (days = 7) =>
     adminGet("/sessions/admin/cognition-dashboard/", { days }),
@@ -56,6 +64,12 @@ export const adminApi = {
     adminGet("/sessions/admin/product-signals/", { days }),
   opsIntelligence: (days = 14) =>
     adminGet("/sessions/admin/ops-intelligence/", { days }),
+
+  listSubscriptionPlans: () => adminGet("/auth/subscription/plans/"),
+  listSubscriptionSubscribers: () => adminGet("/auth/subscription/subscribers/"),
+  createSubscriptionPlan: (payload) => adminPost("/auth/subscription/plans/", payload),
+  updateSubscriptionPlan: (planId, payload) =>
+    adminPatch(`/auth/subscription/plans/${planId}/`, payload),
 
   listUsers: () => adminGet("/auth/users/"),
   listAgencies: () => adminGet("/auth/agencies/"),

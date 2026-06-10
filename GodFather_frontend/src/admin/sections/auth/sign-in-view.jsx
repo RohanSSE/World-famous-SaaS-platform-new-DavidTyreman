@@ -11,17 +11,8 @@ import InputAdornment from "@mui/material/InputAdornment";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useRouter } from "@admin/routes/hooks";
 import { Iconify } from "@admin/components/iconify";
-import { clearAuthSession, saveAuthSession } from "@admin/auth/session";
+import { clearAuthSession, isAdminUser, saveAuthSession } from "@admin/auth/session";
 import authService, { formatApiError } from "../../../services/authService";
-
-function canAccessAdminPanel(user) {
-  if (!user) return false;
-  if (user.is_superuser || user.is_staff) return true;
-  const role = (user.role_name || "").toLowerCase();
-  if (role === "admin") return true;
-  const perms = user.permissions || [];
-  return perms.includes("users.view") || perms.includes("agencies.view");
-}
 
 function SignInView() {
   const router = useRouter();
@@ -81,7 +72,7 @@ function SignInView() {
           localStorage.setItem("user", JSON.stringify(user));
         }
 
-        if (!canAccessAdminPanel(user)) {
+        if (!isAdminUser(user)) {
           await authService.logout();
           clearAuthSession();
           setErrorMessage(
@@ -98,6 +89,8 @@ function SignInView() {
           role: user.role_name,
           isStaff: Boolean(user.is_staff),
           isSuperuser: Boolean(user.is_superuser),
+          is_staff: user.is_staff,
+          is_superuser: user.is_superuser,
           loggedInAt: new Date().toISOString(),
         });
 

@@ -124,7 +124,7 @@ function UserView() {
       const msg =
         err?.response?.data?.detail ||
         err?.message ||
-        "Failed to load data. Sign out and sign in again at /admin/sign-in with an admin or superuser account.";
+        "Failed to load data. Sign out and sign in again at /login with an admin or superuser account.";
       setError(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setLoading(false);

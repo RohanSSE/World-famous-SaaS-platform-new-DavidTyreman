@@ -15,6 +15,7 @@ export default function OnboardingNavBar({
   showNext = true,
   backLabel = "Back",
   nextLabel = "Next",
+  phaseStatus = null,
 }) {
   const safeNavigate = (handler, fallbackPath) => {
     handler?.();
@@ -28,7 +29,7 @@ export default function OnboardingNavBar({
 
   return (
     <>
-      <OnboardingHeader onLogoClick={() => safeNavigate(onLogoClick, logoPath)} />
+      <OnboardingHeader onLogoClick={() => safeNavigate(onLogoClick, logoPath)} phaseStatus={phaseStatus} />
       {(showBack || showNext) && (
         <div className="onboarding-nav-row">
           {showBack ? (

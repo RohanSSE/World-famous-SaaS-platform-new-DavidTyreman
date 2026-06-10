@@ -1,9 +1,22 @@
 import axios from 'axios';
 
-// const API_BASE_URL = 'http://20.197.2.65:4000/api';
-// Default 8001 — port 8000 is often used by Cursor IDE on Windows; override in .env.development
+const getDefaultApiBaseUrl = () => {
+  if (typeof window === 'undefined') {
+    return 'http://127.0.0.1:8001/api';
+  }
+
+  const { protocol, hostname } = window.location;
+  const isLocalHost = ['localhost', '127.0.0.1', '0.0.0.0'].includes(hostname);
+
+  if (isLocalHost) {
+    return 'http://127.0.0.1:8001/api';
+  }
+
+  return `${protocol}//${hostname}:8001/api`;
+};
+
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://13.87.135.158:8001/api';
+  import.meta.env.VITE_API_BASE_URL || getDefaultApiBaseUrl();
 
 const ADMIN_SESSION_KEY = 'admin-auth-session';
 
@@ -36,7 +49,6 @@ function isAuthEndpoint(url = '') {
     '/auth/token/verify/',
   ].some((path) => url.includes(path));
 }
-
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,

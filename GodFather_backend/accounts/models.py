@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.conf import settings
+from django.utils import timezone
 
 class UserManager(BaseUserManager):
     """Custom user manager for email-based authentication"""
@@ -259,9 +261,122 @@ class User(AbstractUser):
     def is_agency_member(self):
         return self.agency is not None and self.has_role('agency')
 
-
     def get_agency_sessions(self):
         if not self.agency:
             return []
         from user_sessions.models import Session
         return Session.objects.filter(agency=self.agency)
+
+    def has_active_subscription(self):
+        if self.is_superuser or self.has_role('admin'):
+            return True
+        now = timezone.now()
+        return self.subscriptions.filter(
+            status__in=[UserSubscription.STATUS_ACTIVE, UserSubscription.STATUS_TRIALING],
+        ).filter(
+            models.Q(current_period_end__isnull=True) | models.Q(current_period_end__gt=now)
+        ).exists()
+
+
+class SubscriptionPlan(models.Model):
+    INTERVAL_ONE_TIME = 'one_time'
+    INTERVAL_MONTH = 'month'
+    INTERVAL_YEAR = 'year'
+
+    BILLING_INTERVAL_CHOICES = [
+        (INTERVAL_ONE_TIME, 'One time'),
+        (INTERVAL_MONTH, 'Monthly'),
+        (INTERVAL_YEAR, 'Yearly'),
+    ]
+
+    name = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='usd')
+    billing_interval = models.CharField(
+        max_length=20,
+        choices=BILLING_INTERVAL_CHOICES,
+        default=INTERVAL_MONTH,
+    )
+    stripe_product_id = models.CharField(max_length=255, blank=True)
+    stripe_price_id = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Optional. If empty, checkout uses the price configured here.',
+    )
+    question_gate_after = models.PositiveIntegerField(
+        default=8,
+        help_text='Users must subscribe after this many answered journey questions.',
+    )
+    is_active = models.BooleanField(default=True)
+    display_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'id']
+        verbose_name = 'Subscription plan'
+        verbose_name_plural = 'Subscription plans'
+
+    def __str__(self):
+        return f"{self.name} - {self.currency.upper()} {self.price}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.is_active:
+            SubscriptionPlan.objects.exclude(pk=self.pk).filter(is_active=True).update(is_active=False)
+
+    @classmethod
+    def active_plan(cls):
+        return cls.objects.filter(is_active=True).order_by('display_order', 'id').first()
+
+
+class UserSubscription(models.Model):
+    STATUS_INCOMPLETE = 'incomplete'
+    STATUS_ACTIVE = 'active'
+    STATUS_TRIALING = 'trialing'
+    STATUS_PAST_DUE = 'past_due'
+    STATUS_CANCELED = 'canceled'
+    STATUS_UNPAID = 'unpaid'
+
+    STATUS_CHOICES = [
+        (STATUS_INCOMPLETE, 'Incomplete'),
+        (STATUS_ACTIVE, 'Active'),
+        (STATUS_TRIALING, 'Trialing'),
+        (STATUS_PAST_DUE, 'Past due'),
+        (STATUS_CANCELED, 'Canceled'),
+        (STATUS_UNPAID, 'Unpaid'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='subscriptions',
+        on_delete=models.CASCADE,
+    )
+    plan = models.ForeignKey(
+        SubscriptionPlan,
+        related_name='user_subscriptions',
+        on_delete=models.PROTECT,
+    )
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_INCOMPLETE)
+    stripe_customer_id = models.CharField(max_length=255, blank=True)
+    stripe_checkout_session_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True)
+    current_period_end = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = 'User subscription'
+        verbose_name_plural = 'User subscriptions'
+
+    def __str__(self):
+        return f"{self.user.email} - {self.plan.name} ({self.status})"
+
+    @property
+    def is_active(self):
+        if self.status not in {self.STATUS_ACTIVE, self.STATUS_TRIALING}:
+            return False
+        return self.current_period_end is None or self.current_period_end > timezone.now()

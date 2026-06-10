@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
 
 import { isAuthenticated } from '@admin/auth/session';
-import { AuthLayout } from '@admin/layouts/auth';
 import { DashboardLayout } from '@admin/layouts/dashboard';
 
 const DashboardPage = lazy(() => import('@admin/pages/dashboard'));
@@ -16,9 +15,8 @@ const OpsPage = lazy(() => import('@admin/pages/ops'));
 const QuestionsPage = lazy(() => import('@admin/pages/questions'));
 const TrainBgfPage = lazy(() => import('@admin/pages/train-bgf'));
 const DevPage = lazy(() => import('@admin/pages/dev'));
-const SignInPage = lazy(() => import('@admin/pages/sign-in'));
-
-const ADMIN_SIGN_IN = '/admin/sign-in';
+const SubscriptionPage = lazy(() => import('@admin/pages/subscription'));
+const LOGIN_PATH = '/login';
 const ADMIN_HOME = '/admin';
 
 function Loading() {
@@ -52,21 +50,13 @@ export function AdminGuestOnly({ children }) {
 
 export function AdminAuthOnly({ children }) {
   if (!isAuthenticated()) {
-    return <Navigate to={ADMIN_SIGN_IN} replace />;
+    return <Navigate to={LOGIN_PATH} replace />;
   }
   return children;
 }
 
 export function AdminSignInRoute() {
-  return (
-    <AdminGuestOnly>
-      <AuthLayout>
-        <Suspense fallback={<Loading />}>
-          <SignInPage />
-        </Suspense>
-      </AuthLayout>
-    </AdminGuestOnly>
-  );
+  return <Navigate to={LOGIN_PATH} replace />;
 }
 
 export function AdminDashboardLayout() {
@@ -111,4 +101,8 @@ export function AdminTrainBgfPage() {
 
 export function AdminDevPage() {
   return <DevPage />;
+}
+
+export function AdminSubscriptionPage() {
+  return <SubscriptionPage />;
 }

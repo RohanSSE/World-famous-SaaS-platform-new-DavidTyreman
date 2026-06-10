@@ -1,62 +1,110 @@
 .ocp-page {
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background: linear-gradient(145deg, #030826 0%, #04063f 100%);
   color: #e8f0ff;
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .ocp-topbar {
   width: 100%;
+  flex-shrink: 0;
+}
+
+.ocp-page .chat-header {
+  min-height: 58px;
+  padding: 10px 32px;
+  box-sizing: border-box;
+  background: rgba(7, 12, 44, 0.7);
+}
+
+.ocp-page .chat-logo {
+  height: 34px;
+}
+
+.ocp-page .chat-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
 }
 
 .ocp-main {
+  flex: 1;
+  min-height: 0;
+  width: min(100%, 980px);
   max-width: 980px;
   margin: 0 auto;
-  padding: 18px 20px 84px;
+  padding: 20px 20px 26px;
   position: relative;
-  z-index: 5;
+  z-index: 1;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .ocp-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  width: min(760px, calc(100vw - 120px));
+  margin: 0 auto 14px;
+  flex-shrink: 0;
+  gap: 14px;
 }
 
 .ocp-chip {
   border: 1px solid rgba(141, 170, 255, 0.45);
   border-radius: 999px;
-  padding: 6px 16px;
-  font-size: 11px;
+  min-height: 36px;
+  padding: 8px 18px;
+  font-size: 13px;
   color: #dae9ff;
   background: rgba(82, 104, 200, 0.26);
   cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.ocp-chip:hover {
+  background: rgba(57, 89, 229, 0.36);
+  border-color: rgba(142, 229, 255, 0.55);
+  transform: translateY(-1px);
 }
 
 .ocp-chat-panel {
   width: min(760px, calc(100vw - 120px));
-  min-height: 280px;
-  max-height: calc(100vh - 300px);
-  margin: 8px auto 28px;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  margin: 0 auto 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   overflow-y: auto;
-  padding: 2px 4px 10px;
+  padding: 14px;
   box-sizing: border-box;
+  border: 1px solid rgba(139, 176, 255, 0.26);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(124, 231, 255, 0.09), transparent 28%),
+    rgba(5, 12, 52, 0.26);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 46px rgba(0, 0, 0, 0.18);
 }
 
 .ocp-bubble {
-  max-width: min(700px, calc(100vw - 100px));
+  max-width: min(700px, 100%);
   width: fit-content;
   margin: 0;
   border: 1px solid rgba(139, 176, 255, 0.45);
-  border-radius: 16px;
-  padding: 14px 18px 14px 42px;
+  border-radius: 12px;
+  padding: 13px 18px 13px 40px;
   position: relative;
-  background: rgba(9, 19, 73, 0.56);
+  background: rgba(9, 19, 73, 0.68);
   box-sizing: border-box;
 }
 
@@ -84,16 +132,16 @@
   position: absolute;
   left: 12px;
   top: 14px;
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #c0f9ff, #5bc9ff 65%);
 }
 
 .ocp-bubble p {
   margin: 0;
-  line-height: 1.5;
-  font-size: 15px;
+  line-height: 1.38;
+  font-size: 13.5px;
   font-weight: 500;
   letter-spacing: 0;
   white-space: pre-wrap;
@@ -124,15 +172,16 @@
 }
 
 .ocp-input-wrap {
-  width: min(600px, calc(100vw - 120px));
+  width: min(700px, calc(100vw - 120px));
   margin: 0 auto 0;
   border: 1px solid rgba(141, 170, 255, 0.45);
   border-radius: 999px;
   display: flex;
   align-items: center;
-  padding: 6px 7px 6px 18px;
-  background: rgba(9, 17, 64, 0.62);
+  padding: 5px 6px 5px 16px;
+  background: rgba(9, 17, 64, 0.72);
   box-sizing: border-box;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
 }
 
 .ocp-input {
@@ -141,7 +190,7 @@
   outline: none;
   background: transparent;
   color: #e8f0ff;
-  font-size: 15px;
+  font-size: 13.5px;
   min-width: 0;
 }
 
@@ -150,8 +199,8 @@
 }
 
 .ocp-send {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border: none;
   border-radius: 50%;
   color: #fff;
@@ -168,12 +217,14 @@
 
 .ocp-orb {
   position: fixed;
-  right: 148px;
-  bottom: 144px;
-  width: 84px;
-  height: 84px;
-  z-index: 4;
+  right: 86px;
+  bottom: 62px;
+  width: 150px;
+  height: 150px;
+  z-index: 0;
   overflow: visible;
+  opacity: 0.82;
+  pointer-events: none;
 }
 
 @media (max-width: 1100px) {
@@ -198,14 +249,18 @@
     padding: 12px 14px 64px;
   }
 
+  .ocp-row {
+    width: calc(100vw - 28px);
+  }
+
   .ocp-bubble {
     max-width: calc(100vw - 28px);
   }
 
   .ocp-chat-panel {
     width: calc(100vw - 28px);
-    min-height: 300px;
-    max-height: calc(100vh - 260px);
+    min-height: 0;
+    max-height: none;
   }
 
   .ocp-bubble p {

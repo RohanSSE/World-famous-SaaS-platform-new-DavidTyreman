@@ -1,19 +1,19 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import Popover from "@mui/material/Popover";
 import MenuList from "@mui/material/MenuList";
 import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 import { Iconify } from "@admin/components/iconify";
 import { clearAuthSession, getAuthSession } from "@admin/auth/session";
-import authService from "../../services/authService";
+import { useAuth } from "../../context/AuthProvider";
 import brandLogo from "../../assets/mask-group.png";
 
 function AdminTopBar({ onMenuClick }) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const session = getAuthSession();
   const [anchor, setAnchor] = useState(null);
-  const ref = useRef(null);
 
   const initials =
     session?.name?.charAt(0)?.toUpperCase() ||
@@ -23,21 +23,13 @@ function AdminTopBar({ onMenuClick }) {
   const handleLogout = useCallback(async () => {
     setAnchor(null);
     try {
-      await authService.logout();
+      await logout();
     } catch {
       /* ignore */
     }
     clearAuthSession();
-    navigate("/admin/sign-in", { replace: true });
-  }, [navigate]);
-
-  useEffect(() => {
-    const onDoc = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setAnchor(null);
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
+    navigate("/intro-ductory", { replace: true });
+  }, [logout, navigate]);
 
   return (
     <header className="admin-chat-header">
@@ -56,7 +48,7 @@ function AdminTopBar({ onMenuClick }) {
         </div>
       </div>
 
-      <div className="admin-chat-header-actions" ref={ref}>
+      <div className="admin-chat-header-actions">
         <button
           type="button"
           className="admin-avatar-top"

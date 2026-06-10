@@ -12,6 +12,14 @@ urlpatterns = [
     path('login/', views.login_with_email, name='login'),
     path('me/', views.me, name='me'),
     path('change-password/', views.change_password, name='change_password'),
+    path('subscription/', views.subscription_status, name='subscription_status'),
+    path('subscription/invoices/', views.subscription_invoices, name='subscription_invoices'),
+    path('subscription/subscribers/', views.subscription_subscribers, name='subscription_subscribers'),
+    path('subscription/plans/', views.subscription_plans, name='subscription_plans'),
+    path('subscription/plans/<int:pk>/', views.subscription_plan_detail, name='subscription_plan_detail'),
+    path('subscription/checkout/', views.create_subscription_checkout, name='subscription_checkout'),
+    path('subscription/verify/', views.verify_subscription_checkout, name='subscription_verify'),
+    path('subscription/webhook/', views.stripe_webhook, name='stripe_webhook'),
     
     # JWT Token Management
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

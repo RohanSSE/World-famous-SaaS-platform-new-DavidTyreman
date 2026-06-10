@@ -49,7 +49,7 @@
    ================== */
 .intro-header {
   position: absolute;
-  top: 20px;
+  top: 14px;
   left: 40px;
   right: 40px;
   display: flex;
@@ -59,14 +59,14 @@
 }
 
 .intro-logo img {
-  height: 40px;
+  height: 34px;
   width: auto;
 }
 
 /* Top-right buttons */
 .intro-buttons {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
   z-index: 10;
 }
@@ -81,10 +81,10 @@
   background: #FFFFFF; /* White background */
   border: 1.5px solid #FFFFFF;
   color: #3959E5; /* Blue text */
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   border-radius: 9999px;
-  padding: 6px 20px;
+  padding: 5px 18px;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -100,9 +100,9 @@
   background: #3b6aff;
   border: none;
   color: #fff;
-  font-size: 15px;
+  font-size: 14px;
   border-radius: 9999px;
-  padding: 6px 20px;
+  padding: 5px 18px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -118,7 +118,7 @@
    ================== */
 .intro-divider {
   position: absolute;
-  top: 80px; /* Below navbar */
+  top: 66px; /* Below navbar */
   left: 0;
   right: 0;
   width: 100%;
@@ -216,17 +216,21 @@
 
 @media (max-width: 768px) {
   .intro-header {
-    top: 16px;
+    top: 12px;
     left: 20px;
     right: 20px;
   }
 
+  .intro-logo img {
+    height: 30px;
+  }
+
   .intro-divider {
-    top: 90px;
+    top: 62px;
   }
 
   .intro-tagline-section {
-    top: 120px;
+    top: 100px;
     padding: 0 20px;
   }
 
@@ -237,7 +241,7 @@
   }
 
   .intro-content {
-    top: 90px;
+    top: 72px;
     padding: 0 20px;
     gap: 32px;
   }
@@ -256,12 +260,12 @@
 @media (max-width: 480px) {
   .intro-header {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     align-items: flex-start;
   }
 
   .intro-divider {
-    top: 100px;
+    top: 96px;
   }
 
   .intro-tagline-section {

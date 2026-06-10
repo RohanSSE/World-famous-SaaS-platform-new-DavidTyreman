@@ -598,9 +598,16 @@ class Session(models.Model):
         return 5  # All stages complete
 
 
-    def can_access_stage(self, stage_num):
+    def can_access_stage(self, stage_num, user=None):
         """Check if user can access a specific stage"""
-        return self.get_current_stage() >= stage_num
+        if self.get_current_stage() < stage_num:
+            return False
+        if stage_num <= 1:
+            return True
+        actor = user or self.created_by
+        if actor and (actor.is_superuser or actor.has_role('admin')):
+            return True
+        return bool(self.created_by and self.created_by.has_active_subscription())
 
 
 class Question(models.Model):
@@ -622,6 +629,9 @@ class Question(models.Model):
 
     
     text = models.TextField()
+    ai_refined_text = models.TextField(blank=True, default="", editable=False)
+    ai_refined_source_hash = models.CharField(max_length=64, blank=True, default="", editable=False)
+    ai_refined_at = models.DateTimeField(null=True, blank=True, editable=False)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='other')
     stage = models.IntegerField(choices=STAGE_CHOICES, default=1)  # ADD THIS
     order = models.IntegerField(default=0)
