@@ -377,6 +377,10 @@ AUTH_USER_MODEL = "accounts.User"
 # Azure OpenAI only (no OpenAI.com). Set in env: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY,
 # AZURE_OPENAI_DEPLOYMENT_NAME (chat), AZURE_OPENAI_EMBEDDING_DEPLOYMENT (embeddings, default text-embedding-3-small).
 EMBEDDING_MODEL = env("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", default="text-embedding-3-small")
+LLM_API_ENDPOINT = env("LLM_API_ENDPOINT", default="")
+LLM_API_KEY = env("LLM_API_KEY", default="")
+LLM_MODEL_NAME = env("LLM_MODEL_NAME", default="")
+LLM_MAX_TOKENS = env.int("LLM_MAX_TOKENS", default=1200)
 
 # Elasticsearch (local: docker compose up -d elasticsearch)
 _es_raw = env("ELASTICSEARCH_HOSTS", default="http://localhost:9200")

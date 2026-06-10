@@ -18,6 +18,40 @@ export const adminApi = {
     adminGet("/sessions/admin/cognition-live/", { minutes }),
   chunkQuality: (limit = 500) =>
     adminGet("/sessions/admin/chunk-quality/", { limit }),
+  ragDevConfig: () => adminGet("/sessions/admin/rag-dev/config/"),
+  saveRagDevConfig: async (payload) => {
+    const response = await api.post("/sessions/admin/rag-dev/config/", payload);
+    return response.data;
+  },
+  ragDevIndexStatus: () => adminGet("/sessions/admin/rag-dev/index-status/"),
+  ragDevRebuildIndex: async (payload = {}) => {
+    const response = await api.post("/sessions/admin/rag-dev/rebuild-index/", payload);
+    return response.data;
+  },
+  ragDevTestQuery: async (payload) => {
+    const response = await api.post("/sessions/admin/rag-dev/test-query/", payload);
+    return response.data;
+  },
+  aiTuningState: (limit = 20) =>
+    adminGet("/sessions/admin/ai-tuning/", { limit }),
+  aiTuningLoadDefault: async () => {
+    const response = await api.post("/sessions/admin/ai-tuning/load-default/");
+    return response.data;
+  },
+  aiTuningSaveSection: async (sectionKey, payload) => {
+    const response = await api.post(
+      `/sessions/admin/ai-tuning/sections/${sectionKey}/save/`,
+      payload
+    );
+    return response.data;
+  },
+  aiTuningTrainSection: async (sectionKey, payload) => {
+    const response = await api.post(
+      `/sessions/admin/ai-tuning/sections/${sectionKey}/train/`,
+      payload
+    );
+    return response.data;
+  },
   productSignals: (days = 14) =>
     adminGet("/sessions/admin/product-signals/", { days }),
   opsIntelligence: (days = 14) =>

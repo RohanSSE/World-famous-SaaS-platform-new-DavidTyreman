@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 from .views import (
     task_dashboard, review_dashboard, agency_dashboard, user_dashboard, session_list, session_create, session_detail,
     session_start, session_complete, session_assign_agency,
@@ -17,6 +17,7 @@ from .views import (
     product_observability_dashboard, session_brand_export,
     admin_cognition_dashboard, admin_cognition_traces, admin_feedback_review,
     admin_cognition_live, admin_chunk_quality, admin_product_signals,
+    admin_rag_dev_config, admin_rag_dev_index_status, admin_rag_dev_rebuild_index, admin_rag_dev_test_query,
     demo_brands_catalog, session_demo_pack, record_pilot_event,
     session_pilot_kpis, user_pilot_summary, admin_ops_intelligence,
 
@@ -24,6 +25,8 @@ from .views import (
 
 app_name = 'user_sessions'
 urlpatterns = [
+    path('admin/ai-tuning/', include('AdminAITuning.urls')),
+
     # Dashboards
     path('dashboard/task/', task_dashboard, name='client_dashboard'),
     path('dashboard/review/', review_dashboard, name='agency_dashboard'),
@@ -112,6 +115,10 @@ urlpatterns = [
     path('admin/feedback-review/', admin_feedback_review, name='admin-feedback-review'),
     path('admin/cognition-live/', admin_cognition_live, name='admin-cognition-live'),
     path('admin/chunk-quality/', admin_chunk_quality, name='admin-chunk-quality'),
+    path('admin/rag-dev/config/', admin_rag_dev_config, name='admin-rag-dev-config'),
+    path('admin/rag-dev/index-status/', admin_rag_dev_index_status, name='admin-rag-dev-index-status'),
+    path('admin/rag-dev/rebuild-index/', admin_rag_dev_rebuild_index, name='admin-rag-dev-rebuild-index'),
+    path('admin/rag-dev/test-query/', admin_rag_dev_test_query, name='admin-rag-dev-test-query'),
     path('admin/product-signals/', admin_product_signals, name='admin-product-signals'),
     path('admin/ops-intelligence/', admin_ops_intelligence, name='admin-ops-intelligence'),
     path('demo-brands/', demo_brands_catalog, name='demo-brands-catalog'),

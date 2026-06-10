@@ -14,6 +14,8 @@ const CognitionPage = lazy(() => import('@admin/pages/cognition'));
 const ReviewPage = lazy(() => import('@admin/pages/review'));
 const OpsPage = lazy(() => import('@admin/pages/ops'));
 const QuestionsPage = lazy(() => import('@admin/pages/questions'));
+const TrainBgfPage = lazy(() => import('@admin/pages/train-bgf'));
+const DevPage = lazy(() => import('@admin/pages/dev'));
 const SignInPage = lazy(() => import('@admin/pages/sign-in'));
 
 const ADMIN_SIGN_IN = '/admin/sign-in';
@@ -101,4 +103,12 @@ export function AdminOpsPage() {
 
 export function AdminQuestionsPage() {
   return <QuestionsPage />;
+}
+
+export function AdminTrainBgfPage() {
+  return <TrainBgfPage />;
+}
+
+export function AdminDevPage() {
+  return <DevPage />;
 }

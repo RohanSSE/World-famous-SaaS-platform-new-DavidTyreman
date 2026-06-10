@@ -12,6 +12,7 @@ from brandgodfather.services.pdf_ingestion import PDFIngestionService
 from brandgodfather.services.BrandBook_generator import BrandBook
 from brandgodfather.services.orchestrator import QuestionOrchestrator
 from brandgodfather.services.output_mode import OutputModeEngine
+from brandgodfather.services.ragv2.orchestrator import run_coaching_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,25 @@ def process_answer_async(self, session_id, q_id, user_answer):
         payload.get("status"),
     )
     return payload
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_backoff_max=120, retry_jitter=True, max_retries=3)
+def process_answer_async_ragv2(self, session_state):
+    """Run RAGv2 standalone coaching pipeline asynchronously."""
+    logger.info(
+        "BrandGodFather process_answer_async_ragv2 started task=%s session_id=%s question=%s",
+        self.request.id,
+        session_state.get("session_id"),
+        session_state.get("current_question"),
+    )
+    result = run_coaching_pipeline(session_state=session_state)
+    logger.info(
+        "BrandGodFather process_answer_async_ragv2 done task=%s session_id=%s status=%s",
+        self.request.id,
+        session_state.get("session_id"),
+        result.get("gate_status"),
+    )
+    return result
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_backoff_max=60, retry_jitter=True, max_retries=3)

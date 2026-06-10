@@ -150,6 +150,8 @@ import {
   AdminReviewPage,
   AdminOpsPage,
   AdminQuestionsPage,
+  AdminTrainBgfPage,
+  AdminDevPage,
 } from "./admin/admin-routes";
 import IntroductoryPage from "./pages/IntroductoryPage";
 
@@ -432,6 +434,8 @@ function AppContent() {
             <Route path="review" element={<AdminReviewPage />} />
             <Route path="ops" element={<AdminOpsPage />} />
             <Route path="questions" element={<AdminQuestionsPage />} />
+            <Route path="train-bgf" element={<AdminTrainBgfPage />} />
+            <Route path="dev" element={<AdminDevPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/admin/sign-in" replace />} />
         </Route>

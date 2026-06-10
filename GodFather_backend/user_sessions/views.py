@@ -2031,8 +2031,8 @@ from openai import OpenAIError
 import logging
 
 from utils.retrieve_ai_knowledge import retrieve_ai_knowledge, format_knowledge_context
-from user_sessions.services.rag_service import (
-    build_combined_context_for_draft,
+from user_sessions.services.rag_service import build_combined_context_for_draft
+from user_sessions.services.rag_pipeline_resolver import (
     generate_rag_response,
     retrieve_context,
     stream_rag_response,
@@ -3069,6 +3069,7 @@ def rag_query(request, pk=None):
             user_query,
             user=request.user,
             session=session,
+            pipeline=str(request.data.get("pipeline") or "").strip() or None,
             agent_id=request.data.get("agent_id", "strategist"),
             include_user_docs=bool(request.data.get("include_user_docs")),
             conversation_messages=conversation_messages,
@@ -3104,6 +3105,10 @@ def rag_query(request, pk=None):
             "latency_breakdown": result.get("latency_breakdown"),
             "evaluation": result.get("evaluation"),
             "retrieval_debug": result.get("retrieval_debug"),
+            "active_pipeline": result.get("active_pipeline"),
+            "rag_phase": result.get("rag_phase"),
+            "phase_artifact": result.get("phase_artifact"),
+            "phase_artifacts": result.get("phase_artifacts", {}),
             "rate_limit_remaining": remaining,
         }
         if "debug" in result:
@@ -3141,6 +3146,7 @@ def rag_query_stream(request, pk=None):
                 user_query,
                 user=request.user,
                 session=session,
+                pipeline=str(request.data.get("pipeline") or "").strip() or None,
                 agent_id=request.data.get("agent_id", "strategist"),
                 include_user_docs=bool(request.data.get("include_user_docs")),
                 conversation_messages=request.data.get("conversation_messages"),
@@ -4873,6 +4879,158 @@ def admin_chunk_quality(request):
 
     limit = min(int(request.query_params.get("limit", 500)), 2000)
     return Response(audit_chunks(limit=limit))
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def admin_rag_dev_config(request):
+    """GET/POST /api/sessions/admin/rag-dev/config/"""
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+
+    from user_sessions.services.rag_dev_config import get_rag_dev_config, save_rag_dev_config
+
+    if request.method == 'GET':
+        return Response(get_rag_dev_config())
+
+    payload = {
+        "active_pipeline": str(request.data.get("active_pipeline", "rag_v1") or "rag_v1"),
+        "enabled": bool(request.data.get("enabled", False)),
+        "pre_retrieval_prompt": str(request.data.get("pre_retrieval_prompt", "") or ""),
+        "system_injection_prompt": str(request.data.get("system_injection_prompt", "") or ""),
+        "retrieval_profile_notes": str(request.data.get("retrieval_profile_notes", "") or ""),
+        "phase_1_master_prompt": str(request.data.get("phase_1_master_prompt", "") or ""),
+        "phase_2_master_prompt": str(request.data.get("phase_2_master_prompt", "") or ""),
+        "phase_3_master_prompt": str(request.data.get("phase_3_master_prompt", "") or ""),
+        "phase_4_master_prompt": str(request.data.get("phase_4_master_prompt", "") or ""),
+    }
+
+    saved = save_rag_dev_config(payload, updated_by=getattr(request.user, "email", "admin"))
+    return Response(saved)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_rag_dev_index_status(request):
+    """GET /api/sessions/admin/rag-dev/index-status/"""
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+
+    from utils.ai_knowledge_auto import (
+        compute_knowledge_fingerprint,
+        elasticsearch_index_exists,
+        load_index_state,
+        needs_rebuild,
+    )
+
+    should_rebuild, reason = needs_rebuild(force=False)
+    state = load_index_state()
+    index_exists = elasticsearch_index_exists()
+
+    doc_count = None
+    if index_exists:
+        try:
+            from document.utils.elasticsearch_service import ElasticsearchService
+            from utils.ai_knowledge_config import AI_KNOWLEDGE_INDEX_NAME
+
+            es = ElasticsearchService()
+            doc_count = es.es.count(index=AI_KNOWLEDGE_INDEX_NAME).get("count")
+        except Exception:
+            doc_count = None
+
+    return Response(
+        {
+            "index_exists": index_exists,
+            "doc_count": doc_count,
+            "needs_rebuild": should_rebuild,
+            "reason": reason,
+            "fingerprint": compute_knowledge_fingerprint(),
+            "state": state,
+        }
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_rag_dev_rebuild_index(request):
+    """POST /api/sessions/admin/rag-dev/rebuild-index/"""
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+
+    from utils.ai_knowledge_auto import ensure_index_current
+
+    force = bool(request.data.get("force", False))
+    async_build = bool(request.data.get("async_build", True))
+    ok, message = ensure_index_current(async_build=async_build, force=force)
+
+    return Response(
+        {
+            "success": bool(ok),
+            "message": message,
+            "force": force,
+            "async_build": async_build,
+        },
+        status=status.HTTP_200_OK if ok else status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_rag_dev_test_query(request):
+    """POST /api/sessions/admin/rag-dev/test-query/"""
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+
+    from user_sessions.services.rag_pipeline_resolver import generate_rag_response
+
+    query = str(request.data.get("query") or "").strip()
+    if not query:
+        return Response({"detail": "query is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    session = None
+    session_id = request.data.get("session_id")
+    if session_id:
+        try:
+            session = Session.objects.get(pk=int(session_id))
+        except Exception:
+            return Response({"detail": "Invalid session_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+    prompt_injection = {
+        "pre_retrieval_prompt": str(request.data.get("pre_retrieval_prompt") or "").strip(),
+        "system_injection_prompt": str(request.data.get("system_injection_prompt") or "").strip(),
+    }
+
+    result = generate_rag_response(
+        query,
+        user=request.user,
+        session=session,
+        session_id=getattr(session, "id", None),
+        pipeline=str(request.data.get("pipeline") or "").strip() or None,
+        agent_id=str(request.data.get("agent_id") or "strategist"),
+        include_user_docs=bool(request.data.get("include_user_docs", False)),
+        include_debug=True,
+        include_evaluation=True,
+        top_k=min(max(int(request.data.get("top_k", 8)), 1), 20),
+        prompt_injection=prompt_injection,
+    )
+
+    return Response(
+        {
+            "answer": result.get("answer"),
+            "sources": result.get("sources", []),
+            "chunks_retrieved": result.get("chunks_retrieved", 0),
+            "retrieval_confidence": result.get("retrieval_confidence"),
+            "retrieval_critique": result.get("retrieval_critique"),
+            "retrieval_debug": result.get("retrieval_debug"),
+            "active_pipeline": result.get("active_pipeline"),
+            "rag_phase": result.get("rag_phase"),
+            "phase_artifact": result.get("phase_artifact"),
+            "phase_artifacts": result.get("phase_artifacts", {}),
+            "evaluation": result.get("evaluation"),
+            "latency_breakdown": result.get("latency_breakdown"),
+            "reasoning_path": result.get("reasoning_path"),
+        }
+    )
 
 
 @api_view(['GET'])

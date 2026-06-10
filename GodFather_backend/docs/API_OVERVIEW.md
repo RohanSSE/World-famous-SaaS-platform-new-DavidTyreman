@@ -136,3 +136,38 @@ Connection and message format are implemented in `user_sessions.consumers.Founda
 3. Use document context in session AI endpoints (e.g. document-based suggestion) as required by the frontend.
 
 All endpoints that modify data require authentication unless otherwise documented (e.g. password reset). Use Swagger/ReDoc for exact request/response shapes and error codes.
+
+---
+
+## 7. Admin AI Tuning (Train BGF) — `/api/sessions/admin/ai-tuning/`
+
+Prepared by: RohanSSE
+
+This section documents the dedicated Train BGF APIs for section-level fine-tuning, version history, default loading, and section-specific training.
+
+All endpoints below are admin-protected and appear in Swagger under tag: **Admin AI Tuning**.
+
+| Method | URL name | Endpoint | Description |
+|--------|----------|----------|-------------|
+| GET | `admin-ai-tuning-state` | `/api/sessions/admin/ai-tuning/` | Returns current tuning config, parsed section fields, default template metadata, and version history from DB. Optional query param: `limit` (1-100). |
+| POST | `admin-ai-tuning-load-default` | `/api/sessions/admin/ai-tuning/load-default/` | Loads default tuning template from DB into active config and creates a versioned audit entry. |
+| POST | `admin-ai-tuning-save-section` | `/api/sessions/admin/ai-tuning/sections/<section_key>/save/` | Saves one section (prompt, goal, criteria) and records a version snapshot in DB. |
+| POST | `admin-ai-tuning-train-section` | `/api/sessions/admin/ai-tuning/sections/<section_key>/train/` | Performs section-specific training flow (save + training trigger) and records a version entry in DB. |
+
+Allowed `section_key` values:
+
+- `phase_1_master_prompt` (Discovery)
+- `phase_2_master_prompt` (BrandBook)
+- `phase_3_master_prompt` (Content Generation)
+- `phase_4_master_prompt` (Ongoing Guidance)
+
+Typical section payload (save/train):
+
+```json
+{
+	"active_pipeline": "rag_v2",
+	"prompt": "Your phase prompt...",
+	"goal": "Target outcome...",
+	"criteria": "How this prompt is evaluated..."
+}
+```

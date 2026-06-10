@@ -999,3 +999,76 @@ class BrandMemory(models.Model):
 
     def __str__(self):
         return f"{self.memory_type}:{self.key[:40]}"
+
+
+class RAGDevConfig(models.Model):
+    """Persisted admin RAG dev/injection config (singleton by key)."""
+
+    PIPELINE_CHOICES = [
+        ("rag_v1", "RAG v1"),
+        ("rag_v2", "RAG v2"),
+    ]
+
+    key = models.CharField(max_length=64, unique=True, default="global")
+    active_pipeline = models.CharField(max_length=16, choices=PIPELINE_CHOICES, default="rag_v1")
+    enabled = models.BooleanField(default=False)
+    pre_retrieval_prompt = models.TextField(blank=True, default="")
+    system_injection_prompt = models.TextField(blank=True, default="")
+    retrieval_profile_notes = models.TextField(blank=True, default="")
+    phase_1_master_prompt = models.TextField(blank=True, default="")
+    phase_2_master_prompt = models.TextField(blank=True, default="")
+    phase_3_master_prompt = models.TextField(blank=True, default="")
+    phase_4_master_prompt = models.TextField(blank=True, default="")
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rag_dev_configs",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return f"RAGDevConfig<{self.key}> enabled={self.enabled}"
+
+
+class RAGPhaseArtifact(models.Model):
+    """Persisted outputs and metadata per session and RAGv2 phase."""
+
+    PHASE_CHOICES = [
+        ("phase_1", "Phase 1 Discovery"),
+        ("phase_2", "Phase 2 Brand Book and Playbook"),
+        ("phase_3", "Phase 3 Brand Promotion"),
+        ("phase_4", "Phase 4 Strategic Guidance and Content Creation"),
+    ]
+
+    session = models.ForeignKey(
+        Session,
+        on_delete=models.CASCADE,
+        related_name="rag_phase_artifacts",
+    )
+    phase_key = models.CharField(max_length=16, choices=PHASE_CHOICES)
+    artifact = models.JSONField(default=dict, blank=True)
+    summary = models.TextField(blank=True, default="")
+    source_count = models.PositiveIntegerField(default=0)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="updated_rag_phase_artifacts",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["phase_key", "-updated_at"]
+        unique_together = [("session", "phase_key")]
+        indexes = [models.Index(fields=["session", "phase_key"])]
+
+    def __str__(self):
+        return f"RAGPhaseArtifact<{self.session_id}:{self.phase_key}>"

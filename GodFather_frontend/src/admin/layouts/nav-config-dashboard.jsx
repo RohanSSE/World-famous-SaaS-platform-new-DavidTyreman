@@ -33,6 +33,11 @@ const navData = [
     path: "/admin/questions",
     icon: icon("ic-blog"),
   },
+  {
+    title: "Train BGF",
+    path: "/admin/train-bgf",
+    icon: icon("ic-analytics"),
+  },
 ];
 
 export { navData };

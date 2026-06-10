@@ -419,6 +419,7 @@ def retrieve_context(
     embedding_service=None,
     es_service=None,
     trace: Optional[RetrievalTrace] = None,
+    prompt_injection: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     timer = RAGTimer()
     persona = getattr(session, "persona", None) if session else None
@@ -427,6 +428,21 @@ def retrieve_context(
         query, conversation_messages, session_summary
     )
     agent_query = resolve_query_for_agent(agent_id, conv_query)
+
+    from .rag_dev_config import get_rag_dev_config
+
+    dev_cfg = get_rag_dev_config()
+    pre_retrieval_prompt = ""
+    if isinstance(prompt_injection, dict) and prompt_injection.get("pre_retrieval_prompt"):
+        pre_retrieval_prompt = str(prompt_injection.get("pre_retrieval_prompt") or "").strip()
+    elif dev_cfg.get("enabled"):
+        pre_retrieval_prompt = str(dev_cfg.get("pre_retrieval_prompt") or "").strip()
+
+    if pre_retrieval_prompt:
+        agent_query = (
+            f"{agent_query}\n\nRetrieval Guidance (operator):\n"
+            f"{pre_retrieval_prompt[:1200]}"
+        )
 
     if trace:
         trace.query = query
@@ -619,6 +635,7 @@ def generate_rag_response(
     es_service=None,
     openai_client=None,
     session_id: Optional[int] = None,
+    prompt_injection: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     timer = RAGTimer()
     trace = RetrievalTrace()
@@ -656,6 +673,7 @@ def generate_rag_response(
             embedding_service=embedding_service,
             es_service=es_service,
             trace=trace,
+            prompt_injection=prompt_injection,
         )
 
     if not es_available(es_service):
@@ -695,6 +713,20 @@ def generate_rag_response(
         memory_snippets, retrieval.get("graph_concepts", []), user_query, sources
     )
     extra_system = format_proactive_prompt(strategic_insights) or ""
+
+    from .rag_dev_config import get_rag_dev_config
+
+    dev_cfg = get_rag_dev_config()
+    injected_system_prompt = ""
+    if isinstance(prompt_injection, dict) and prompt_injection.get("system_injection_prompt"):
+        injected_system_prompt = str(prompt_injection.get("system_injection_prompt") or "").strip()
+    elif dev_cfg.get("enabled"):
+        injected_system_prompt = str(dev_cfg.get("system_injection_prompt") or "").strip()
+
+    if injected_system_prompt:
+        extra_system = (
+            f"{extra_system}\n\nRAG Operator Injection:\n{injected_system_prompt[:2400]}"
+        ).strip()
     style = get_strategic_style(sid)
     style_prompt = format_style_prompt(style)
     if style_prompt:
@@ -1077,6 +1109,7 @@ def stream_rag_response(
     planner = run_planner_entry(user_query, agent_id)
     agent_id = planner.get("primary_agent", agent_id)
     sid = session.pk if session else None
+    prompt_injection = kwargs.get("prompt_injection")
 
     memory_snippets = memory_snippets_for_retrieval(
         sid, query=user_query, agent_id=agent_id
@@ -1105,6 +1138,7 @@ def stream_rag_response(
         conversation_messages=kwargs.get("conversation_messages"),
         embedding_service=kwargs.get("embedding_service"),
         es_service=kwargs.get("es_service"),
+        prompt_injection=prompt_injection,
     )
     insights = detect_strategic_tensions(
         memory_snippets, retrieval.get("graph_concepts", []), user_query, retrieval["sources"]
@@ -1123,6 +1157,19 @@ def stream_rag_response(
 
     conf_mode, conf_avg, conf_prompt = assess_retrieval_confidence(retrieval.get("chunks", []))
     extra = format_proactive_prompt(insights) if insights else ""
+
+    from .rag_dev_config import get_rag_dev_config
+
+    dev_cfg = get_rag_dev_config()
+    injected_system_prompt = ""
+    if isinstance(prompt_injection, dict) and prompt_injection.get("system_injection_prompt"):
+        injected_system_prompt = str(prompt_injection.get("system_injection_prompt") or "").strip()
+    elif dev_cfg.get("enabled"):
+        injected_system_prompt = str(dev_cfg.get("system_injection_prompt") or "").strip()
+
+    if injected_system_prompt:
+        extra = (extra + "\n\nRAG Operator Injection:\n" + injected_system_prompt[:2400]).strip()
+
     if conf_prompt:
         extra = (extra + "\n\n" + conf_prompt).strip()
     messages = build_rag_prompt(user_query, retrieval["context"], agent_id=agent_id, extra_system=extra)

@@ -1,0 +1,22 @@
+[
+  {
+    "index": "brandgodfather_sessions",
+    "count": 0,
+    "file": "C:\\Users\\rohan\\Documents\\World-famous-SaaS-platform-new-DavidTyreman\\GodFather_backend\\RAGprocessdata\\brandgodfather_sessions_20260610T080359Z.jsonl"
+  },
+  {
+    "index": "brandgodfather_episodic",
+    "count": 0,
+    "file": "C:\\Users\\rohan\\Documents\\World-famous-SaaS-platform-new-DavidTyreman\\GodFather_backend\\RAGprocessdata\\brandgodfather_episodic_20260610T080359Z.jsonl"
+  },
+  {
+    "index": "brandgodfather_chunks_v2",
+    "count": 74,
+    "file": "C:\\Users\\rohan\\Documents\\World-famous-SaaS-platform-new-DavidTyreman\\GodFather_backend\\RAGprocessdata\\brandgodfather_chunks_v2_20260610T080359Z.jsonl"
+  },
+  {
+    "index": "brandgodfather_brand_chunks",
+    "count": 74,
+    "file": "C:\\Users\\rohan\\Documents\\World-famous-SaaS-platform-new-DavidTyreman\\GodFather_backend\\RAGprocessdata\\brandgodfather_brand_chunks_20260610T080359Z.jsonl"
+  }
+]
