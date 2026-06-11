@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   BRAND SUMMARY — CUSTOM FLIP BOOK
+  BRAND BOOK - CUSTOM FLIP BOOK
    ═══════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
@@ -792,6 +792,11 @@
   animation: bsp-pulse 2s ease-in-out infinite;
 }
 
+.bsp-fullscreen-state .sqm-card p {
+  animation: none;
+  opacity: 1;
+}
+
 .bsp-error-text {
   color: #ff8080 !important;
 }
@@ -991,7 +996,7 @@
 }
 
 .bsp-book-content {
-  padding: 22px 340px 16px 52px;
+  padding: 22px 340px 18px 52px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1049,20 +1054,190 @@
 
 .bsp-content-flow {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   max-width: 760px;
-  padding-right: 6px;
+  padding: 0 10px 24px 0;
   min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 203, 255, 0.58) rgba(99, 203, 255, 0.12);
+}
+
+.bsp-content-flow::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bsp-content-flow::-webkit-scrollbar-track {
+  background: rgba(99, 203, 255, 0.08);
+  border-radius: 999px;
+}
+
+.bsp-content-flow::-webkit-scrollbar-thumb {
+  background: rgba(99, 203, 255, 0.58);
+  border-radius: 999px;
+}
+
+.bsp-loading-quote {
+  margin-top: 22px;
+  max-width: 560px;
+}
+
+.bsp-loading-quote .sqm-text {
+  font-size: clamp(18px, 3vw, 24px);
+}
+
+.bsp-book-content .sqm-card--brand-book {
+  flex-shrink: 0;
+  max-width: 700px;
+  margin: 0 0 12px;
+  padding: 12px 16px;
+}
+
+.bsp-book-content .sqm-card--brand-book .sqm-eyebrow {
+  margin-bottom: 6px;
+  font-size: 9px;
+}
+
+.bsp-book-content .sqm-card--brand-book .sqm-text {
+  font-size: clamp(15px, 1.8vw, 18px);
+  line-height: 1.22;
+}
+
+.bsp-book-content .sqm-card--brand-book .sqm-author {
+  margin-top: 7px;
+  font-size: 11px;
+}
+
+.bsp-book-content .sqm-card--brand-book .sqm-evidence {
+  display: none;
 }
 
 .bsp-structured-section {
   margin-bottom: 18px;
 }
 
+.bsp-godfather-commentary {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(116, 172, 255, 0.28);
+  border-left: 3px solid rgba(162, 228, 255, 0.72);
+  background: rgba(11, 24, 52, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.bsp-commentary-kicker {
+  margin: 0 0 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a2e4ff;
+}
+
+.bsp-commentary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bsp-commentary-label {
+  margin: 0 0 4px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f5fbff;
+}
+
+.bsp-commentary-text {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #d8e9ff;
+}
+
 .bsp-dna-list,
 .bsp-tagline-list {
   margin: 8px 0 0;
-  padding-left: 18px;
+  padding-left: 0;
+}
+
+.bsp-dna-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  max-width: 720px;
+}
+
+.bsp-dna-section-title {
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.28rem;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.28;
+  text-decoration: none;
+  color: #89ceff;
+}
+
+.bsp-dna-item {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 18px;
+  align-items: start;
+  padding: 18px 20px;
+  min-height: 96px;
+  border: 1px solid rgba(116, 172, 255, 0.34);
+  border-left: 3px solid rgba(99, 203, 255, 0.86);
+  background: linear-gradient(135deg, rgba(16, 34, 76, 0.62), rgba(8, 17, 52, 0.4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 28px rgba(0, 9, 40, 0.18);
+}
+
+.bsp-dna-index {
+  width: 44px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #061233;
+  background: #63cbff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 18px rgba(99, 203, 255, 0.34);
+}
+
+.bsp-dna-copy {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.bsp-dna-title {
+  color: #f5fbff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.36;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.bsp-dna-text {
+  color: #d8e9ff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.62;
+  max-width: 620px;
 }
 
 .bsp-two-col {
@@ -1075,6 +1250,12 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
+}
+
+@media (max-width: 760px) {
+  .bsp-commentary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .bsp-content-flow .bsp-main-title,
@@ -1098,12 +1279,13 @@
 }
 
 .bsp-book-pager {
-  margin-top: 8px;
+  margin-top: 10px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  min-height: 34px;
 }
 
 .bsp-corner-orb {
@@ -1324,6 +1506,10 @@
 
   .bsp-book-content {
     padding: 20px;
+  }
+
+  .bsp-book-content .sqm-card--brand-book {
+    max-width: none;
   }
 
   .bsp-top-cta-wrap {

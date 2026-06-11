@@ -29,6 +29,17 @@ import {
 } from "../utils/answerQuality";
 import "./PhaseQuestionPage.css";
 
+const BGF_HELP_ACTIONS = [
+  { intent: "hint", label: "Hint" },
+  { intent: "example", label: "Example" },
+  { intent: "why", label: "Why it matters" },
+  { intent: "explain", label: "Explain" },
+  { intent: "context", label: "Context" },
+];
+
+// Temporarily hidden until the client approves the expanded Ask BGF helper.
+const SHOW_BGF_HELP_PANEL = false;
+
 function SessionTitleModal({
   open,
   title,
@@ -141,8 +152,12 @@ export default function PhaseQuestionPage() {
   const [submitError, setSubmitError] = useState("");
   const [nudges, setNudges] = useState([]);
   const [nudgeQuality, setNudgeQuality] = useState(null);
+  const [nudgeQuote, setNudgeQuote] = useState(null);
   const [nudgeIndex, setNudgeIndex] = useState(0);
   const [nudgesLoading, setNudgesLoading] = useState(false);
+  const [bgfHelpLoading, setBgfHelpLoading] = useState(false);
+  const [bgfHelpResponse, setBgfHelpResponse] = useState(null);
+  const [bgfAskText, setBgfAskText] = useState("");
   const [journeyAnsweredCount, setJourneyAnsweredCount] = useState(0);
   const [billing, setBilling] = useState(null);
   const [billingLoading, setBillingLoading] = useState(false);
@@ -378,17 +393,17 @@ export default function PhaseQuestionPage() {
           if (qid != null) idToKey[String(qid)] = q.key;
         });
 
-        setAnswers((prev) => {
-          const next = { ...prev };
-          (Array.isArray(remoteAnswers) ? remoteAnswers : []).forEach((a) => {
-            const key = idToKey[String(a.question)] || `q_${a.question}`;
-            if (typeof a.answer_text === "string" && a.answer_text.trim() !== "") {
-              next[key] = a.answer_text;
-            }
-          });
-          localStorage.setItem(storageKey, JSON.stringify(next));
-          return next;
+        const localAnswers = JSON.parse(localStorage.getItem(storageKey) || "{}");
+        const next = localAnswers && typeof localAnswers === "object" ? { ...localAnswers } : {};
+        (Array.isArray(remoteAnswers) ? remoteAnswers : []).forEach((a) => {
+          const key = idToKey[String(a.question)] || `q_${a.question}`;
+          if (typeof a.answer_text === "string" && a.answer_text.trim() !== "") {
+            next[key] = a.answer_text;
+          }
         });
+        localStorage.setItem(storageKey, JSON.stringify(next));
+        setAnswers(next);
+        setJourneyAnsweredCount(countStoredJourneyAnswers(sessionId));
       } catch {
         /* keep local cache */
       }
@@ -421,8 +436,8 @@ export default function PhaseQuestionPage() {
   };
 
   useEffect(() => {
-    refreshJourneyAnswerCount();
-  }, [sessionId, answers]);
+    setJourneyAnsweredCount(countStoredJourneyAnswers(sessionId));
+  }, [sessionId]);
 
   useEffect(() => {
     const q = questions[currentIdx];
@@ -432,8 +447,12 @@ export default function PhaseQuestionPage() {
     setInputValue(saved != null ? String(saved) : "");
     setNudges([]);
     setNudgeQuality(null);
+    setNudgeQuote(null);
     setNudgeIndex(0);
     setNudgesLoading(false);
+    setBgfHelpResponse(null);
+    setBgfAskText("");
+    setBgfHelpLoading(false);
     if (inputRef.current) {
       inputRef.current.style.height = "auto";
       inputRef.current.focus();
@@ -452,12 +471,13 @@ export default function PhaseQuestionPage() {
     setNudgeQuality(scoreAnswerQualityLocal(q, hint));
 
     try {
-      const res = await authService.getAiAnswerSuggestions(sessionId, q.id, hint);
+      const res = await authService.getAiAnswerSuggestions(sessionId, q.id, hint, { intent: "refine" });
       let list = [];
       if (Array.isArray(res)) {
         list = res;
       } else if (res && typeof res === "object") {
         list = res.suggestions ?? res.suggestion ?? [];
+        setNudgeQuote(res.suggestion_quote?.enabled ? res.suggestion_quote : null);
         if (res.quality && res.quality_label) {
           setNudgeQuality(normalizeAnswerQualityCopy({
             quality: res.quality,
@@ -473,6 +493,7 @@ export default function PhaseQuestionPage() {
       setNudgeIndex(0);
     } catch {
       setNudges([]);
+      setNudgeQuote(null);
       setNudgeIndex(0);
     } finally {
       setNudgesLoading(false);
@@ -496,6 +517,7 @@ export default function PhaseQuestionPage() {
     if (!sessionId || !q?.id || hint.length < 3) {
       setNudges([]);
       setNudgeQuality(null);
+      setNudgeQuote(null);
       setNudgesLoading(false);
       return;
     }
@@ -520,6 +542,7 @@ export default function PhaseQuestionPage() {
     currentInputAiDraftRef.current = true;
     const cleaned = extractApplicableNudgeText(text);
     setInputValue(cleaned);
+    setNudgeQuote(null);
     setNudgeIndex(0);
     requestAnimationFrame(() => {
       resizeInput();
@@ -539,6 +562,32 @@ export default function PhaseQuestionPage() {
     await fetchNudges(hint, q);
   };
 
+  const handleBgfHelp = async (intent, customQuestion = "") => {
+    const q = questions[currentIdx];
+    if (!sessionId || !q?.id || bgfHelpLoading) return;
+    const trimmedQuestion = customQuestion.trim();
+    if (intent === "ask" && !trimmedQuestion) return;
+
+    if (nudgesDebounceRef.current) clearTimeout(nudgesDebounceRef.current);
+    setBgfHelpLoading(true);
+    setBgfHelpResponse(null);
+    try {
+      const res = await authService.getAiAnswerSuggestions(sessionId, q.id, inputValue.trim(), {
+        intent,
+        customQuestion: trimmedQuestion,
+      });
+      setBgfHelpResponse(res);
+      if (intent === "ask") setBgfAskText("");
+    } catch (err) {
+      setBgfHelpResponse({
+        title: "Brand Godfather",
+        answer: err?.message || "Could not answer that right now.",
+      });
+    } finally {
+      setBgfHelpLoading(false);
+    }
+  };
+
   const persistAnswers = (next) => {
     setAnswers(next);
     try {
@@ -546,6 +595,7 @@ export default function PhaseQuestionPage() {
     } catch {
       /* ignore */
     }
+    setJourneyAnsweredCount(countStoredJourneyAnswers(sessionId));
   };
 
   const handleCreateSession = async () => {
@@ -581,6 +631,7 @@ export default function PhaseQuestionPage() {
           /* non-fatal */
         }
       }
+      navigate("/phase-intro/1");
     } catch (err) {
       setModalError(err?.message || "Failed to create session");
     } finally {
@@ -608,7 +659,7 @@ export default function PhaseQuestionPage() {
     }, 1700);
   };
 
-  const saveCurrentAnswer = async () => {
+  const saveCurrentAnswer = async ({ waitForServer = true } = {}) => {
     const currentQuestion = questions[currentIdx];
     if (!currentQuestion) return null;
     const value = inputValue.trim();
@@ -626,23 +677,32 @@ export default function PhaseQuestionPage() {
 
     if (sid && apiQuestionId) {
       const wasAiAccepted = currentInputAiDraftRef.current;
-      await authService.createAnswer(sid, {
+      const savePromise = authService.createAnswer(sid, {
         question: Number(apiQuestionId),
         answer_text: value,
         is_ai_accepted: wasAiAccepted,
         ai_suggestion: wasAiAccepted ? value : undefined,
       });
+      if (waitForServer) {
+        await savePromise;
+      } else {
+        savePromise.catch((err) => {
+          setSubmitError(err?.message || "Answer saved locally. Server sync failed.");
+        });
+      }
     }
     currentInputAiDraftRef.current = false;
-    await refreshJourneyAnswerCount();
     return nextAnswers;
   };
 
   const handleSend = async () => {
     if (submitting) return;
+    if (nudgesDebounceRef.current) clearTimeout(nudgesDebounceRef.current);
+    setNudges([]);
+    setNudgeQuote(null);
     setSubmitting(true);
     try {
-      const nextAnswers = await saveCurrentAnswer();
+      const nextAnswers = await saveCurrentAnswer({ waitForServer: false });
       if (!nextAnswers) return;
 
       const phaseComplete =
@@ -1002,6 +1062,11 @@ export default function PhaseQuestionPage() {
                       {nudgeQuality.reason && (
                         <p className="pq-nudges-reason">{nudgeQuality.reason}</p>
                       )}
+                      {nudgeQuote?.quote && (
+                        <blockquote className="pq-nudge-quote">
+                          {nudgeQuote.quote}
+                        </blockquote>
+                      )}
                       {activeNudge && (
                         <>
                           <p className="pq-nudges-lead">
@@ -1018,7 +1083,7 @@ export default function PhaseQuestionPage() {
                           </button>
                           {nudges.length > 1 && (
                             <p className="pq-nudges-status pq-nudges-status--muted">
-                              Tap AI Refine for next suggestion ({nudgeIndex + 1}/{nudges.length})
+                              Tap Help me to go deeper for next suggestion ({nudgeIndex + 1}/{nudges.length})
                             </p>
                           )}
                         </>
@@ -1081,13 +1146,13 @@ export default function PhaseQuestionPage() {
                   />
                   <div className="pq-refine-wrap">
                     <div className="pq-refine-tip">
-                      Sharpen it the World-Famous way. Let Godfather refine this.
+                      Help me to go deeper
                     </div>
                     <button
                       type="button"
                       className="pq-icon-btn"
-                      title="AI refine"
-                      aria-label="AI refine"
+                      title="Help me to go deeper"
+                      aria-label="Help me to go deeper"
                       onClick={handleRefineClick}
                       disabled={nudgesLoading || inputValue.trim().length < 3}
                     >
@@ -1105,6 +1170,61 @@ export default function PhaseQuestionPage() {
                     <img src={chatIcon2} alt="" />
                   </button>
                 </div>
+
+                {SHOW_BGF_HELP_PANEL && (
+                  <div className="pq-bgf-help" aria-live="polite">
+                    <div className="pq-bgf-help-head">
+                      <span>Ask the Brand Godfather</span>
+                      {bgfHelpLoading && <small>Thinking...</small>}
+                    </div>
+                    <div className="pq-bgf-help-actions">
+                      {BGF_HELP_ACTIONS.map((action) => (
+                        <button
+                          key={action.intent}
+                          type="button"
+                          className="pq-bgf-help-chip"
+                          onClick={() => handleBgfHelp(action.intent)}
+                          disabled={bgfHelpLoading || !sessionId || !currentQuestion?.id}
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+                    <form
+                      className="pq-bgf-ask-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        handleBgfHelp("ask", bgfAskText);
+                      }}
+                    >
+                      <input
+                        type="text"
+                        value={bgfAskText}
+                        onChange={(event) => setBgfAskText(event.target.value)}
+                        placeholder="Ask anything about this question..."
+                        disabled={bgfHelpLoading}
+                      />
+                      <button type="submit" disabled={bgfHelpLoading || !bgfAskText.trim()}>
+                        Ask
+                      </button>
+                    </form>
+                    {bgfHelpResponse?.answer && (
+                      <div className="pq-bgf-help-response">
+                        <strong>{bgfHelpResponse.title || "Brand Godfather"}</strong>
+                        <p>{bgfHelpResponse.answer}</p>
+                        {bgfHelpResponse.example_answer && (
+                          <button
+                            type="button"
+                            className="pq-bgf-example"
+                            onClick={() => applyNudge(bgfHelpResponse.example_answer)}
+                          >
+                            {bgfHelpResponse.example_answer}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="pq-footer-row">
                   <div className="pq-nav-arrows">

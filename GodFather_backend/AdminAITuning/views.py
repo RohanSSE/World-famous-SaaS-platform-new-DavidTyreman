@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from AdminAITuning.service import (
+    activate_engine_tuning,
     get_train_bgf_state,
     load_default_tuning,
     save_section_tuning,
@@ -52,6 +53,23 @@ section_payload_schema = openapi.Schema(
         "prompt": openapi.Schema(type=openapi.TYPE_STRING),
         "goal": openapi.Schema(type=openapi.TYPE_STRING),
         "criteria": openapi.Schema(type=openapi.TYPE_STRING),
+    },
+)
+
+engine_payload_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    required=["active_pipeline"],
+    properties={
+        "active_pipeline": openapi.Schema(
+            type=openapi.TYPE_STRING,
+            enum=["rag_v1", "rag_v2"],
+            description="BGF engine selector. rag_v1=engine1, rag_v2=engine2.",
+        ),
+        "enabled": openapi.Schema(
+            type=openapi.TYPE_BOOLEAN,
+            default=True,
+            description="When true, activate the selected BGF engine for user/agency RAG endpoints.",
+        ),
     },
 )
 
@@ -130,6 +148,48 @@ def admin_ai_tuning_load_default(request):
 
     result = load_default_tuning(updated_by=getattr(request.user, "email", "admin"))
     return Response(result)
+
+
+@swagger_auto_schema(
+    method="post",
+    tags=["Admin AI Tuning"],
+    operation_id="admin_ai_tuning_activate_engine",
+    operation_description="Persist selected BGF engine immediately and enable it for user/agency RAG endpoints.",
+    request_body=engine_payload_schema,
+    responses={
+        200: openapi.Response(
+            "Engine activated",
+            openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "config": openapi.Schema(type=openapi.TYPE_OBJECT, additional_properties=True),
+                    "version": version_item_schema,
+                    "mapped_endpoints": openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Schema(type=openapi.TYPE_STRING),
+                    ),
+                },
+            ),
+        ),
+        400: "Invalid active_pipeline",
+        403: "Admin only",
+    },
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def admin_ai_tuning_activate_engine(request):
+    if not _user_is_admin(request.user):
+        return Response({"detail": "Admin only"}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        result = activate_engine_tuning(
+            active_pipeline=request.data.get("active_pipeline"),
+            enabled=bool(request.data.get("enabled", True)),
+            updated_by=getattr(request.user, "email", "admin"),
+        )
+        return Response(result)
+    except ValueError as e:
+        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(

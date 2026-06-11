@@ -1576,6 +1576,59 @@
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.9);
 }
+.ddp-suggestion-quality {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 10px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(142, 229, 255, 0.28);
+  background: rgba(142, 229, 255, 0.09);
+  color: #c0f9ff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: inset 0 0 18px rgba(142, 229, 255, 0.05);
+}
+.ddp-suggestion-quality--too_weak {
+  border-color: rgba(142, 229, 255, 0.34);
+  background: linear-gradient(135deg, rgba(142, 229, 255, 0.12), rgba(57, 89, 229, 0.18));
+  color: #c0f9ff;
+}
+.ddp-suggestion-quality--vendor_thought {
+  border-color: rgba(250, 204, 21, 0.32);
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.12), rgba(57, 89, 229, 0.14));
+  color: #ffe7a3;
+}
+.ddp-suggestion-quality--strong {
+  border-color: rgba(34, 197, 94, 0.34);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.13), rgba(142, 229, 255, 0.08));
+  color: #86efac;
+}
+.ddp-suggestion-quote {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid rgba(142, 229, 255, 0.72);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(142, 229, 255, 0.11), rgba(57, 89, 229, 0.12));
+  color: rgba(240, 253, 255, 0.94);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  box-shadow: inset 0 0 22px rgba(142, 229, 255, 0.05);
+}
+.ddp-suggestion-quote::before,
+.ddp-suggestion-quote::after {
+  color: #8ee5ff;
+}
+.ddp-suggestion-quote::before {
+  content: "\201C";
+}
+.ddp-suggestion-quote::after {
+  content: "\201D";
+}
 .ddp-suggestions-grid {
   display: flex;
   flex-direction: row;

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import BrandOrb from "../components/orb/BrandOrb";
 import OrbPresence from "../components/orb/OrbPresence";
 import ChatNavbar from "./ChatNavbar";
+import StrategicQuoteMoment from "../components/StrategicQuoteMoment";
 import "./BrandBookReadyPage.css";
 
 const discoveryPoints = [
@@ -97,6 +98,14 @@ export default function BrandBookReadyPage() {
         </div>
 
         <p className="bbr-foot">Strong brands are not static. They evolve, deepen, and strengthen continuously.</p>
+
+        <StrategicQuoteMoment
+          context="brand_book_ready"
+          phaseId={3}
+          variant="inline"
+          eyebrow="Before Output Mode"
+          className="bbr-quote"
+        />
 
         <button type="button" className="bbr-cta" onClick={() => navigate("/output-mode")}>
           Enter Output Mode

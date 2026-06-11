@@ -1239,8 +1239,10 @@ import "../components/BrandSummaryPage.css";
 import ChatNavbar from "./ChatNavbar";
 import BrandOrb from "../components/orb/BrandOrb";
 import OrbPresence from "../components/orb/OrbPresence";
+import StrategicQuoteMoment from "../components/StrategicQuoteMoment";
 import { useOrbPresence } from "../context/OrbPresenceContext";
 import { downloadBrandBookScreenPdf } from "../utils/BrandBookPdfGenerator";
+import { getPageSourceText } from "../utils/strategicQuotes";
 
 // Set to false to use real API (generateFoundationSummary); true for dummy data
 const USE_DUMMY_DATA = false;
@@ -1469,6 +1471,26 @@ function renderInlineFormatted(text, keyPrefix = "i") {
   return parts.length > 0 ? parts : text;
 }
 
+function getGodfatherCommentary(section) {
+  const raw = section?.godfather_commentary || section?.brand_godfather_commentary || section?.commentary || {};
+  if (typeof raw === "string") {
+    return { why_it_works: raw, how_to_apply: "" };
+  }
+  const whyItWorks = raw?.why_it_works || raw?.why || raw?.why_this_works || section?.why_it_works || "";
+  const howToApply = raw?.how_to_apply || raw?.application || raw?.how_it_should_be_applied || section?.how_to_apply || "";
+  return { why_it_works: whyItWorks, how_to_apply: howToApply };
+}
+
+function normalizeDnaPoint(point, idx) {
+  if (point && typeof point === "object") {
+    return {
+      title: point.title || point.label || point.usp || `Brand DNA ${idx + 1}`,
+      content: point.content || point.description || point.why || point.value || "",
+    };
+  }
+  return { title: `Brand DNA ${idx + 1}`, content: point || "" };
+}
+
 function RenderElement({ el, dropCap = false }) {
   if (el.type === "heading") {
     return (
@@ -1610,7 +1632,7 @@ export default function BrandSummaryPage() {
         setTitle(t);
         setElements(elements);
       } catch (e) {
-        console.error("Brand summary load error:", e);
+        console.error("Brand Book load error:", e);
         const message =
           e?.response?.data?.detail ||
           (Array.isArray(e?.response?.data?.detail) ? e.response.data.detail[0] : null) ||
@@ -1665,14 +1687,36 @@ export default function BrandSummaryPage() {
         title,
       });
     } catch (err) {
-      const msg = err?.message || "Export failed";
-      setError(msg);
+      console.warn("Screen PDF export failed; trying server export fallback:", err);
+      if (!sessionId) {
+        const msg = err?.message || "Export failed";
+        setError(msg);
+      } else {
+        try {
+          await authService.downloadBrandSummaryExport(sessionId, {
+            brand_book: {
+              brand_name: brandName,
+              sidebar_title: sidebarTitle,
+              pages,
+            },
+            summary: {
+              title,
+              heading,
+              sub_heading: subheading,
+            },
+          });
+        } catch (fallbackError) {
+          const msg = fallbackError?.message || err?.message || "Export failed";
+          setError(msg);
+        }
+      }
     } finally {
       setExporting(false);
     }
   };
 
   const activePage = pages[currentPage] || {};
+  const activePageSourceText = getPageSourceText(activePage);
   const activeElements = Array.isArray(activePage) ? activePage : activePage?.elements || [];
   const totalPages = pages.length;
   const words = countWords(elements);
@@ -1772,7 +1816,14 @@ export default function BrandSummaryPage() {
     return (
       <div className="bsp-fullscreen-state">
         <div className="bsp-spinner" />
-        <p>Preparing your brand summary…</p>
+        <p>Preparing your Brand Book...</p>
+        <StrategicQuoteMoment
+          context="brand_book_loading"
+          phaseId={3}
+          variant="inline"
+          eyebrow="While the Brand Book is forming"
+          className="bsp-loading-quote"
+        />
       </div>
     );
   }
@@ -1816,14 +1867,14 @@ export default function BrandSummaryPage() {
         </aside>
 
         <main className="bsp-book-content">
-          {currentPage === totalPages - 1 && activePage?.cta_label && (
+          {currentPage === totalPages - 1 && totalPages > 0 && (
             <div className="bsp-top-cta-wrap">
               <button
                 type="button"
                 className="bsp-top-cta-btn"
                 onClick={() => navigate("/brand-book-ready")}
               >
-                {activePage.cta_label}
+                {activePage?.cta_label || "Explore More"}
               </button>
             </div>
           )}
@@ -1849,6 +1900,15 @@ export default function BrandSummaryPage() {
               </div>
             </section>
           )}
+
+          <StrategicQuoteMoment
+            context="brand_book_page"
+            phaseId={Math.min(3, currentPage + 1)}
+            sourceText={activePageSourceText}
+            variant="inline"
+            eyebrow={currentPage === 0 ? "Brand Book lens" : "Strategic interpretation"}
+            className="sqm-card--brand-book"
+          />
 
           <section className={`bsp-content-flow bsp-density-${contentDensity}`}>
             {currentPage === 0 && !activePage?.title && title && (
@@ -1880,32 +1940,67 @@ export default function BrandSummaryPage() {
             )}
 
             {Array.isArray(activePage?.sections) &&
-              activePage.sections.map((sec, idx) => (
-                <article key={`section-${idx}`} className="bsp-structured-section">
-                  <h3
-                    className="bsp-section-title"
-                    onMouseEnter={() => showHeadingInsight(sec.title, sec.content)}
-                    onMouseLeave={clearHeadingInsight}
-                  >
-                    {sec.title}
-                  </h3>
-                  <p className="bsp-body-text">{sec.content}</p>
-                </article>
-              ))}
+              activePage.sections.map((sec, idx) => {
+                const commentary = getGodfatherCommentary(sec);
+                const hasCommentary = commentary.why_it_works || commentary.how_to_apply;
+                return (
+                  <article key={`section-${idx}`} className="bsp-structured-section">
+                    <h3
+                      className="bsp-section-title"
+                      onMouseEnter={() => showHeadingInsight(sec.title, sec.content)}
+                      onMouseLeave={clearHeadingInsight}
+                    >
+                      {sec.title}
+                    </h3>
+                    <p className="bsp-body-text">{sec.content}</p>
+                    {hasCommentary && (
+                      <div className="bsp-godfather-commentary">
+                        <p className="bsp-commentary-kicker">Brand Godfather Commentary</p>
+                        <div className="bsp-commentary-grid">
+                          {commentary.why_it_works && (
+                            <div>
+                              <p className="bsp-commentary-label">Why It Works</p>
+                              <p className="bsp-commentary-text">{commentary.why_it_works}</p>
+                            </div>
+                          )}
+                          {commentary.how_to_apply && (
+                            <div>
+                              <p className="bsp-commentary-label">How To Apply</p>
+                              <p className="bsp-commentary-text">{commentary.how_to_apply}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
 
             {Array.isArray(activePage?.dna_points) && activePage.dna_points.length > 0 && (
               <article className="bsp-structured-section">
                 <h3
-                  className="bsp-section-title"
-                  onMouseEnter={() => showHeadingInsight(activePage.title || "Brand DNA", activePage.dna_points.join(" "))}
+                  className="bsp-section-title bsp-dna-section-title"
+                  onMouseEnter={() => showHeadingInsight(activePage.title || "Brand DNA", activePage.dna_points.map((p, i) => {
+                    const dna = normalizeDnaPoint(p, i);
+                    return `${dna.title} ${dna.content}`;
+                  }).join(" "))}
                   onMouseLeave={clearHeadingInsight}
                 >
                   {activePage.title || "Brand DNA"}
                 </h3>
                 <ul className="bsp-dna-list">
-                  {activePage.dna_points.map((p, idx) => (
-                    <li key={`dna-${idx}`} className="bsp-list-item">{p}</li>
-                  ))}
+                  {activePage.dna_points.map((point, idx) => {
+                    const dna = normalizeDnaPoint(point, idx);
+                    return (
+                      <li key={`dna-${idx}`} className="bsp-dna-item">
+                        <span className="bsp-dna-index">{idx + 1}</span>
+                        <span className="bsp-dna-copy">
+                          <span className="bsp-dna-title">{dna.title}</span>
+                          {dna.content && <span className="bsp-dna-text">{dna.content}</span>}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </article>
             )}

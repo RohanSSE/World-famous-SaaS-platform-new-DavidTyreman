@@ -108,7 +108,7 @@ const SignupLoginModal = ({ isOpen, onClose, initialMode = "signup" }) => {
     }
     if (roleName === "client") {
       if (typeof localStorage !== "undefined" && localStorage.getItem("sessionId")) {
-        return "/phase-questions/1";
+        return "/phase-intro/1";
       }
       return "/welcome";
     }

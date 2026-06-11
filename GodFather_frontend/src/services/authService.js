@@ -68,7 +68,7 @@ function resolveAgencyOnboardingRedirect(dashboard = {}) {
       /* ignore storage failures */
     }
     const nextPhase = clampPhase(progress?.current_stage_num || 1);
-    return { route: `/phase-questions/${nextPhase}`, completed: false, session: sessionForStorage };
+    return { route: `/phase-intro/${nextPhase}`, completed: false, session: sessionForStorage };
   }
 
   return { route: "/welcome", completed: false, session: null };
@@ -748,6 +748,30 @@ const authService = {
     }
   },
 
+  getStrategicQuote: async (sessionId, payload = {}) => {
+    if (!sessionId) throw new Error("Missing sessionId for getStrategicQuote");
+    try {
+      const response = await api.post(
+        `/sessions/${encodeURIComponent(sessionId)}/strategic-quote/`,
+        {
+          context: payload.context || "phase_intro",
+          phase_id: payload.phaseId ?? payload.phase_id ?? 1,
+          source_text: payload.sourceText ?? payload.source_text ?? "",
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Failed to get strategic quote";
+      const err = new Error(msg);
+      err._raw = error;
+      throw err;
+    }
+  },
+
   // ========== SESSION COMPLETION ==========
   // ✅ FIXED: Use POST to hit /sessions/{id}/complete/
   completeSession: async (sessionId) => {
@@ -931,7 +955,7 @@ generateSessionSummary: async (sessionId) => {
       error?.response?.data?.detail ||
       error?.response?.data?.message ||
       error?.message ||
-      "Failed to generate brand summary";
+      "Failed to generate Brand Book";
     throw new Error(msg);
   }
 },
@@ -1120,7 +1144,7 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
   },
 
   // Get AI answer suggestions based on user input
-  getAiAnswerSuggestions: async (sessionId, questionId, userHint) => {
+  getAiAnswerSuggestions: async (sessionId, questionId, userHint, options = {}) => {
     if (!sessionId) throw new Error("Missing sessionId for getAiAnswerSuggestions");
     if (!questionId) throw new Error("Missing questionId for getAiAnswerSuggestions");
 
@@ -1130,6 +1154,8 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
         {
           question_id: Number(questionId),
           hints: typeof userHint === "string" ? userHint.trim() : "",
+          intent: options.intent || "refine",
+          custom_question: options.customQuestion || options.custom_question || "",
         }
       );
       return response.data; // { suggestions: [...] }

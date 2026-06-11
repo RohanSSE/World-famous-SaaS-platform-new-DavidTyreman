@@ -7,7 +7,7 @@ from .views import (
     download_manifesto_pdf, answer_ai_suggestion, answer_ai_suggestion_draft, answer_ai_suggestion_from_documents,
     answer_ai_suggestion_unified, edit_conversation, session_conversations, session_generate_summary,
     session_generate_social_content,session_generate_foundation_summary,answer_ai_suggestions,
-    assistant_suggestion, brand_book_heading_insight,
+    assistant_suggestion, brand_book_heading_insight, strategic_quote,
     session_get_foundation_summary, session_update_foundation_summary,
     admin_questions_bulk_set,
     rag_query, ai_task_status, rag_query_stream, rag_agents_list,
@@ -89,6 +89,7 @@ urlpatterns = [
     # AI Answer suggestions (user types 2–3 words for manifesto)
     path('<int:pk>/ai-answer-suggestions/', answer_ai_suggestions, name='ai-answer-suggestions'),
     path('<int:pk>/brand-book-insight/', brand_book_heading_insight, name='brand-book-insight'),
+    path('<int:pk>/strategic-quote/', strategic_quote, name='strategic-quote'),
 
 
     # Social Media Content

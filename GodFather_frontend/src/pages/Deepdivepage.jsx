@@ -1885,6 +1885,7 @@ export default function DeepDivePage() {
   const [introVisible, setIntroVisible] = useState(true);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const [suggestionMeta, setSuggestionMeta] = useState(null);
   const [suggestionError, setSuggestionError] = useState(null);
   const [hoveredSuggestionIdx, setHoveredSuggestionIdx] = useState(null);
   const typewriterRef = useRef(null);
@@ -2042,6 +2043,7 @@ export default function DeepDivePage() {
       isBusy
     ) {
       setSuggestions([]);
+      setSuggestionMeta(null);
       setHoveredSuggestionIdx(null);
       return;
     }
@@ -2050,6 +2052,7 @@ export default function DeepDivePage() {
     const sid = localStorage.getItem("sessionId") || session?.id;
     if (!sid) {
       setSuggestions([]);
+      setSuggestionMeta(null);
       return;
     }
     suggestionsDebounceRef.current = setTimeout(async () => {
@@ -2060,6 +2063,7 @@ export default function DeepDivePage() {
       setSuggestionLoading(true);
       setSuggestionError(null);
       setSuggestions([]);
+      setSuggestionMeta(null);
       setHoveredSuggestionIdx(null);
       try {
         const response = await authService.getAiAnswerSuggestions(
@@ -2068,17 +2072,22 @@ export default function DeepDivePage() {
           inputValue.trim(),
         );
         let list = [];
-        if (Array.isArray(response)) list = response;
-        else if (response && typeof response === "object")
+        if (Array.isArray(response)) {
+          list = response;
+          setSuggestionMeta(null);
+        } else if (response && typeof response === "object") {
           list =
             response.suggestions ??
             response.suggestion ??
             (Array.isArray(response.results) ? response.results : []);
+          setSuggestionMeta(response);
+        }
         setSuggestions(Array.isArray(list) ? list : []);
       } catch (err) {
         console.error("AI suggestion error", err);
         setSuggestionError(err?.message || "Failed to get AI suggestions");
         setSuggestions([]);
+        setSuggestionMeta(null);
       } finally {
         setSuggestionLoading(false);
       }
@@ -2765,12 +2774,25 @@ export default function DeepDivePage() {
                         <button
                           type="button"
                           className="ddp-suggestions-close"
-                          onClick={() => setSuggestions([])}
+                          onClick={() => {
+                            setSuggestions([]);
+                            setSuggestionMeta(null);
+                          }}
                           aria-label="Close suggestions"
                         >
                           ✕
                         </button>
                       </div>
+                      {suggestionMeta?.quality_label && (
+                        <div className={`ddp-suggestion-quality ddp-suggestion-quality--${suggestionMeta.quality || "too_weak"}`}>
+                          {suggestionMeta.quality_label}
+                        </div>
+                      )}
+                      {suggestionMeta?.suggestion_quote?.enabled && suggestionMeta.suggestion_quote.quote && (
+                        <blockquote className="ddp-suggestion-quote">
+                          {suggestionMeta.suggestion_quote.quote}
+                        </blockquote>
+                      )}
                       <div
                         className="ddp-suggestions-grid"
                         onMouseLeave={() => {
@@ -2794,6 +2816,7 @@ export default function DeepDivePage() {
                                 suggestionSelectedRef.current = true;
                                 setInputValue(suggestion);
                                 setSuggestions([]);
+                                setSuggestionMeta(null);
                                 setIsAiDraft(false);
                                 setHoveredSuggestionIdx(null);
                               }}
@@ -2803,6 +2826,7 @@ export default function DeepDivePage() {
                                   suggestionSelectedRef.current = true;
                                   setInputValue(suggestion);
                                   setSuggestions([]);
+                                  setSuggestionMeta(null);
                                   setIsAiDraft(false);
                                   setHoveredSuggestionIdx(null);
                                 }

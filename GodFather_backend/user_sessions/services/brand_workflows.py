@@ -136,7 +136,7 @@ def run_brand_workflow(
     if extra_context:
         query = f"{extra_context.strip()}\n\n{query}"
 
-    from user_sessions.services.rag_service import generate_rag_response
+    from user_sessions.services.rag_pipeline_resolver import generate_rag_response
 
     result = generate_rag_response(
         user_query=query,

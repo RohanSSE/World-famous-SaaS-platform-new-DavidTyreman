@@ -396,11 +396,11 @@ function AppContent() {
 
         <Route
           path="/foundation-questions"
-          element={<Navigate to="/phase-questions/1" replace />}
+          element={<Navigate to="/phase-intro/1" replace />}
         />
         <Route
           path="/foundation-questions/*"
-          element={<Navigate to="/phase-questions/1" replace />}
+          element={<Navigate to="/phase-intro/1" replace />}
         />
 
         <Route

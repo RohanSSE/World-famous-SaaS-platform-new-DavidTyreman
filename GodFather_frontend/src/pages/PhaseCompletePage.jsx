@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, Navigate, useSearchParams } from "react-router-dom";
 import ChatNavbar from "./ChatNavbar";
 import authService from "../services/authService";
+import StrategicQuoteMoment from "../components/StrategicQuoteMoment";
 import {
   doesPhaseRequireSubscription,
   getJourneyPhase,
@@ -248,6 +249,14 @@ export default function PhaseCompletePage() {
           </button>
         </article>
       </main>
+
+      <StrategicQuoteMoment
+        context={isDiscoveryComplete ? "brand_book_loading" : "phase_complete"}
+        phaseId={phase.id}
+        variant="overlay"
+        eyebrow={isDiscoveryComplete ? "Before the Brand Book" : "Between phases"}
+        storageKey={`phase-complete-quote-${phase.id}`}
+      />
     </div>
   );
 }

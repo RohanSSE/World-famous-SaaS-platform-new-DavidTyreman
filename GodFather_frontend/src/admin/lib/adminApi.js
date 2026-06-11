@@ -46,6 +46,10 @@ export const adminApi = {
     const response = await api.post("/sessions/admin/ai-tuning/load-default/");
     return response.data;
   },
+  aiTuningActivateEngine: async (payload) => {
+    const response = await api.post("/sessions/admin/ai-tuning/engine/", payload);
+    return response.data;
+  },
   aiTuningSaveSection: async (sectionKey, payload) => {
     const response = await api.post(
       `/sessions/admin/ai-tuning/sections/${sectionKey}/save/`,

@@ -41,7 +41,7 @@ const handleCtaClick = () => {
     if (isAgency) {
       navigate("/agency-dashboard");
     } else if (localStorage.getItem("sessionId")) {
-      navigate("/phase-questions/1");
+      navigate("/phase-intro/1");
     } else {
       navigate("/welcome");
     }

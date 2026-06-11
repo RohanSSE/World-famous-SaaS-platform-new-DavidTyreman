@@ -23,16 +23,35 @@
         "low_strategic_density",
         "unsupported_claim"
       ],
-      "frequency": 52,
+      "frequency": 53,
       "severity": 0.949,
       "recommended_fix": "expand_manifesto_chunks",
-      "last_seen": "2026-06-10T23:59:54.378372+00:00",
+      "last_seen": "2026-06-11T11:47:54.894075+00:00",
       "example_queries": [
-        "MESSAGING FRAMEWORK \u2014 Build messaging ladder: brand promise, proof points, emotional hooks, and pillar hierarchy \u2014 all f",
         "how to apply my brand identity?",
         "i want to grow my brand",
         "Internal Culture Alignment",
-        "Help me define my market position and brand promise."
+        "Help me define my market position and brand promise.",
+        "tell me more about my product is it good ?"
+      ]
+    },
+    {
+      "failure_pattern": "low_confidence_overclaim_low_strategic_density_unsupported_claim",
+      "flags": [
+        "low_strategic_density",
+        "unsupported_claim",
+        "low_confidence_overclaim"
+      ],
+      "frequency": 21,
+      "severity": 0.984,
+      "recommended_fix": "expand_manifesto_chunks",
+      "last_seen": "2026-06-11T12:30:11.035371+00:00",
+      "example_queries": [
+        "Help position us against cheaper competitors.",
+        "How do we position a B2B SaaS as category leader?",
+        "How do we make competitors irrelevant?",
+        "How do we understand audience psychology for positioning?",
+        "The user selected this Brand Promotion Phase starting point: Create A Social Media Campaign.\nUse the completed Brand Boo"
       ]
     },
     {
@@ -51,24 +70,6 @@
         "How do we make competitors irrelevant?",
         "How do we understand audience psychology for positioning?",
         "suggest me some instagram hastag"
-      ]
-    },
-    {
-      "failure_pattern": "low_confidence_overclaim_low_strategic_density_unsupported_claim",
-      "flags": [
-        "low_strategic_density",
-        "unsupported_claim",
-        "low_confidence_overclaim"
-      ],
-      "frequency": 18,
-      "severity": 0.984,
-      "recommended_fix": "expand_manifesto_chunks",
-      "last_seen": "2026-05-25T09:25:17.137159+00:00",
-      "example_queries": [
-        "Help position us against cheaper competitors.",
-        "How do we position a B2B SaaS as category leader?",
-        "How do we make competitors irrelevant?",
-        "How do we understand audience psychology for positioning?"
       ]
     },
     {

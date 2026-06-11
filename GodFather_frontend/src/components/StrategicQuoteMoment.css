@@ -1,0 +1,157 @@
+.sqm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(1, 5, 16, 0.58);
+  backdrop-filter: blur(16px) saturate(1.15);
+}
+
+.sqm-card {
+  position: relative;
+  width: min(100%, 620px);
+  margin: 0;
+  border: 1px solid rgba(142, 229, 255, 0.34);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(13, 25, 67, 0.86), rgba(4, 10, 35, 0.92)),
+    rgba(3, 8, 24, 0.92);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #eff7ff;
+  font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
+  overflow: hidden;
+}
+
+.sqm-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(142, 229, 255, 0.13), transparent 42%);
+  pointer-events: none;
+}
+
+.sqm-card--overlay {
+  padding: 34px 38px 30px;
+  text-align: center;
+  animation: sqmReveal 0.42s ease both;
+}
+
+.sqm-card--inline {
+  padding: 18px 22px;
+  text-align: left;
+}
+
+.sqm-card--brand-book {
+  width: min(100%, 680px);
+  padding: 14px 18px;
+  margin: 0 0 14px;
+}
+
+.sqm-card--user {
+  border-color: rgba(124, 231, 255, 0.5);
+  background: linear-gradient(145deg, rgba(17, 42, 74, 0.86), rgba(6, 14, 43, 0.92));
+}
+
+.sqm-eyebrow {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin: 0 0 10px;
+  color: #8ee5ff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.sqm-text {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(22px, 4vw, 34px);
+  font-weight: 520;
+  line-height: 1.18;
+}
+
+.sqm-card--inline .sqm-text,
+.sqm-card--brand-book .sqm-text {
+  font-size: clamp(18px, 2.4vw, 23px);
+  line-height: 1.24;
+}
+
+.sqm-author {
+  position: relative;
+  z-index: 1;
+  margin: 14px 0 0;
+  color: rgba(214, 233, 255, 0.9);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sqm-evidence {
+  position: relative;
+  z-index: 1;
+  margin: 12px auto 0;
+  max-width: 480px;
+  color: rgba(192, 249, 255, 0.78);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.sqm-card--inline .sqm-evidence,
+.sqm-card--brand-book .sqm-evidence {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.sqm-continue {
+  position: relative;
+  z-index: 1;
+  margin: 24px auto 0;
+  min-height: 40px;
+  min-width: 150px;
+  border: none;
+  border-radius: 999px;
+  padding: 0 24px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(90deg, #3f63ec 0%, #7ce7ff 100%);
+  box-shadow: 0 12px 34px rgba(63, 99, 236, 0.42);
+}
+
+.sqm-continue:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+@keyframes sqmReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 600px) {
+  .sqm-overlay {
+    padding: 16px;
+  }
+
+  .sqm-card--overlay {
+    padding: 28px 20px 24px;
+  }
+
+  .sqm-card--inline,
+  .sqm-card--brand-book {
+    padding: 16px;
+  }
+}

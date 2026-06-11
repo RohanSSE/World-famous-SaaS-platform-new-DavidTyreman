@@ -15,6 +15,9 @@ def get_active_pipeline_name(override: Optional[str] = None) -> str:
         return selected
 
     cfg = get_rag_dev_config()
+    if not bool(cfg.get("enabled", False)):
+        return "rag_v1"
+
     configured = str(cfg.get("active_pipeline") or "rag_v1").strip().lower()
     return configured if configured in _ALLOWED_PIPELINES else "rag_v1"
 

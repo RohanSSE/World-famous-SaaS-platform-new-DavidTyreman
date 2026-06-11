@@ -57,6 +57,21 @@
   gap: 14px;
 }
 
+.ocp-context-pill {
+  width: min(760px, calc(100vw - 120px));
+  margin: 0 auto 12px;
+  border: 1px solid rgba(192, 249, 255, 0.28);
+  border-radius: 8px;
+  padding: 9px 14px;
+  box-sizing: border-box;
+  color: #dff7ff;
+  background: rgba(21, 32, 86, 0.44);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
 .ocp-chip {
   border: 1px solid rgba(141, 170, 255, 0.45);
   border-radius: 999px;
@@ -250,6 +265,10 @@
   }
 
   .ocp-row {
+    width: calc(100vw - 28px);
+  }
+
+  .ocp-context-pill {
     width: calc(100vw - 28px);
   }
 

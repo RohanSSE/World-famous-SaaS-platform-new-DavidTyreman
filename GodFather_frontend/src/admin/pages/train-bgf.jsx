@@ -70,6 +70,7 @@ function parsePhasePrompt(value = "") {
 export default function TrainBgfPage() {
   const [loading, setLoading] = useState(true);
   const [loadingDefault, setLoadingDefault] = useState(false);
+  const [savingEngine, setSavingEngine] = useState(false);
   const [savingBySection, setSavingBySection] = useState({});
   const [trainingBySection, setTrainingBySection] = useState({});
   const [error, setError] = useState("");
@@ -147,10 +148,38 @@ export default function TrainBgfPage() {
 
   const hasBusySections = useMemo(
     () =>
+      savingEngine ||
       Object.values(savingBySection).some(Boolean) ||
       Object.values(trainingBySection).some(Boolean),
-    [savingBySection, trainingBySection]
+    [savingEngine, savingBySection, trainingBySection]
   );
+
+  const activateEngine = async (nextEngine) => {
+    if (!nextEngine || nextEngine === engine || hasBusySections) return;
+
+    const previousEngine = engine;
+    setEngine(nextEngine);
+    setSavingEngine(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await adminApi.aiTuningActivateEngine({
+        active_pipeline: nextEngine,
+        enabled: true,
+      });
+      setEngine(res?.config?.active_pipeline || nextEngine);
+      setVersions((prev) => (res?.version ? [res.version, ...prev] : prev));
+      setSuccess(
+        `${nextEngine === "rag_v2" ? "BGF engine2" : "BGF engine1"} activated for user and agency RAG endpoints.`
+      );
+    } catch (e) {
+      setEngine(previousEngine);
+      setError(e?.response?.data?.detail || e.message || "Failed to activate BGF engine");
+    } finally {
+      setSavingEngine(false);
+    }
+  };
 
   const updateSectionField = (sectionKey, field, value) => {
     setSections((prev) => ({
@@ -254,14 +283,18 @@ export default function TrainBgfPage() {
                   exclusive
                   value={engine}
                   onChange={(_, nextValue) => {
-                    if (!nextValue || hasBusySections) return;
-                    setEngine(nextValue);
+                    activateEngine(nextValue);
                   }}
                   size="small"
                 >
-                  <ToggleButton value="rag_v1">Use BGF engine1</ToggleButton>
-                  <ToggleButton value="rag_v2">Use BGF engine2</ToggleButton>
+                  <ToggleButton value="rag_v1" disabled={hasBusySections}>Use BGF engine1</ToggleButton>
+                  <ToggleButton value="rag_v2" disabled={hasBusySections}>Use BGF engine2</ToggleButton>
                 </ToggleButtonGroup>
+                {savingEngine ? (
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.75 }}>
+                    Activating selected engine...
+                  </Typography>
+                ) : null}
               </Box>
 
               <Box>

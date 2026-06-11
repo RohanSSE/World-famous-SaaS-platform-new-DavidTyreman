@@ -202,6 +202,31 @@
   font-size: 13px;
 }
 
+.bbr-quote {
+  width: min(100%, 620px);
+  margin: 10px auto 12px;
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.bbr-quote .sqm-eyebrow {
+  margin-bottom: 6px;
+  font-size: 9px;
+}
+
+.bbr-quote .sqm-text {
+  font-size: clamp(15px, 2vw, 19px);
+}
+
+.bbr-quote .sqm-author {
+  margin-top: 7px;
+  font-size: 11px;
+}
+
+.bbr-quote .sqm-evidence {
+  display: none;
+}
+
 .bbr-cta {
   border: none;
   border-radius: 999px;

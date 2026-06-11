@@ -389,7 +389,7 @@ export default function UserDashboard() {
       if (sessionObj.id) localStorage.setItem("sessionId", String(sessionObj.id));
       toast.success("Session created successfully!");
       setShowFoundationModal(false);
-      navigate("/phase-questions/1");
+      navigate("/phase-intro/1");
     } catch (err) {
       setModalError(err.message || "Failed to create session.");
       toast.error(err.message);
@@ -409,7 +409,7 @@ export default function UserDashboard() {
   const handleContinueSession = (session) => {
     localStorage.setItem("session", JSON.stringify(session));
     if (session.id) localStorage.setItem("sessionId", String(session.id));
-    navigate("/phase-questions/1");
+    navigate("/phase-intro/1");
   };
 
   const handleToggleLock = async (session) => {

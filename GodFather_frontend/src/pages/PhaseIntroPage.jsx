@@ -1,6 +1,7 @@
 import { useNavigate, useParams, Navigate } from "react-router-dom";
 import OnboardingNavBar from "../components/onboarding/OnboardingNavBar";
 import BrandOrb from "../components/orb/BrandOrb";
+import StrategicQuoteMoment from "../components/StrategicQuoteMoment";
 import { getJourneyPhase, isPhaseUnlocked } from "../constants/journeyPhases";
 import "./PhaseIntroPage.css";
 
@@ -49,6 +50,16 @@ export default function PhaseIntroPage() {
           Let&apos;s Start
         </button>
       </main>
+
+      {phase.id === 1 && (
+        <StrategicQuoteMoment
+          context="phase_intro"
+          phaseId={phase.id}
+          variant="overlay"
+          eyebrow="Before question one"
+          storageKey={`phase-intro-quote-${phase.id}`}
+        />
+      )}
     </div>
   );
 }

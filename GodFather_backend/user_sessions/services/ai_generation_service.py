@@ -5,13 +5,13 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from django.contrib.auth import get_user_model
 
 from user_sessions.models import AIOutput, Answer, FoundationSummary, Session
 
-from .rag_service import retrieve_context
+from .rag_pipeline_resolver import retrieve_context
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -30,6 +30,71 @@ def _parse_summary(raw_text: str) -> Dict[str, Any]:
 def _summary_structure_instructions() -> str:
     from user_sessions.views import BRAND_SUMMARY_STRUCTURE_INSTRUCTIONS
     return BRAND_SUMMARY_STRUCTURE_INSTRUCTIONS
+
+
+def _retrieve_brand_book_reference_context(query: str, max_chars: int = 4500) -> Dict[str, Any]:
+    """Fetch Vessel & Craft / BrandGodFather RAGv2 reference chunks from the dedicated ES index."""
+    try:
+        from brandgodfather.services.rag_retrieval import HybridRAGService
+
+        service = HybridRAGService()
+        vessel_hits = []
+        try:
+            vector = service._embed_query(query)
+            body = {
+                "size": 8,
+                "knn": {
+                    "field": "dense_vector",
+                    "query_vector": vector,
+                    "k": 8,
+                    "num_candidates": 50,
+                    "filter": [
+                        {"wildcard": {"chunk_id": "Vessel & Craft FINAL Brand Book.pdf*"}},
+                    ],
+                },
+                "_source": [
+                    "chunk_id",
+                    "text",
+                    "chunk_type",
+                    "question_id",
+                    "phase",
+                    "brand_type",
+                    "emotional_register",
+                ],
+            }
+            vessel_hits = service._parse_hits(service.es.search(index=service.INDEX_NAME, body=body))
+        except Exception as exc:
+            logger.warning("Vessel & Craft vector reference lookup failed: %s", exc)
+
+        general_hits = service._retrieve_context(query_text=query, filters={}, k=24)
+        hits = vessel_hits + general_hits
+        chunks: List[str] = []
+        sources: List[Dict[str, Any]] = []
+        seen = set()
+        for hit in hits:
+            text = str(getattr(hit, "text", "") or "").strip()
+            if not text:
+                continue
+            chunk_id = str(getattr(hit, "chunk_id", "") or "")
+            dedupe_key = chunk_id or text[:160]
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            source_title = chunk_id.split("-")[0] if chunk_id else "BrandGodFather RAGv2"
+            chunks.append(f"Source: {source_title}\n{text}")
+            if chunk_id:
+                sources.append({
+                    "title": source_title,
+                    "source": chunk_id,
+                    "type": "brandgodfather_ragv2",
+                    "excerpt": text[:260],
+                    "relevance_score": round(float(getattr(hit, "score", 0.0) or 0.0), 4),
+                })
+        context = "\n\n---\n\n".join(chunks).strip()[:max_chars]
+        return {"context": context, "sources": sources}
+    except Exception as exc:
+        logger.warning("Brand Book reference RAGv2 retrieval failed: %s", exc)
+        return {"context": "", "sources": []}
 
 
 def run_manifesto_generation(session_id: int, user_id: int) -> Dict[str, Any]:
@@ -140,7 +205,7 @@ def run_session_summary_generation(session_id: int, user_id: int) -> Dict[str, A
         qa_text += f"A: {answer.answer_text.strip()}\n\n"
 
     prompt = f"""
-You are THE BRAND GODFATHER. Synthesize all Q&A into a structured brand summary.
+You are THE BRAND GODFATHER. Synthesize all Q&A into a structured Brand Book.
 
 QUESTIONS & ANSWERS:
 
@@ -148,21 +213,33 @@ QUESTIONS & ANSWERS:
 """
 
     retrieval = retrieve_context(
-        "brand summary synthesis emotional truth authentic identity",
+        "final structured Brand Book sections brand story big idea promise audience vision mission commentary application Vessel & Craft reference",
         user=user,
         session=session,
         include_knowledge=True,
         agent_id="manifesto",
-        top_k=5,
+        top_k=8,
         max_chars=4000,
     )
 
+    brand_book_reference = _retrieve_brand_book_reference_context(
+        "Vessel & Craft final brand book structure sections Brand Story Big Idea Promise Audience Vision Mission Godfather Standard Application why this works how to apply"
+    )
+
     david_system_prompt = """You are THE BRAND GODFATHER — speaking with David's voice and wisdom.
-Synthesize insights from all provided answers. Bold, direct, no jargon.
+Generate a final structured Brand Book from all provided answers. Bold, direct, no jargon.
+Each Brand Book section must stand alone and include practical Brand Godfather commentary.
 """
     david_system_prompt += _summary_structure_instructions()
     if retrieval["context"]:
         david_system_prompt += "\n\nReference tone and method:\n" + retrieval["context"]
+    if brand_book_reference["context"]:
+        david_system_prompt += (
+            "\n\nVessel & Craft Brand Book reference structure from BrandGodFather RAGv2. "
+            "Use this for structure, section quality, Godfather Standard style, and application logic. "
+            "Do not copy the client's brand language; adapt only the structure and level of specificity:\n"
+            + brand_book_reference["context"]
+        )
 
     try:
         client, model = _openai()
@@ -173,15 +250,18 @@ Synthesize insights from all provided answers. Bold, direct, no jargon.
                 {"role": "user", "content": prompt},
             ],
             temperature=0.7,
-            max_tokens=2500,
+            max_tokens=6000,
+            response_format={"type": "json_object"},
         )
         raw_summary = completion.choices[0].message.content.strip()
         summary = _parse_summary(raw_summary)
+        sources = (retrieval.get("sources") or []) + (brand_book_reference.get("sources") or [])
         return {
             "success": True,
             "summary": summary,
             "total_questions_answered": answers.count(),
-            "sources": retrieval["sources"],
+            "sources": sources,
+            "brand_book_reference_sources": brand_book_reference.get("sources") or [],
         }
     except Exception as e:
         logger.exception("Summary generation failed session=%s", session_id)
@@ -216,7 +296,7 @@ def run_foundation_summary_generation(session_id: int, user_id: int) -> Dict[str
     summary_obj.save()
 
     prompt = f"""
-You are THE BRAND GODFATHER. Analyze Foundation Q&A and return structured summary.
+You are THE BRAND GODFATHER. Analyze Foundation Q&A and return a structured Brand Book preview.
 
 QUESTIONS & ANSWERS:
 
@@ -228,16 +308,24 @@ QUESTIONS & ANSWERS:
     david_system_prompt += _summary_structure_instructions()
 
     retrieval = retrieve_context(
-        "foundation brand identity emotional truth",
+        "foundation brand identity emotional truth structured brand book sections commentary application",
         user=user,
         session=session,
         include_knowledge=True,
         agent_id="manifesto",
-        top_k=5,
+        top_k=8,
         max_chars=4000,
+    )
+    brand_book_reference = _retrieve_brand_book_reference_context(
+        "Vessel & Craft final brand book structure Brand Story Big Idea Promise Audience commentary application"
     )
     if retrieval["context"]:
         david_system_prompt += "\n\nReference:\n" + retrieval["context"]
+    if brand_book_reference["context"]:
+        david_system_prompt += (
+            "\n\nBrand Book reference structure from BrandGodFather RAGv2. Use this for section structure and commentary style only:\n"
+            + brand_book_reference["context"]
+        )
 
     try:
         client, model = _openai()
@@ -248,7 +336,8 @@ QUESTIONS & ANSWERS:
                 {"role": "user", "content": prompt},
             ],
             temperature=0.4,
-            max_tokens=2500,
+            max_tokens=6000,
+            response_format={"type": "json_object"},
         )
         raw_summary = completion.choices[0].message.content.strip()
         summary = _parse_summary(raw_summary)
@@ -258,7 +347,8 @@ QUESTIONS & ANSWERS:
         return {
             "success": True,
             "summary": summary,
-            "sources": retrieval["sources"],
+            "sources": (retrieval.get("sources") or []) + (brand_book_reference.get("sources") or []),
+            "brand_book_reference_sources": brand_book_reference.get("sources") or [],
         }
     except Exception as e:
         logger.exception("Foundation summary failed session=%s", session_id)

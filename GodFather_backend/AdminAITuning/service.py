@@ -229,6 +229,51 @@ def get_train_bgf_state(limit: int = 20) -> Dict[str, Any]:
     }
 
 
+def activate_engine_tuning(*, active_pipeline: str | None, enabled: bool = True, updated_by: str | None) -> Dict[str, Any]:
+    pipeline = str(active_pipeline or "").strip().lower()
+    if pipeline not in {"rag_v1", "rag_v2"}:
+        raise ValueError("Invalid active_pipeline")
+
+    current = _ensure_brand_discovery_in_config(get_rag_dev_config(), updated_by=updated_by)
+    payload = {
+        "active_pipeline": pipeline,
+        "enabled": bool(enabled),
+        "pre_retrieval_prompt": str(current.get("pre_retrieval_prompt") or ""),
+        "system_injection_prompt": str(current.get("system_injection_prompt") or ""),
+        "retrieval_profile_notes": str(current.get("retrieval_profile_notes") or ""),
+        "phase_1_base_prompt": str(current.get("phase_1_base_prompt") or _load_brand_discovery_prompt()),
+        "phase_1_admin_injection_prompt": str(current.get("phase_1_admin_injection_prompt") or ""),
+        "phase_1_admin_injection_goal": str(current.get("phase_1_admin_injection_goal") or ""),
+        "phase_1_admin_injection_criteria": str(current.get("phase_1_admin_injection_criteria") or ""),
+        "phase_1_master_prompt": str(current.get("phase_1_master_prompt") or ""),
+        "phase_2_master_prompt": str(current.get("phase_2_master_prompt") or ""),
+        "phase_3_master_prompt": str(current.get("phase_3_master_prompt") or ""),
+        "phase_4_master_prompt": str(current.get("phase_4_master_prompt") or ""),
+    }
+
+    saved = save_rag_dev_config(payload, updated_by=updated_by)
+    version = _record_version(
+        action="save",
+        section_key="global",
+        snapshot=saved,
+        updated_by=updated_by,
+    )
+    return {
+        "config": saved,
+        "version": version,
+        "mapped_endpoints": [
+            "/api/sessions/rag-query/",
+            "/api/sessions/<session_id>/rag-query/",
+            "/api/sessions/rag-query/stream/",
+            "/api/sessions/<session_id>/rag-query/stream/",
+            "/api/sessions/<session_id>/generate-manifesto/",
+            "/api/sessions/<session_id>/generate-summary/",
+            "/api/sessions/<session_id>/generate-foundation-summary/",
+            "/api/sessions/<session_id>/brand-workflow/",
+        ],
+    }
+
+
 def save_section_tuning(*, section_key: str, section_data: Dict[str, Any], active_pipeline: str | None, updated_by: str | None) -> Dict[str, Any]:
     if section_key not in PHASE_KEYS:
         raise ValueError("Invalid section_key")

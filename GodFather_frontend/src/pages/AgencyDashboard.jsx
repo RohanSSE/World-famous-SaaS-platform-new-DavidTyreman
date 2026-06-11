@@ -527,7 +527,7 @@ export default function AgencyDashboard() {
       localStorage.setItem("session", JSON.stringify(sessionObj));
       if (sessionObj.id) localStorage.setItem("sessionId", String(sessionObj.id));
       toast.success("New session started!");
-      navigate("/phase-questions/1");
+      navigate("/phase-intro/1");
     } catch (err) {
       toast.error(err?.message || "Failed to start session");
     } finally {

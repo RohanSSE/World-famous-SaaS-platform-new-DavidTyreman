@@ -50,7 +50,7 @@ export default function JourneyPhasesPage() {
       if (data?.already_active) {
         setBilling(data);
         unlockPhaseAfterComplete(1);
-        navigate("/phase-questions/2");
+        navigate("/phase-intro/2");
         return;
       }
       if (!data?.checkout_url) throw new Error("Checkout URL missing from server response");
@@ -67,7 +67,7 @@ export default function JourneyPhasesPage() {
       if (isPhaseSubscriptionLocked(selectedPhase)) startCheckout();
       return;
     }
-    navigate(`/phase-questions/${selectedPhase}`);
+    navigate(`/phase-intro/${selectedPhase}`);
   };
 
   const handleBack = () => navigate("/before-continue");

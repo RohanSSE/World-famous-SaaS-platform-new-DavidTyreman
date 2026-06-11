@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import BrandOrb from "../components/orb/BrandOrb";
 import OrbPresence from "../components/orb/OrbPresence";
 import ChatNavbar from "./ChatNavbar";
@@ -10,8 +10,19 @@ const introMessage = {
   id: "intro",
   role: "assistant",
   content:
-    "I'm here to help you think strategically. Ask me anything about positioning, messaging, campaigns, or how to apply your brand identity.",
+    "I'm here to help you turn your Brand Book into strategic promotion. Choose a direction, or ask me anything about campaigns, messaging, trust, visibility, or growth opportunities.",
 };
+
+const PROMOTION_STARTER_STORAGE_KEY = "brandPromotionStarter";
+const PROMOTION_STARTER_CONSUMED_KEY = "brandPromotionStarterConsumed";
+
+function getStoredPromotionStarter() {
+  try {
+    return JSON.parse(sessionStorage.getItem(PROMOTION_STARTER_STORAGE_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
 
 function getStoredSessionId() {
   const directId = localStorage.getItem("sessionId");
@@ -37,10 +48,17 @@ function getDashboardPath() {
 
 export default function OutputChatPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const autoStartRef = useRef(false);
+  const promotionStarter = useMemo(
+    () => location.state?.promotionStarter || getStoredPromotionStarter(),
+    [location.state]
+  );
   const [messages, setMessages] = useState([introMessage]);
   const [inputValue, setInputValue] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
+  const [activeStarterGoal, setActiveStarterGoal] = useState(promotionStarter?.goal || "");
 
   const conversationMessages = useMemo(
     () =>
@@ -53,54 +71,89 @@ export default function OutputChatPage() {
     [messages]
   );
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const question = inputValue.trim();
+  const sendQuestion = useCallback(
+    async (rawQuestion, options = {}) => {
+      const question = rawQuestion.trim();
+      const displayContent = (options.displayContent || question).trim();
 
-    if (!question || isSending) return;
+      if (!question || isSending) return;
 
-    const userMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: question,
-    };
+      const userMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: displayContent,
+      };
 
-    setMessages((currentMessages) => [...currentMessages, userMessage]);
-    setInputValue("");
-    setError("");
-    setIsSending(true);
+      setMessages((currentMessages) => [...currentMessages, userMessage]);
+      setInputValue("");
+      setError("");
+      setIsSending(true);
+
+      try {
+        const response = await authService.ragQuery(question, {
+          sessionId: getStoredSessionId(),
+          agentId: "strategist",
+          includeUserDocs: true,
+          conversationMessages: [...conversationMessages, { role: "user", content: question }],
+        });
+
+        setMessages((currentMessages) => [
+          ...currentMessages,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: response.answer || "I couldn't generate an answer for that yet.",
+            sources: response.sources || [],
+          },
+        ]);
+      } catch (requestError) {
+        setError(requestError.message || "Something went wrong. Please try again.");
+        setMessages((currentMessages) => [
+          ...currentMessages,
+          {
+            id: `assistant-error-${Date.now()}`,
+            role: "assistant",
+            content: "I couldn't reach the brand intelligence backend right now. Please try again in a moment.",
+            isError: true,
+          },
+        ]);
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [conversationMessages, isSending]
+  );
+
+  useEffect(() => {
+    if (!promotionStarter?.prompt || autoStartRef.current) return;
+
+    const starterId = promotionStarter.id || promotionStarter.goal || promotionStarter.prompt;
 
     try {
-      const response = await authService.ragQuery(question, {
-        sessionId: getStoredSessionId(),
-        agentId: "strategist",
-        includeUserDocs: true,
-        conversationMessages: [...conversationMessages, { role: "user", content: question }],
-      });
-
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: response.answer || "I couldn't generate an answer for that yet.",
-          sources: response.sources || [],
-        },
-      ]);
-    } catch (requestError) {
-      setError(requestError.message || "Something went wrong. Please try again.");
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        {
-          id: `assistant-error-${Date.now()}`,
-          role: "assistant",
-          content: "I couldn't reach the brand intelligence backend right now. Please try again in a moment.",
-          isError: true,
-        },
-      ]);
-    } finally {
-      setIsSending(false);
+      if (sessionStorage.getItem(PROMOTION_STARTER_CONSUMED_KEY) === starterId) return;
+    } catch {
+      // Continue with route state when browser storage is unavailable.
     }
+
+    autoStartRef.current = true;
+
+    try {
+      sessionStorage.setItem(PROMOTION_STARTER_CONSUMED_KEY, starterId);
+      sessionStorage.removeItem(PROMOTION_STARTER_STORAGE_KEY);
+    } catch {
+      // The selected starter can still be sent from route state.
+    }
+
+    setActiveStarterGoal(promotionStarter.goal || "");
+
+    sendQuestion(promotionStarter.prompt, {
+      displayContent: promotionStarter.goal || "Start Brand Promotion Phase",
+    });
+  }, [promotionStarter, sendQuestion]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    await sendQuestion(inputValue);
   };
 
   return (
@@ -127,6 +180,10 @@ export default function OutputChatPage() {
             Go to dashboard
           </button>
         </div>
+
+        {activeStarterGoal && (
+          <div className="ocp-context-pill">Brand Promotion Focus: {activeStarterGoal}</div>
+        )}
 
         <div className="ocp-chat-panel" aria-live="polite">
           {messages.map((message) => (

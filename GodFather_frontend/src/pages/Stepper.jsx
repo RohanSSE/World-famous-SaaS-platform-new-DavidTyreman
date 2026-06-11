@@ -83,7 +83,7 @@ const STEPS = [
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
     ),
-    label: "Brand Summary",
+    label: "Brand Book",
     tagline: "Your first snapshot",
     description:
       "Generate your first strategic brand snapshot based on your foundational answers.",

@@ -54,26 +54,113 @@ def get_openai_chat_model():
     return os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME', 'gpt-4o')
 
 
-# ---- Structured brand summary (heading, sub_heading, sections for UI) ----
+# ---- Structured Brand Book (heading, sub_heading, sections for UI) ----
 BRAND_SUMMARY_STRUCTURE_INSTRUCTIONS = """
 Respond with a single valid JSON object only (no markdown, no code fence). Use this exact shape so the UI can map and display each part:
 
 {
   "heading": "One compelling headline that captures the brand in a line",
   "sub_heading": "One or two full sentences that capture the brand essence and emotional truth.",
+    "brand_dna": [
+        { "title": "USP point one", "content": "Why this is a unique selling point from the full discovery journey." },
+        { "title": "USP point two", "content": "Why this is a unique selling point from the full discovery journey." },
+        { "title": "USP point three", "content": "Why this is a unique selling point from the full discovery journey." }
+    ],
   "sections": [
-    { "title": "Core Themes", "content": "A full, detailed paragraph: what emotional truths and values emerge from the answers. Write in clear, narrative prose with specific examples or implications." },
-    { "title": "Brand Identity", "content": "A full, detailed paragraph describing the authentic brand personality, voice, and how it shows up in the world." },
-    { "title": "Key Insights", "content": "A full, detailed paragraph on the most powerful or unique aspects, with depth and specificity." },
-    { "title": "Patterns & Truths", "content": "A full, detailed paragraph on recurring themes, emotions, or behaviors and what they reveal." },
-    { "title": "The Essence", "content": "A full, detailed paragraph that synthesizes what the brand is really about at its core, in words." }
+    {
+      "title": "Brand Story",
+      "content": "A standalone section written in clear brand-book prose.",
+      "godfather_commentary": {
+        "why_it_works": "One short paragraph explaining the strategic strength of this section.",
+        "how_to_apply": "One short paragraph explaining how the client should use this section in decisions, messaging, sales, hiring, delivery, or content."
+      }
+    },
+    { "title": "Big Idea", "content": "...", "godfather_commentary": { "why_it_works": "...", "how_to_apply": "..." } },
+    { "title": "Brand Promise", "content": "...", "godfather_commentary": { "why_it_works": "...", "how_to_apply": "..." } },
+    { "title": "Audience", "content": "...", "godfather_commentary": { "why_it_works": "...", "how_to_apply": "..." } },
+    { "title": "Vision", "content": "...", "godfather_commentary": { "why_it_works": "...", "how_to_apply": "..." } },
+    { "title": "Mission", "content": "...", "godfather_commentary": { "why_it_works": "...", "how_to_apply": "..." } },
+    { "title": "Differentiation", "content": "...", "godfather_commentary": { "why_it_works": "...", "how_to_apply": "..." } },
+    { "title": "Values & Behaviors", "content": "...", "godfather_commentary": { "why_it_works": "...", "how_to_apply": "..." } },
+    { "title": "Voice & Tone", "content": "...", "godfather_commentary": { "why_it_works": "...", "how_to_apply": "..." } },
+    { "title": "How To Use This Brand", "content": "...", "godfather_commentary": { "why_it_works": "...", "how_to_apply": "..." } }
   ]
 }
 
-WORD COUNT (strict): The total brand summary — heading + sub_heading + all five section "content" fields combined — must be between 400 and 700 words. Aim for roughly 80–140 words per section content so the summary is substantive and insightful. Do not go under 400 or over 700 words total.
+Each section must be generated independently and be usable on its own. Do not write one long narrative broken into fake headings. Each section needs its own strategic point, language, and application.
 
-Rules: heading and sub_heading are short; each section "content" must be a rich, detailed paragraph (multiple sentences, no bullet points). Output only the JSON object.
+Brand DNA is mandatory: generate exactly 3 points from the user's complete journey, not from one answer. Each Brand DNA point must name a distinct USP/unique selling point and explain why it makes the brand harder to copy.
+
+Use the Vessel & Craft Brand Book reference structure when available from RAG: clear section titles, concise strategic copy, and short Brand Godfather commentary that explains why the section works and how it should be applied.
+
+WORD COUNT (strict): heading + sub_heading + all section "content" fields combined should be between 900 and 1600 words. Each section content should be 70-140 words. Commentary fields should be 25-60 words each.
+
+Rules: heading and sub_heading are short; each section "content" must be a rich, detailed paragraph (multiple sentences, no bullet points). Commentary must be practical and specific. Output only the JSON object.
 """
+
+
+def _summary_text_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        return "\n".join(_summary_text_value(item) for item in value if _summary_text_value(item)).strip()
+    if isinstance(value, dict):
+        return _summary_text_value(value.get("text") or value.get("content") or value.get("value") or "")
+    return str(value).strip()
+
+
+def _normalize_godfather_commentary(section):
+    commentary = section.get("godfather_commentary") or section.get("brand_godfather_commentary") or section.get("commentary") or {}
+    if isinstance(commentary, str):
+        return {"why_it_works": commentary.strip(), "how_to_apply": ""}
+    if not isinstance(commentary, dict):
+        commentary = {}
+    return {
+        "why_it_works": _summary_text_value(
+            commentary.get("why_it_works")
+            or commentary.get("why")
+            or commentary.get("why_this_works")
+            or section.get("why_it_works")
+        ),
+        "how_to_apply": _summary_text_value(
+            commentary.get("how_to_apply")
+            or commentary.get("application")
+            or commentary.get("how_it_should_be_applied")
+            or section.get("how_to_apply")
+        ),
+    }
+
+
+def _normalize_summary_section(section, fallback_title="Brand Section"):
+    if not isinstance(section, dict):
+        return {
+            "title": fallback_title,
+            "content": _summary_text_value(section),
+            "godfather_commentary": {"why_it_works": "", "how_to_apply": ""},
+        }
+    return {
+        "title": _summary_text_value(section.get("title") or section.get("heading") or fallback_title),
+        "content": _summary_text_value(section.get("content") or section.get("body") or section.get("text")),
+        "godfather_commentary": _normalize_godfather_commentary(section),
+    }
+
+
+def _normalize_brand_dna_points(points):
+    if not isinstance(points, list):
+        return []
+    normalized = []
+    for idx, point in enumerate(points[:3]):
+        if isinstance(point, dict):
+            title = _summary_text_value(point.get("title") or point.get("label") or point.get("usp") or f"Brand DNA {idx + 1}")
+            content = _summary_text_value(point.get("content") or point.get("description") or point.get("why") or point.get("value"))
+        else:
+            title = f"Brand DNA {idx + 1}"
+            content = _summary_text_value(point)
+        if title or content:
+            normalized.append({"title": title or f"Brand DNA {idx + 1}", "content": content})
+    return normalized
 
 
 def _parse_structured_summary(raw_text):
@@ -87,26 +174,31 @@ def _parse_structured_summary(raw_text):
             raw_text = raw_text[start:end]
     try:
         data = json.loads(raw_text)
-        heading = (data.get("heading") or "").strip()
-        sub_heading = (data.get("sub_heading") or "").strip()
+        if not isinstance(data, dict):
+            raise TypeError("Structured summary must be a JSON object")
+        heading = _summary_text_value(data.get("heading") or data.get("title"))
+        sub_heading = _summary_text_value(data.get("sub_heading") or data.get("subHeading") or data.get("subtitle"))
+        brand_dna = _normalize_brand_dna_points(data.get("brand_dna") or data.get("brandDNA") or data.get("dna_points"))
         sections = data.get("sections")
         if isinstance(sections, list) and len(sections) > 0:
             sections = [
-                {"title": (s.get("title") or "").strip(), "content": (s.get("content") or "").strip()}
-                for s in sections if isinstance(s, dict)
+                _normalize_summary_section(s, fallback_title=f"Brand Section {idx + 1}")
+                for idx, s in enumerate(sections)
             ]
         else:
-            sections = [{"title": "Summary", "content": raw_text}]
+            sections = [_normalize_summary_section(raw_text, fallback_title="Summary")]
         return {
-            "heading": heading or "Brand Summary",
+            "heading": heading or "Brand Book",
             "sub_heading": sub_heading or "",
+            "brand_dna": brand_dna,
             "sections": sections,
         }
     except (json.JSONDecodeError, TypeError):
         return {
-            "heading": "Brand Summary",
+            "heading": "Brand Book",
             "sub_heading": "",
-            "sections": [{"title": "Summary", "content": raw_text}],
+            "brand_dna": [],
+            "sections": [_normalize_summary_section(raw_text, fallback_title="Summary")],
         }
 
 
@@ -127,102 +219,72 @@ def _split_text_chunks(text, sentence_limit=3):
 
 def _build_brand_book_payload(session, summary):
     """
-    Convert structured summary into deterministic 3-page brand book payload.
+    Convert structured summary into deterministic multi-page brand book payload.
     UI can render this directly like the target reference design.
     """
     heading = (summary or {}).get("heading") or "Brand Overview"
     sub_heading = (summary or {}).get("sub_heading") or ""
+    brand_dna = _normalize_brand_dna_points((summary or {}).get("brand_dna") or (summary or {}).get("brandDNA") or (summary or {}).get("dna_points"))
     sections = (summary or {}).get("sections") or []
     normalized_sections = [
-        {
-            "title": (s.get("title") or "").strip(),
-            "content": (s.get("content") or "").strip(),
+        _normalize_summary_section(s, fallback_title=f"Brand Section {idx + 1}")
+        for idx, s in enumerate(sections)
+        if isinstance(s, dict) or _summary_text_value(s)
+    ]
+
+    if not normalized_sections:
+        normalized_sections = [_normalize_summary_section(sub_heading or heading, fallback_title="Brand Overview")]
+
+    def page(page_id, title, items):
+        return {
+            "id": page_id,
+            "title": title,
+            "sections": items,
         }
-        for s in sections
-        if isinstance(s, dict)
+
+    section_groups = [
+        ("foundation", "Strategic Foundation", normalized_sections[0:2]),
+        ("promise-audience", "Promise & Audience", normalized_sections[2:4]),
+        ("vision-mission", "Vision & Mission", normalized_sections[4:6]),
+        ("positioning", "Positioning & Behavior", normalized_sections[6:8]),
+        ("expression", "Voice & Application", normalized_sections[8:10]),
     ]
 
-    def sec(idx, fallback_title):
-        if idx < len(normalized_sections):
-            item = normalized_sections[idx]
-            return {
-                "title": item["title"] or fallback_title,
-                "content": item["content"] or "",
-            }
-        return {"title": fallback_title, "content": ""}
-
-    s0 = sec(0, "Brand Origin Story")
-    s1 = sec(1, "Brand DNA")
-    s2 = sec(2, "Brand Promise")
-    s3 = sec(3, "Emotional Connection")
-    s4 = sec(4, "Differentiation Statement")
-
-    dna_items = [c for c in _split_text_chunks(s1["content"], sentence_limit=1)[:3] if c]
-    if not dna_items:
-        dna_items = ["Bold.", "Purposeful.", "Distinctive."]
-
-    emotional_chunks = _split_text_chunks(s3["content"], sentence_limit=2)
-    emotional_before = emotional_chunks[0] if emotional_chunks else s3["content"]
-    emotional_after = emotional_chunks[1] if len(emotional_chunks) > 1 else sub_heading
-
-    style_line = _split_text_chunks(sub_heading, sentence_limit=1)
-    style_text = style_line[0] if style_line else "Confident, warm, and visionary."
-    visual_text = style_line[1] if len(style_line) > 1 else "Deep blue, soft glow accents."
-    design_text = style_line[2] if len(style_line) > 2 else "Authentic, emotional, polished."
-
-    tagline_source = _split_text_chunks(s4["content"], sentence_limit=1)
-    taglines = [
-        tagline_source[0] if len(tagline_source) > 0 else "Build your truth. Live your brand.",
-        tagline_source[1] if len(tagline_source) > 1 else "Where clarity becomes culture.",
-        tagline_source[2] if len(tagline_source) > 2 else "Born to stand out. Built to last.",
+    pages = [
+        {
+            "id": "overview",
+            "title": "Brand Overview",
+            "overview_fields": [
+                {"label": "Brand Name", "value": session.title or "Your Brand"},
+                {"label": "Brand Book Direction", "value": heading},
+                {"label": "Core Belief", "value": sub_heading or "Defined through the discovery answers."},
+            ],
+            "sections": [],
+        }
     ]
+
+    if brand_dna:
+        pages.append({
+            "id": "brand-dna",
+            "title": "Brand DNA",
+            "sections": [],
+            "dna_points": brand_dna,
+        })
+
+    for group_id, group_title, group_sections in section_groups:
+        if group_sections:
+            pages.append(page(group_id, group_title, group_sections))
+
+    if len(normalized_sections) > 10:
+        pages.append(page("additional", "Additional Brand Sections", normalized_sections[10:]))
+
+    if pages:
+        pages[-1]["cta_label"] = "Explore More"
 
     return {
         "sidebar_title": "Brand Book",
         "brand_name": session.title or "Brand",
-        "pages": [
-            {
-                "id": "overview",
-                "title": "Brand Overview",
-                "overview_fields": [
-                    {"label": "Brand Name", "value": session.title or "Your Brand"},
-                    {"label": "Industry/Category", "value": heading},
-                    {"label": "Core Belief (1-line Purpose)", "value": sub_heading or "Defined through your manifesto responses."},
-                ],
-                "sections": [
-                    {"title": s0["title"], "content": s0["content"]},
-                ],
-            },
-            {
-                "id": "dna",
-                "title": "Brand DNA",
-                "dna_points": dna_items,
-                "sections": [
-                    {"title": s2["title"], "content": s2["content"]},
-                ],
-                "emotional_connection": {
-                    "title": s3["title"] or "Emotional Connection",
-                    "before_title": "Before Our Brand",
-                    "before": emotional_before,
-                    "after_title": "After Our Brand",
-                    "after": emotional_after,
-                },
-            },
-            {
-                "id": "differentiation",
-                "title": s4["title"] or "Differentiation Statement",
-                "statement": s4["content"],
-                "style_tone": {
-                    "title": "Brand Style & Tone & Visual Mood",
-                    "summary": s2["content"],
-                    "tone": style_text,
-                    "visual": visual_text,
-                    "design": design_text,
-                },
-                "taglines": taglines,
-                "cta_label": "Explore More",
-            },
-        ],
+        "pages": pages,
     }
 
 
@@ -2149,6 +2211,7 @@ from brandgodfather.services.ragv2.discovery_metadata import build_discovery_met
 from user_sessions.services.rag_service import build_combined_context_for_draft
 from user_sessions.services.rag_pipeline_resolver import (
     generate_rag_response,
+    get_active_pipeline_name,
     retrieve_context,
     stream_rag_response,
 )
@@ -3241,9 +3304,202 @@ def rag_query(request, pk=None):
         if "debug" in result:
             payload["debug"] = result["debug"]
         return Response(payload, status=status.HTTP_200_OK)
+
     except Exception as e:
         logger.exception("rag_query failed")
         return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def _strategic_quote_fallback(role_name, context, phase_id):
+    role = (role_name or "user").lower()
+    ctx = (context or "phase_intro").lower()
+    is_agency = role == "agency"
+
+    if ctx == "phase_intro" and int(phase_id or 1) <= 1:
+        text = "Before a brand can stand apart, it has to tell the truth about what it is here to become."
+    elif ctx == "phase_complete":
+        text = "A stronger brand does not simply move forward; it carries a clearer reason for being chosen."
+    elif ctx in ("brand_book_loading", "brand_book_page"):
+        text = "A Brand Book is not a document. It is the discipline that keeps meaning from drifting."
+    elif ctx in ("brand_book_ready", "output_mode"):
+        text = "The brand is the experience people remember after the transaction is over."
+    else:
+        text = "Strong brands turn scattered answers into a point of view people can feel."
+
+    if is_agency:
+        text = text.replace("brand", "agency brand", 1) if "brand" in text.lower() else text
+        lens = "agency"
+    else:
+        lens = "user"
+
+    return {
+        "text": text,
+        "author": "The Brand Godfather",
+        "source": "fallback",
+        "evidence": f"Generated from {lens} journey context fallback.",
+    }
+
+
+@swagger_auto_schema(
+    method='POST',
+    operation_description="Generate a contextual strategic quote for a session transition or Brand Book moment",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            "context": openapi.Schema(type=openapi.TYPE_STRING, description="phase_intro, phase_complete, brand_book_loading, brand_book_page, brand_book_ready, output_mode"),
+            "phase_id": openapi.Schema(type=openapi.TYPE_INTEGER),
+            "source_text": openapi.Schema(type=openapi.TYPE_STRING, description="Current page or local summary text for alignment"),
+        },
+    ),
+    responses={200: openapi.Response(description="Strategic quote")},
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def strategic_quote(request, pk):
+    session = get_object_or_404(Session, pk=pk)
+    if not session.has_access(request.user):
+        return Response({"detail": "Access denied"}, status=403)
+
+    context = (request.data.get("context") or "phase_intro").strip()[:60]
+    try:
+        phase_id = max(1, min(3, int(request.data.get("phase_id") or 1)))
+    except (TypeError, ValueError):
+        phase_id = 1
+    source_text = (request.data.get("source_text") or "").strip()[:1800]
+    role_name = (request.user.get_role_name() or "user").lower()
+    active_pipeline = get_active_pipeline_name()
+
+    answers = Answer.objects.filter(session=session).select_related("question").order_by("question__stage", "question__order")
+    answer_lines = []
+    for answer in answers[:30]:
+        question_text = (answer.question.text or "").strip()
+        answer_text = (answer.answer_text or "").strip()
+        if answer_text:
+            answer_lines.append(f"Q: {question_text}\nA: {answer_text}")
+    qa_text = "\n\n".join(answer_lines)[:4500]
+
+    summary_text = ""
+    try:
+        summary_obj = FoundationSummary.objects.filter(session=session, status="completed").first()
+        summary_text = (summary_obj.summary_text or "")[:1800] if summary_obj else ""
+    except Exception:
+        summary_text = ""
+
+    rag_context = ""
+    rag_sources = []
+    try:
+        retrieval = retrieve_context(
+            f"strategic quote {context} phase {phase_id} role {role_name} {session.title} {source_text[:300]}",
+            user=request.user,
+            session=session,
+            session_id=session.id,
+            include_knowledge=True,
+            agent_id="strategist",
+            top_k=4,
+            max_chars=2200,
+        )
+        active_pipeline = retrieval.get("active_pipeline") or active_pipeline
+        rag_context = str(retrieval.get("context") or "").strip()[:2200]
+        rag_sources = retrieval.get("sources") or []
+    except Exception as e:
+        logger.warning("Strategic quote RAG failed session=%s: %s", session.id, e)
+
+    fallback = _strategic_quote_fallback(role_name, context, phase_id)
+    role_lens = (
+        "agency operator, client trust, portfolio growth, strategic authority"
+        if role_name == "agency"
+        else "founder, business owner, emotional identity, customer meaning"
+    )
+    context_lens = {
+        "phase_intro": "before questions begin; invite self-knowledge and honesty",
+        "phase_complete": "between phases; mark a strategic shift without sounding motivational",
+        "brand_book_loading": "during Brand Book generation; reflection, synthesis, meaning",
+        "brand_book_page": "inside Brand Book; interpret the specific page direction",
+        "brand_book_ready": "before Output Mode; prepare the user to use the brand as an operating system",
+        "output_mode": "Output Mode; growth and execution grounded in the Brand Book",
+    }.get(context, "strategic transition")
+
+    system_prompt = """You are THE BRAND GODFATHER.
+Generate one original strategic quote for this exact user moment.
+
+Rules:
+- Do not quote famous people.
+- Do not sound decorative, motivational, generic, or cheesy.
+- Make it philosophical, emotionally intelligent, and strategically useful.
+- If the role is agency, make the quote feel like agency/client-growth strategy.
+- If the role is user/client, make the quote feel like founder/business brand identity strategy.
+- Ground it in the supplied answers, summary, page text, or RAG context when available.
+- Return JSON only.
+
+JSON shape:
+{
+  "text": "one original quote, 8-24 words",
+  "author": "The Brand Godfather",
+  "evidence": "short explanation of what signal this quote was aligned to"
+}
+"""
+    user_prompt = f"""
+Role: {role_name}
+Role lens: {role_lens}
+Context: {context}
+Context lens: {context_lens}
+Phase: {phase_id}
+Session title: {session.title}
+
+Current page/source text:
+{source_text or "None"}
+
+Stored answer gist:
+{qa_text or "No answers yet. Use session title, role, phase, and context."}
+
+Stored summary:
+{summary_text or "None"}
+
+RAG context:
+{rag_context or "None"}
+"""
+
+    try:
+        client = get_openai_client()
+        model = get_openai_chat_model()
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.55,
+            max_tokens=240,
+            response_format={"type": "json_object"},
+        )
+        raw = completion.choices[0].message.content.strip()
+        parsed = json.loads(raw)
+        text = str(parsed.get("text") or "").strip().strip('"')
+        author = str(parsed.get("author") or "The Brand Godfather").strip()
+        evidence = str(parsed.get("evidence") or "Generated from session strategy signals.").strip()
+        if len(text.split()) < 4 or len(text) > 180:
+            raise ValueError("Generated quote failed length gate")
+        return Response({
+            "text": text,
+            "author": author,
+            "source": "llm",
+            "evidence": evidence,
+            "role": role_name,
+            "context": context,
+            "phase_id": phase_id,
+            "active_pipeline": active_pipeline,
+            "sources": rag_sources,
+        })
+    except Exception as e:
+        logger.warning("Strategic quote generation failed session=%s: %s", session.id, e)
+        return Response({
+            **fallback,
+            "role": role_name,
+            "context": context,
+            "phase_id": phase_id,
+            "active_pipeline": active_pipeline,
+            "sources": rag_sources,
+        })
 
 
 @swagger_auto_schema(
@@ -3351,7 +3607,7 @@ def ai_task_status(request, task_id):
 
 @swagger_auto_schema(
     method='POST',
-    operation_description="Generate comprehensive brand summary (structured for UI: heading, sub_heading, sections)",
+    operation_description="Generate comprehensive Brand Book (structured for UI: heading, sub_heading, sections)",
     responses={
         200: openapi.Response(
             description="Success",
@@ -3392,7 +3648,7 @@ def session_generate_summary(request, pk):
     """
     POST /api/sessions/<pk>/generate-summary/
     
-    Generates a comprehensive brand summary from all answered questions.
+    Generates a comprehensive Brand Book from all answered questions.
     Only passes question and answer text to the prompt.
     """
     # 1. Session access check
@@ -3484,6 +3740,7 @@ QUESTIONS & ANSWERS:
             "brand_book": brand_book,
             "total_questions_answered": gen_result["total_questions_answered"],
             "sources": gen_result.get("sources", []),
+            "brand_book_reference_sources": gen_result.get("brand_book_reference_sources", []),
         }, status=status.HTTP_200_OK)
     return Response(
         {"detail": gen_result.get("error", "Generation failed")},
@@ -4153,6 +4410,7 @@ def session_generate_foundation_summary(request, pk):
             "brand_book": brand_book,
             "total_questions_answered": len(qa_pairs),
             "sources": gen_result.get("sources", []),
+            "brand_book_reference_sources": gen_result.get("brand_book_reference_sources", []),
         }, status=status.HTTP_200_OK)
 
     summary_obj.refresh_from_db()
@@ -4350,6 +4608,11 @@ def answer_ai_suggestions(request, pk):
 
     question_id = request.data.get("question_id")
     hints = (request.data.get("hints") or "").strip()
+    intent = (request.data.get("intent") or "refine").strip().lower()
+    custom_question = (request.data.get("custom_question") or "").strip()[:600]
+    allowed_intents = {"refine", "example", "context", "why", "hint", "explain", "ask"}
+    if intent not in allowed_intents:
+        intent = "refine"
 
     try:
         question = Question.objects.get(id=question_id, is_active=True)
@@ -4357,6 +4620,135 @@ def answer_ai_suggestions(request, pk):
         return Response({"detail": "Question not found"}, status=404)
 
     heuristic = score_answer_quality(question, hints)
+    question_stage = int(getattr(question, "stage", 1) or 1)
+    include_suggestion_quote = question_stage >= 2
+    active_pipeline = get_active_pipeline_name()
+    rag_phase = None
+    rag_context = ""
+    rag_sources = []
+
+    try:
+        retrieval = retrieve_context(
+            (
+                "AI answer suggestion for Brand Godfather discovery question. "
+                f"Question: {question.text.strip()} Draft: {hints}"
+            ),
+            user=request.user,
+            session=session,
+            session_id=session.id,
+            include_knowledge=True,
+            agent_id="strategist",
+            top_k=5,
+            max_chars=2500,
+        )
+        active_pipeline = retrieval.get("active_pipeline") or active_pipeline
+        rag_phase = retrieval.get("rag_phase")
+        rag_context = str(retrieval.get("context") or "").strip()
+        rag_sources = retrieval.get("sources") or []
+    except Exception as e:
+        logger.warning("AI answer suggestions RAG context failed session=%s question=%s: %s", pk, question_id, e)
+
+    if active_pipeline == "rag_v2" and not rag_context:
+        rag_context = (
+            f"RAGv2 is the active Brand Godfather pipeline for phase {question_stage}. "
+            "Use the phase prompt, question stage, and session answers as the strategic source of truth."
+        )
+    if active_pipeline and not rag_sources:
+        rag_sources = [{
+            "title": "Active Brand Godfather pipeline",
+            "source": active_pipeline,
+            "type": "pipeline",
+            "excerpt": f"{active_pipeline} selected by admin AI tuning for phase {question_stage} answer guidance.",
+        }]
+
+    if intent != "refine":
+        intent_labels = {
+            "example": "Give one strong example answer the user can learn from, but do not force them to copy it.",
+            "context": "Give additional strategic context behind the question.",
+            "why": "Explain why this question matters to the Brand Book and brand strategy.",
+            "hint": "Give a concise hint that helps the user answer in their own words.",
+            "explain": "Explain what the question is really asking in simple language.",
+            "ask": "Answer the user's custom question as the Brand Godfather.",
+        }
+        system_prompt = """You are THE BRAND GODFATHER — a strategic brand guide inside a question flow.
+
+The user is not asking for a rewrite unless explicitly requested. Help them understand, think, and answer better.
+Be concise, specific, emotionally intelligent, and grounded in the active RAG/context.
+Do not use generic AI helper language. Do not over-explain.
+
+Return JSON only:
+{
+  "mode": "example|context|why|hint|explain|ask",
+  "title": "short label",
+  "answer": "helpful response, 2-5 sentences max",
+  "example_answer": "optional example answer only when useful"
+}
+"""
+        user_prompt = f"""Active BGF pipeline: {active_pipeline}
+RAG phase: {rag_phase or "auto"}
+Phase number: {question_stage}
+Mode requested: {intent}
+Mode instruction: {intent_labels.get(intent)}
+
+Question being answered:
+{question.text.strip()}
+
+User draft, if any:
+{hints or "No draft yet."}
+
+User's custom question, if any:
+{custom_question or "None"}
+
+Retrieved brand/RAG context from the active pipeline:
+{rag_context[:2500] if rag_context else "No retrieved context available."}
+"""
+        try:
+            completion = get_openai_client().chat.completions.create(
+                model=get_openai_chat_model(),
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.55,
+                max_tokens=420,
+            )
+            text = completion.choices[0].message.content.strip()
+            result = json.loads(text)
+            return Response({
+                "mode": intent,
+                "title": result.get("title") or intent.replace("_", " ").title(),
+                "answer": result.get("answer") or "Think about the most honest strategic truth behind this question.",
+                "example_answer": result.get("example_answer") or "",
+                "active_pipeline": active_pipeline,
+                "pipeline_source": "admin_ai_tuning",
+                "rag_phase": rag_phase,
+                "phase_number": question_stage,
+                "rag_context_used": bool(rag_context),
+                "sources": rag_sources[:5],
+            }, status=200)
+        except Exception as e:
+            logger.warning("AI question helper failed session=%s question=%s intent=%s: %s", pk, question_id, intent, e)
+            fallback_answers = {
+                "example": "A strong answer usually names a belief, shows why it matters, and makes it feel specific to your brand.",
+                "context": "This question is looking for the strategic truth underneath your answer, not a polished marketing line.",
+                "why": "This matters because your answer becomes part of the emotional and strategic foundation of the Brand Book.",
+                "hint": "Start with: 'We believe...' then finish with something only your brand would truly stand behind.",
+                "explain": "In simple terms, this question is asking what you really believe and why anyone should feel it.",
+                "ask": "Use the question, your draft, and the brand truth you already know as the source of the answer.",
+            }
+            return Response({
+                "mode": intent,
+                "title": intent.replace("_", " ").title(),
+                "answer": fallback_answers.get(intent, fallback_answers["hint"]),
+                "example_answer": "",
+                "active_pipeline": active_pipeline,
+                "pipeline_source": "admin_ai_tuning",
+                "rag_phase": rag_phase,
+                "phase_number": question_stage,
+                "rag_context_used": bool(rag_context),
+                "sources": rag_sources[:5],
+            }, status=200)
 
     system_prompt = """You are THE BRAND GODFATHER — a world-class brand strategist coach.
 
@@ -4374,6 +4766,8 @@ Your job:
 3) Give 2–3 strings in "suggestions" — each MUST be only the final answer text the user pastes in (one sentence).
    Never wrap with "Rewrite with...", "Try this instead:", or "like '...'".
 
+4) If phase_number is 2 or higher, include "suggestion_quote": a short original strategic quote, grounded in the retrieved context and the user's draft, that can sit above the suggestions. If phase_number is 1, return an empty string.
+
 Rules:
 - Vendor trap = "we provide solutions", "unmet market needs", generic services talk, sounding hireable not memorable.
 - Weak = too short, generic buzzwords, no felt truth, no proof of behavior.
@@ -4385,12 +4779,21 @@ Output JSON only:
   "quality": "too_weak|vendor_thought|strong",
     "quality_label": "Good start — let's give it more soul|Nice direction — let's make it feel more ownable|This has a strong spark — let's sharpen it",
   "reason": "...",
+    "suggestion_quote": "...",
   "suggestions": ["...", "..."]
 }"""
 
-    user_prompt = f"""Question: {question.text.strip()}
+    user_prompt = f"""Active BGF pipeline: {active_pipeline}
+RAG phase: {rag_phase or "auto"}
+Phase number: {question_stage}
+Include suggestion quote: {"yes" if include_suggestion_quote else "no"}
+
+Question: {question.text.strip()}
 
 User draft: {hints}
+
+Retrieved brand/RAG context from the active pipeline:
+{rag_context[:2500] if rag_context else "No retrieved context available."}
 
 {build_quality_prompt_context(question, hints, heuristic)}"""
 
@@ -4411,6 +4814,22 @@ User draft: {hints}
             text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         result = json.loads(text)
         payload = normalize_ai_quality_response(result, heuristic)
+        quote_text = str(result.get("suggestion_quote") or "").strip() if include_suggestion_quote else ""
+        payload["active_pipeline"] = active_pipeline
+        payload["pipeline_source"] = "admin_ai_tuning"
+        payload["rag_phase"] = rag_phase
+        payload["phase_number"] = question_stage
+        payload["rag_context_used"] = bool(rag_context)
+        payload["suggestion_quote"] = {
+            "enabled": bool(quote_text),
+            "quote": quote_text,
+            "source": "rag_v2_phase_prompt" if active_pipeline == "rag_v2" else "active_pipeline",
+            "active_pipeline": active_pipeline,
+            "rag_phase": rag_phase,
+            "rag_context_used": bool(rag_context),
+            "sources": rag_sources[:3],
+        }
+        payload["sources"] = rag_sources[:5]
         return Response(payload, status=200)
 
     except (json.JSONDecodeError, KeyError):
@@ -4418,6 +4837,21 @@ User draft: {hints}
             {"suggestions": _fallback_suggestions(heuristic)},
             heuristic,
         )
+        payload["active_pipeline"] = active_pipeline
+        payload["pipeline_source"] = "admin_ai_tuning"
+        payload["rag_phase"] = rag_phase
+        payload["phase_number"] = question_stage
+        payload["rag_context_used"] = bool(rag_context)
+        payload["suggestion_quote"] = {
+            "enabled": False,
+            "quote": "",
+            "source": "fallback",
+            "active_pipeline": active_pipeline,
+            "rag_phase": rag_phase,
+            "rag_context_used": bool(rag_context),
+            "sources": rag_sources[:3],
+        }
+        payload["sources"] = rag_sources[:5]
         return Response(payload, status=200)
     except Exception:
         return Response({"detail": "AI service error"}, status=500)
@@ -4799,7 +5233,10 @@ def _summary_export_text_from_payload(brand_book, summary):
                         page_lines.append(f"{label}: {value}" if label else value)
             dna_points = page.get("dna_points") or []
             if dna_points:
-                page_lines.append("Brand DNA: " + ", ".join(str(point) for point in dna_points if point))
+                dna_lines = []
+                for point in _normalize_brand_dna_points(dna_points):
+                    dna_lines.append(" - ".join(part for part in [point.get("title"), point.get("content")] if part))
+                page_lines.append("Brand DNA: " + "; ".join(dna_lines))
             for section in page.get("sections") or []:
                 if isinstance(section, dict):
                     section_title = str(section.get("title") or "").strip()
