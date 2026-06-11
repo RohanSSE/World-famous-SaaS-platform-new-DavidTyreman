@@ -2145,6 +2145,7 @@ from openai import OpenAIError
 import logging
 
 from utils.retrieve_ai_knowledge import retrieve_ai_knowledge, format_knowledge_context
+from brandgodfather.services.ragv2.discovery_metadata import build_discovery_metadata
 from user_sessions.services.rag_service import build_combined_context_for_draft
 from user_sessions.services.rag_pipeline_resolver import (
     generate_rag_response,
@@ -3231,6 +3232,12 @@ def rag_query(request, pk=None):
             "phase_artifacts": result.get("phase_artifacts", {}),
             "rate_limit_remaining": remaining,
         }
+        if session is not None:
+            payload["discovery_metadata"] = build_discovery_metadata(
+                session_id=str(getattr(session, "session_id", session.pk)),
+                q_id=f"Q{int(getattr(session, 'current_stage', 1) or 1)}",
+                raw_answer=user_query,
+            )
         if "debug" in result:
             payload["debug"] = result["debug"]
         return Response(payload, status=status.HTTP_200_OK)
@@ -5050,6 +5057,10 @@ def admin_rag_dev_config(request):
         "pre_retrieval_prompt": str(request.data.get("pre_retrieval_prompt", "") or ""),
         "system_injection_prompt": str(request.data.get("system_injection_prompt", "") or ""),
         "retrieval_profile_notes": str(request.data.get("retrieval_profile_notes", "") or ""),
+        "phase_1_base_prompt": str(request.data.get("phase_1_base_prompt", "") or ""),
+        "phase_1_admin_injection_prompt": str(request.data.get("phase_1_admin_injection_prompt", "") or ""),
+        "phase_1_admin_injection_goal": str(request.data.get("phase_1_admin_injection_goal", "") or ""),
+        "phase_1_admin_injection_criteria": str(request.data.get("phase_1_admin_injection_criteria", "") or ""),
         "phase_1_master_prompt": str(request.data.get("phase_1_master_prompt", "") or ""),
         "phase_2_master_prompt": str(request.data.get("phase_2_master_prompt", "") or ""),
         "phase_3_master_prompt": str(request.data.get("phase_3_master_prompt", "") or ""),
@@ -5180,6 +5191,15 @@ def admin_rag_dev_test_query(request):
             "evaluation": result.get("evaluation"),
             "latency_breakdown": result.get("latency_breakdown"),
             "reasoning_path": result.get("reasoning_path"),
+            "discovery_metadata": (
+                build_discovery_metadata(
+                    session_id=str(getattr(session, "session_id", session.pk)),
+                    q_id=f"Q{int(getattr(session, 'current_stage', 1) or 1)}",
+                    raw_answer=query,
+                )
+                if session is not None
+                else None
+            ),
         }
     )
 

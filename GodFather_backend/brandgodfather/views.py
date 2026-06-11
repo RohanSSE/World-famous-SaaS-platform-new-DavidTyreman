@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS
 from brandgodfather.services.orchestrator import QuestionOrchestrator
 from brandgodfather.services.question_router import QuestionRouter
+from brandgodfather.services.ragv2.discovery_metadata import build_discovery_metadata
 from brandgodfather.services.session_manager import SessionManager
 from brandgodfather.tasks import process_answer_async
 
@@ -29,14 +30,16 @@ class BrandGodFatherAnswerAPIView(APIView):
 
         if use_async:
             task = process_answer_async.delay(session_id=session_id, q_id=q_id, user_answer=answer)
+            discovery_metadata = build_discovery_metadata(session_id=session_id, q_id=q_id, raw_answer=answer)
             return Response(
-                {"task_id": task.id, "status": "PENDING"},
+                {"task_id": task.id, "status": "PENDING", "discovery_metadata": discovery_metadata},
                 status=status.HTTP_202_ACCEPTED,
             )
 
         orchestrator = QuestionOrchestrator()
         result = orchestrator.process_answer(session_id=session_id, q_id=q_id, user_answer=answer)
         payload = result.model_dump() if hasattr(result, "model_dump") else dict(result)
+        payload["discovery_metadata"] = build_discovery_metadata(session_id=session_id, q_id=q_id, raw_answer=answer)
         return Response(payload, status=status.HTTP_200_OK)
 
 

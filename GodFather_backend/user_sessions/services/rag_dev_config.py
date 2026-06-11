@@ -12,6 +12,10 @@ _DEFAULT_CONFIG: Dict[str, Any] = {
     "pre_retrieval_prompt": "",
     "system_injection_prompt": "",
     "retrieval_profile_notes": "",
+    "phase_1_base_prompt": "",
+    "phase_1_admin_injection_prompt": "",
+    "phase_1_admin_injection_goal": "",
+    "phase_1_admin_injection_criteria": "",
     "phase_1_master_prompt": "",
     "phase_2_master_prompt": "",
     "phase_3_master_prompt": "",
@@ -19,6 +23,28 @@ _DEFAULT_CONFIG: Dict[str, Any] = {
     "updated_at": None,
     "updated_by": None,
 }
+
+
+def _compose_phase_1_master_prompt(cfg: Dict[str, Any]) -> str:
+    base_prompt = str(cfg.get("phase_1_base_prompt") or "").strip()
+    extra_prompt = str(cfg.get("phase_1_admin_injection_prompt") or "").strip()
+    extra_goal = str(cfg.get("phase_1_admin_injection_goal") or "").strip()
+    extra_criteria = str(cfg.get("phase_1_admin_injection_criteria") or "").strip()
+
+    if not base_prompt:
+        return str(cfg.get("phase_1_master_prompt") or "").strip()
+
+    parts = [base_prompt]
+    if extra_prompt or extra_goal or extra_criteria:
+        admin_block = (
+            "[Admin Optional Injection]\n"
+            f"[Prompt]\n{extra_prompt}\n\n"
+            f"[Goal]\n{extra_goal}\n\n"
+            f"[Evaluation Criteria]\n{extra_criteria}"
+        ).strip()
+        parts.append(admin_block)
+
+    return "\n\n".join(part for part in parts if part).strip()
 
 
 def _normalize(raw: Dict[str, Any] | None) -> Dict[str, Any]:
@@ -32,10 +58,15 @@ def _normalize(raw: Dict[str, Any] | None) -> Dict[str, Any]:
     cfg["pre_retrieval_prompt"] = str(cfg.get("pre_retrieval_prompt") or "").strip()
     cfg["system_injection_prompt"] = str(cfg.get("system_injection_prompt") or "").strip()
     cfg["retrieval_profile_notes"] = str(cfg.get("retrieval_profile_notes") or "").strip()
+    cfg["phase_1_base_prompt"] = str(cfg.get("phase_1_base_prompt") or "").strip()
+    cfg["phase_1_admin_injection_prompt"] = str(cfg.get("phase_1_admin_injection_prompt") or "").strip()
+    cfg["phase_1_admin_injection_goal"] = str(cfg.get("phase_1_admin_injection_goal") or "").strip()
+    cfg["phase_1_admin_injection_criteria"] = str(cfg.get("phase_1_admin_injection_criteria") or "").strip()
     cfg["phase_1_master_prompt"] = str(cfg.get("phase_1_master_prompt") or "").strip()
     cfg["phase_2_master_prompt"] = str(cfg.get("phase_2_master_prompt") or "").strip()
     cfg["phase_3_master_prompt"] = str(cfg.get("phase_3_master_prompt") or "").strip()
     cfg["phase_4_master_prompt"] = str(cfg.get("phase_4_master_prompt") or "").strip()
+    cfg["phase_1_master_prompt"] = _compose_phase_1_master_prompt(cfg)
     cfg["updated_by"] = cfg.get("updated_by")
     cfg["updated_at"] = cfg.get("updated_at")
     return cfg
@@ -53,6 +84,10 @@ def get_rag_dev_config() -> Dict[str, Any]:
             "pre_retrieval_prompt": row.pre_retrieval_prompt,
             "system_injection_prompt": row.system_injection_prompt,
             "retrieval_profile_notes": row.retrieval_profile_notes,
+            "phase_1_base_prompt": row.phase_1_base_prompt,
+            "phase_1_admin_injection_prompt": row.phase_1_admin_injection_prompt,
+            "phase_1_admin_injection_goal": row.phase_1_admin_injection_goal,
+            "phase_1_admin_injection_criteria": row.phase_1_admin_injection_criteria,
             "phase_1_master_prompt": row.phase_1_master_prompt,
             "phase_2_master_prompt": row.phase_2_master_prompt,
             "phase_3_master_prompt": row.phase_3_master_prompt,
@@ -83,6 +118,11 @@ def save_rag_dev_config(payload: Dict[str, Any], updated_by: str | None = None) 
     row.pre_retrieval_prompt = cfg["pre_retrieval_prompt"]
     row.system_injection_prompt = cfg["system_injection_prompt"]
     row.retrieval_profile_notes = cfg["retrieval_profile_notes"]
+    row.phase_1_base_prompt = cfg["phase_1_base_prompt"]
+    row.phase_1_admin_injection_prompt = cfg["phase_1_admin_injection_prompt"]
+    row.phase_1_admin_injection_goal = cfg["phase_1_admin_injection_goal"]
+    row.phase_1_admin_injection_criteria = cfg["phase_1_admin_injection_criteria"]
+    cfg["phase_1_master_prompt"] = _compose_phase_1_master_prompt(cfg)
     row.phase_1_master_prompt = cfg["phase_1_master_prompt"]
     row.phase_2_master_prompt = cfg["phase_2_master_prompt"]
     row.phase_3_master_prompt = cfg["phase_3_master_prompt"]
@@ -96,6 +136,10 @@ def save_rag_dev_config(payload: Dict[str, Any], updated_by: str | None = None) 
         "pre_retrieval_prompt": row.pre_retrieval_prompt,
         "system_injection_prompt": row.system_injection_prompt,
         "retrieval_profile_notes": row.retrieval_profile_notes,
+        "phase_1_base_prompt": row.phase_1_base_prompt,
+        "phase_1_admin_injection_prompt": row.phase_1_admin_injection_prompt,
+        "phase_1_admin_injection_goal": row.phase_1_admin_injection_goal,
+        "phase_1_admin_injection_criteria": row.phase_1_admin_injection_criteria,
         "phase_1_master_prompt": row.phase_1_master_prompt,
         "phase_2_master_prompt": row.phase_2_master_prompt,
         "phase_3_master_prompt": row.phase_3_master_prompt,

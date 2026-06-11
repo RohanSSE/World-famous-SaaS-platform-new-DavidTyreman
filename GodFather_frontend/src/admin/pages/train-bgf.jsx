@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 
 import Alert from "@mui/material/Alert";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -40,6 +43,7 @@ const SECTION_CONFIG = [
 
 function emptySectionState() {
   return {
+    mandatory_prompt: "",
     prompt: "",
     goal: "",
     criteria: "",
@@ -107,7 +111,14 @@ export default function TrainBgfPage() {
     }
 
     setSections({
-      phase_1_master_prompt: parsePhasePrompt(cfg.phase_1_master_prompt),
+      phase_1_master_prompt: {
+        ...emptySectionState(),
+        ...parsePhasePrompt(cfg.phase_1_master_prompt),
+        mandatory_prompt: String(cfg.phase_1_base_prompt || "").trim(),
+        prompt: String(cfg.phase_1_admin_injection_prompt || parsePhasePrompt(cfg.phase_1_master_prompt).prompt || "").trim(),
+        goal: String(cfg.phase_1_admin_injection_goal || parsePhasePrompt(cfg.phase_1_master_prompt).goal || "").trim(),
+        criteria: String(cfg.phase_1_admin_injection_criteria || parsePhasePrompt(cfg.phase_1_master_prompt).criteria || "").trim(),
+      },
       phase_2_master_prompt: parsePhasePrompt(cfg.phase_2_master_prompt),
       phase_3_master_prompt: parsePhasePrompt(cfg.phase_3_master_prompt),
       phase_4_master_prompt: parsePhasePrompt(cfg.phase_4_master_prompt),
@@ -227,6 +238,10 @@ export default function TrainBgfPage() {
           </Typography>
         </Box>
 
+        <Alert severity="info">
+          Default System prompt Non editable. Other prompt fields are editable.
+        </Alert>
+
         {error && <Alert severity="error">{error}</Alert>}
         {success && <Alert severity="success">{success}</Alert>}
 
@@ -289,7 +304,11 @@ export default function TrainBgfPage() {
                     fullWidth
                     multiline
                     minRows={4}
-                    label="Input Prompt"
+                    label={
+                      section.key === "phase_1_master_prompt"
+                        ? "Optional Injection Prompt"
+                        : "Input Prompt"
+                    }
                     value={sectionState.prompt}
                     onChange={(e) =>
                       updateSectionField(section.key, "prompt", e.target.value)
@@ -300,7 +319,11 @@ export default function TrainBgfPage() {
                     fullWidth
                     multiline
                     minRows={3}
-                    label="Goal of Prompt"
+                    label={
+                      section.key === "phase_1_master_prompt"
+                        ? "Optional Injection Goal"
+                        : "Goal of Prompt"
+                    }
                     value={sectionState.goal}
                     onChange={(e) =>
                       updateSectionField(section.key, "goal", e.target.value)
@@ -311,7 +334,11 @@ export default function TrainBgfPage() {
                     fullWidth
                     multiline
                     minRows={3}
-                    label="Evaluation Criteria of Prompt"
+                    label={
+                      section.key === "phase_1_master_prompt"
+                        ? "Optional Injection Evaluation Criteria"
+                        : "Evaluation Criteria of Prompt"
+                    }
                     value={sectionState.criteria}
                     onChange={(e) =>
                       updateSectionField(section.key, "criteria", e.target.value)
@@ -334,6 +361,28 @@ export default function TrainBgfPage() {
                       {training ? "Training..." : "Train AI"}
                     </Button>
                   </Stack>
+
+                  {section.key === "phase_1_master_prompt" ? (
+                    <Accordion>
+                      <AccordionSummary expandIcon={<Typography variant="body2">+</Typography>}>
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                          <Typography variant="body1">Mandatory Base Prompt</Typography>
+                          <Chip size="small" color="warning" label="Default Non editable" />
+                        </Stack>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={8}
+                          label="Mandatory Base Prompt (BrandDiscoveryPrompt.md from DB)"
+                          value={sectionState.mandatory_prompt || ""}
+                          InputProps={{ readOnly: true }}
+                          helperText="This base prompt is mandatory and locked."
+                        />
+                      </AccordionDetails>
+                    </Accordion>
+                  ) : null}
                 </Stack>
               </Card>
             );

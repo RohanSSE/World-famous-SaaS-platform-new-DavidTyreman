@@ -23,16 +23,16 @@
         "low_strategic_density",
         "unsupported_claim"
       ],
-      "frequency": 51,
+      "frequency": 52,
       "severity": 0.949,
       "recommended_fix": "expand_manifesto_chunks",
-      "last_seen": "2026-06-01T11:17:55.531673+00:00",
+      "last_seen": "2026-06-10T23:59:54.378372+00:00",
       "example_queries": [
-        "Create a tone guide: voice, energy, forbidden phrases, preferred phrases, and communication laws aligned with the brand ",
         "MESSAGING FRAMEWORK \u2014 Build messaging ladder: brand promise, proof points, emotional hooks, and pillar hierarchy \u2014 all f",
         "how to apply my brand identity?",
         "i want to grow my brand",
-        "Internal Culture Alignment"
+        "Internal Culture Alignment",
+        "Help me define my market position and brand promise."
       ]
     },
     {

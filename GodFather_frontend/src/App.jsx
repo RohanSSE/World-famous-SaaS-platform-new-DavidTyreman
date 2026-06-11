@@ -440,7 +440,7 @@ function AppContent() {
             <Route path="train-bgf" element={<AdminTrainBgfPage />} />
             <Route path="dev" element={<AdminDevPage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/admin/sign-in" replace />} />
         </Route>
 
         {/* Catch all - redirect to home */}

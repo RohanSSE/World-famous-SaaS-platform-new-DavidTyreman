@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
 
@@ -20,11 +21,76 @@ DEFAULT_BASE_CONFIG: Dict[str, Any] = {
     "pre_retrieval_prompt": "",
     "system_injection_prompt": "",
     "retrieval_profile_notes": "",
+    "phase_1_base_prompt": "",
+    "phase_1_admin_injection_prompt": "",
+    "phase_1_admin_injection_goal": "",
+    "phase_1_admin_injection_criteria": "",
     "phase_1_master_prompt": "",
     "phase_2_master_prompt": "",
     "phase_3_master_prompt": "",
     "phase_4_master_prompt": "",
 }
+
+
+def _load_brand_discovery_prompt() -> str:
+    base_dir = Path(__file__).resolve().parents[1]
+    prompt_path = base_dir / "prompts" / "RAGv2Prompts" / "BrandDiscoveryPrompt.md"
+    try:
+        return prompt_path.read_text(encoding="utf-8").strip()
+    except Exception:
+        return ""
+
+
+def _compose_phase_1_prompt(base_prompt: str, section_data: Dict[str, Any]) -> str:
+    mandatory = str(base_prompt or "").strip()
+    prompt = str(section_data.get("prompt") or "").strip()
+    goal = str(section_data.get("goal") or "").strip()
+    criteria = str(section_data.get("criteria") or "").strip()
+
+    if not mandatory:
+        return _build_phase_prompt(section_data)
+
+    blocks = [mandatory]
+    if prompt or goal or criteria:
+        blocks.append(
+            (
+                "[Admin Optional Injection]\n"
+                f"[Prompt]\n{prompt}\n\n"
+                f"[Goal]\n{goal}\n\n"
+                f"[Evaluation Criteria]\n{criteria}"
+            ).strip()
+        )
+    return "\n\n".join(blocks)
+
+
+def _ensure_brand_discovery_in_config(cfg: Dict[str, Any], updated_by: str | None = None) -> Dict[str, Any]:
+    base_prompt = str(cfg.get("phase_1_base_prompt") or "").strip()
+    if base_prompt:
+        if not str(cfg.get("phase_1_master_prompt") or "").strip():
+            cfg["phase_1_master_prompt"] = _compose_phase_1_prompt(
+                base_prompt,
+                {
+                    "prompt": cfg.get("phase_1_admin_injection_prompt") or "",
+                    "goal": cfg.get("phase_1_admin_injection_goal") or "",
+                    "criteria": cfg.get("phase_1_admin_injection_criteria") or "",
+                },
+            )
+        return cfg
+
+    fallback = _load_brand_discovery_prompt()
+    if not fallback:
+        return cfg
+
+    cfg["phase_1_base_prompt"] = fallback
+    cfg["phase_1_master_prompt"] = _compose_phase_1_prompt(
+        fallback,
+        {
+            "prompt": cfg.get("phase_1_admin_injection_prompt") or "",
+            "goal": cfg.get("phase_1_admin_injection_goal") or "",
+            "criteria": cfg.get("phase_1_admin_injection_criteria") or "",
+        },
+    )
+    return save_rag_dev_config(cfg, updated_by=updated_by)
 
 
 def _serialize_version(row: AITuningVersion) -> Dict[str, Any]:
@@ -93,13 +159,33 @@ def _build_phase_prompt(payload: Dict[str, Any]) -> str:
 def _ensure_default_template() -> AITuningVersion:
     row = AITuningVersion.objects.filter(is_default_template=True).order_by("-created_at").first()
     if row:
+        snapshot = dict(row.snapshot or {})
+        if not snapshot.get("phase_1_base_prompt"):
+            base_prompt = _load_brand_discovery_prompt()
+            if base_prompt:
+                snapshot["phase_1_base_prompt"] = base_prompt
+                snapshot["phase_1_master_prompt"] = _compose_phase_1_prompt(
+                    base_prompt,
+                    {
+                        "prompt": snapshot.get("phase_1_admin_injection_prompt") or "",
+                        "goal": snapshot.get("phase_1_admin_injection_goal") or "",
+                        "criteria": snapshot.get("phase_1_admin_injection_criteria") or "",
+                    },
+                )
+                row.snapshot = snapshot
+                row.save(update_fields=["snapshot"])
         return row
+
+    base_prompt = _load_brand_discovery_prompt()
+    snapshot = dict(DEFAULT_BASE_CONFIG)
+    snapshot["phase_1_base_prompt"] = base_prompt
+    snapshot["phase_1_master_prompt"] = _compose_phase_1_prompt(base_prompt, {"prompt": "", "goal": "", "criteria": ""})
 
     return AITuningVersion.objects.create(
         action="load_default",
         section_key="global",
         active_pipeline=DEFAULT_BASE_CONFIG["active_pipeline"],
-        snapshot=dict(DEFAULT_BASE_CONFIG),
+        snapshot=snapshot,
         is_default_template=True,
     )
 
@@ -118,7 +204,7 @@ def _record_version(*, action: str, section_key: str, snapshot: Dict[str, Any], 
 
 
 def get_train_bgf_state(limit: int = 20) -> Dict[str, Any]:
-    cfg = get_rag_dev_config()
+    cfg = _ensure_brand_discovery_in_config(get_rag_dev_config())
     default_template = _ensure_default_template()
 
     versions_qs = AITuningVersion.objects.filter(is_default_template=False).order_by("-created_at")[: max(1, min(limit, 100))]
@@ -126,7 +212,16 @@ def get_train_bgf_state(limit: int = 20) -> Dict[str, Any]:
     return {
         "config": cfg,
         "sections": {
-            key: _extract_phase_parts(cfg.get(key, ""))
+            key: (
+                {
+                    "mandatory_prompt": str(cfg.get("phase_1_base_prompt") or ""),
+                    "prompt": str(cfg.get("phase_1_admin_injection_prompt") or ""),
+                    "goal": str(cfg.get("phase_1_admin_injection_goal") or ""),
+                    "criteria": str(cfg.get("phase_1_admin_injection_criteria") or ""),
+                }
+                if key == "phase_1_master_prompt"
+                else _extract_phase_parts(cfg.get(key, ""))
+            )
             for key in sorted(PHASE_KEYS)
         },
         "default_template": _serialize_version(default_template),
@@ -145,12 +240,30 @@ def save_section_tuning(*, section_key: str, section_data: Dict[str, Any], activ
         "pre_retrieval_prompt": str(current.get("pre_retrieval_prompt") or ""),
         "system_injection_prompt": str(current.get("system_injection_prompt") or ""),
         "retrieval_profile_notes": str(current.get("retrieval_profile_notes") or ""),
+        "phase_1_base_prompt": str(current.get("phase_1_base_prompt") or _load_brand_discovery_prompt()),
+        "phase_1_admin_injection_prompt": str(current.get("phase_1_admin_injection_prompt") or ""),
+        "phase_1_admin_injection_goal": str(current.get("phase_1_admin_injection_goal") or ""),
+        "phase_1_admin_injection_criteria": str(current.get("phase_1_admin_injection_criteria") or ""),
         "phase_1_master_prompt": str(current.get("phase_1_master_prompt") or ""),
         "phase_2_master_prompt": str(current.get("phase_2_master_prompt") or ""),
         "phase_3_master_prompt": str(current.get("phase_3_master_prompt") or ""),
         "phase_4_master_prompt": str(current.get("phase_4_master_prompt") or ""),
     }
-    payload[section_key] = _build_phase_prompt(section_data)
+    if section_key == "phase_1_master_prompt":
+        # Phase 1 base prompt is immutable and always loaded from DB state.
+        payload["phase_1_admin_injection_prompt"] = str(section_data.get("prompt") or "").strip()
+        payload["phase_1_admin_injection_goal"] = str(section_data.get("goal") or "").strip()
+        payload["phase_1_admin_injection_criteria"] = str(section_data.get("criteria") or "").strip()
+        payload["phase_1_master_prompt"] = _compose_phase_1_prompt(
+            payload["phase_1_base_prompt"],
+            {
+                "prompt": payload["phase_1_admin_injection_prompt"],
+                "goal": payload["phase_1_admin_injection_goal"],
+                "criteria": payload["phase_1_admin_injection_criteria"],
+            },
+        )
+    else:
+        payload[section_key] = _build_phase_prompt(section_data)
 
     saved = save_rag_dev_config(payload, updated_by=updated_by)
     version = _record_version(
