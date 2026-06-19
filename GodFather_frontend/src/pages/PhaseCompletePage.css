@@ -1,13 +1,13 @@
 .phase-complete-page {
   min-height: 100vh;
-  height: 100vh;
-  height: 100dvh;
+  min-height: 100dvh;
   background: #030508;
   background-image: radial-gradient(ellipse 90% 70% at 50% 20%, #0f2858 0%, #061018 50%, #020408 100%);
   color: #fff;
   font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
@@ -127,10 +127,9 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  flex: 1;
-  min-height: 0;
-  padding: 0.15rem 1.5rem 0.6rem;
-  overflow: hidden;
+  flex: 1 0 auto;
+  min-height: auto;
+  padding: 0.15rem 1.5rem 2rem;
 }
 
 .phase-complete-card {
