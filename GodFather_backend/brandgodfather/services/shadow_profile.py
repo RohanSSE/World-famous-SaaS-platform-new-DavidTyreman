@@ -205,9 +205,10 @@ class ShadowProfileService:
             "pressure_level_used": int(payload.get("pressure_recommendation", 3) or 3),
             "brand_seed_echo": bool(payload.get("brand_seed_echo", False)),
             "avoidance_topic": str(payload.get("avoidance_topic", "") or ""),
-            "answer_embedding": answer_embedding,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+        if answer_embedding:
+            doc["answer_embedding"] = answer_embedding
 
         existing_id = self._get_latest_episodic_doc_id(session_id=session_id, q_id=q_id)
         if existing_id:
@@ -235,6 +236,14 @@ class ShadowProfileService:
         return ""
 
     def _get_session(self, session_id: str) -> Tuple[Optional[str], Dict[str, Any]]:
+        try:
+            doc = self.es.get(index=self.SESSIONS_INDEX, id=session_id)
+            source = doc.get("_source", {})
+            if source:
+                return doc.get("_id"), source
+        except Exception:
+            pass
+
         body = {
             "size": 1,
             "query": {"bool": {"filter": [{"term": {"session_id": session_id}}]}},

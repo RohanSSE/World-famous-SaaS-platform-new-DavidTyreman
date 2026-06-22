@@ -526,6 +526,24 @@ export default function AgencyDashboard() {
       resetActiveJourneyState();
       localStorage.setItem("session", JSON.stringify(sessionObj));
       if (sessionObj.id) localStorage.setItem("sessionId", String(sessionObj.id));
+      if (sessionObj.id) {
+        try {
+          await authService.startSession(sessionObj.id);
+        } catch {
+          /* non-fatal */
+        }
+        try {
+          await authService.ensureBrandGodFatherSession({
+            sourceSessionId: String(sessionObj.id),
+            contextData: {
+              frontend_page: "AgencyDashboard",
+              orb_journey_start: true,
+            },
+          });
+        } catch {
+          /* non-fatal: first answer submission will retry */
+        }
+      }
       toast.success("New session started!");
       navigate("/phase-intro/1");
     } catch (err) {

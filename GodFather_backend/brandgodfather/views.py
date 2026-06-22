@@ -20,6 +20,7 @@ class BrandGodFatherAnswerAPIView(APIView):
         session_id = str(request.data.get("session_id", "")).strip()
         q_id = str(request.data.get("q_id", "")).strip()
         answer = str(request.data.get("answer", "")).strip()
+        context_data = request.data.get("context_data", {}) or {}
         use_async = bool(request.data.get("async", False))
 
         if not session_id or not q_id or not answer:
@@ -36,8 +37,50 @@ class BrandGodFatherAnswerAPIView(APIView):
                 status=status.HTTP_202_ACCEPTED,
             )
 
-        orchestrator = QuestionOrchestrator()
-        result = orchestrator.process_answer(session_id=session_id, q_id=q_id, user_answer=answer)
+        manager = SessionManager()
+        if isinstance(context_data, dict) and context_data:
+            existing = manager.get_session(session_id)
+            existing_context = existing.context_data if existing else {}
+            merged_context = {**(existing_context or {}), **context_data}
+            if existing:
+                manager.update_session(session_id, {"context_data": merged_context})
+
+        try:
+            orchestrator = QuestionOrchestrator()
+        except Exception as exc:
+            return Response(
+                {"detail": f"BrandGodFather ORB engine unavailable: {exc}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        try:
+            result = orchestrator.process_answer(session_id=session_id, q_id=q_id, user_answer=answer)
+        except ValueError as exc:
+            if "Session not found" not in str(exc):
+                return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+            user_id = str(getattr(request.user, "id", "") or getattr(request.user, "email", "") or "frontend-user")
+            manager.ensure_session(
+                session_id=session_id,
+                user_id=user_id,
+                context_data={
+                    **(context_data if isinstance(context_data, dict) else {}),
+                    "recovered_from_answer_request": True,
+                    "source": "brandgodfather_answer_api",
+                },
+            )
+            try:
+                result = orchestrator.process_answer(session_id=session_id, q_id=q_id, user_answer=answer)
+            except Exception as retry_exc:
+                return Response(
+                    {"detail": f"BrandGodFather ORB session recovery failed: {retry_exc}"},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+        except Exception as exc:
+            return Response(
+                {"detail": f"BrandGodFather ORB answer failed: {exc}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
         payload = result.model_dump() if hasattr(result, "model_dump") else dict(result)
         payload["discovery_metadata"] = build_discovery_metadata(session_id=session_id, q_id=q_id, raw_answer=answer)
         return Response(payload, status=status.HTTP_200_OK)
@@ -90,12 +133,25 @@ class BrandGodFatherSessionStartAPIView(APIView):
 
         manager = SessionManager()
         router = QuestionRouter()
-        session = manager.create_session(user_id=user_id, context_data=context_data)
+        session, reused = manager.start_or_get_session(user_id=user_id, context_data=context_data)
         first = router.get_question("Q1")
+        current_q_id = session.current_q_id or "Q1"
+        current = router.get_question(current_q_id)
+        source_session_id = (session.context_data or {}).get("source_session_id")
+        source_session_ref = (session.context_data or {}).get("source_session_ref")
 
         return Response(
             {
                 "session_id": session.session_id,
+                "source_session_id": source_session_id,
+                "source_session_ref": source_session_ref,
+                "reused": reused,
+                "current_q_id": current_q_id,
+                "current_question": {
+                    "q_id": current_q_id,
+                    "phase": current.phase if current else "I",
+                    "prompt": current.prompt if current else "",
+                },
                 "first_question": {
                     "q_id": "Q1",
                     "phase": first.phase if first else "I",

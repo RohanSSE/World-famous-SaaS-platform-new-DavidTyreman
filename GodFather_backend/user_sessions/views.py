@@ -20,6 +20,7 @@ from .serializers import (
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import os
+import re
 from openai import AzureOpenAI
 from reportlab.lib.colors import HexColor, Color
 import json
@@ -289,6 +290,47 @@ def _build_brand_book_payload(session, summary):
 
 
 # Multiple Sessions
+def _strategic_challenge_for_draft(question, draft: str, heuristic: dict, refined: bool = False) -> dict:
+    quality = str(heuristic.get("quality") or "too_weak")
+    profile = heuristic.get("profile") or {}
+    step = str(profile.get("step") or profile.get("category") or "this question")
+    draft_text = (draft or "").strip()
+    words = len(re.findall(r"\b[\w']+\b", draft_text))
+
+    if quality == "vendor_thought":
+        challenge = (
+            "This is still describing the offer, not the brand. "
+            "Before we touch the wording, name the belief or behavior that makes this true.\n\n"
+            "What would your best customer feel or do differently because this brand exists?"
+        )
+        challenge_type = "vendor_thought"
+    elif quality == "too_weak" or words < 10:
+        challenge = (
+            f"There is a start here, but it is too safe for {step}. "
+            "I am not polishing this yet; we need the truth underneath it.\n\n"
+            "What are you willing to stand for that a generic competitor would avoid saying?"
+        )
+        challenge_type = "shallow_answer"
+    else:
+        challenge = (
+            "This has enough shape to keep working with, but do not jump to polish first. "
+            "Make the strategic choice sharper before the language gets cleaner.\n\n"
+            "Who is this for, who is it not for, and what truth does that force you to own?"
+        )
+        challenge_type = "strategic_challenge"
+
+    return {
+        "improved_answer": draft_text,
+        "follow_up_question": challenge,
+        "mode": "challenge_first",
+        "rewrite_blocked": True,
+        "challenge_type": challenge_type,
+        "quality": quality,
+        "reason": heuristic.get("reason") or "Challenge the thinking before improving copy.",
+        "refined_requested": bool(refined),
+    }
+
+
 @swagger_auto_schema(
     method='get',
     operation_description="Client task dashboard - view own session",
@@ -2429,14 +2471,14 @@ def answer_ai_suggestion_from_documents(request, pk):
             QUESTION:
             {question_text}
 
-            CURRENT DRAFT ANSWER:
+            CURRENT ANSWER:
             {draft_text}
 
             RELEVANT INFORMATION FROM DOCUMENTS:
             {context}
 
             INSTRUCTIONS:
-            1. Use the document information to improve and expand the draft answer
+            1. Use the document information to improve and expand the answer
             2. Ensure the answer is comprehensive and well-structured
             3. Cite information naturally (e.g., "According to the Brand Strategy Guide...")
             4. Make it specific and actionable
@@ -2866,7 +2908,7 @@ def answer_ai_suggestion_unified(request, pk):
 
 @swagger_auto_schema(
     method='POST',
-    operation_description="Get AI suggestion: improved answer + one smart follow-up question",
+    operation_description="Get challenge-first coaching: exact answer copy + one strategic follow-up question",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
@@ -2883,6 +2925,10 @@ def answer_ai_suggestion_unified(request, pk):
                 properties={
                     "improved_answer": openapi.Schema(type=openapi.TYPE_STRING),
                     "follow_up_question": openapi.Schema(type=openapi.TYPE_STRING),
+                    "mode": openapi.Schema(type=openapi.TYPE_STRING),
+                    "rewrite_blocked": openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                    "challenge_type": openapi.Schema(type=openapi.TYPE_STRING),
+                    "quality": openapi.Schema(type=openapi.TYPE_STRING),
                     "documents_searched": openapi.Schema(type=openapi.TYPE_INTEGER),
                     "context_used": openapi.Schema(type=openapi.TYPE_BOOLEAN),
                 }
@@ -2924,6 +2970,21 @@ def answer_ai_suggestion_draft(request, pk):
     
     question_text = question.text.strip()
     print("question_text ", question_text)
+
+    from user_sessions.services.answer_quality import score_answer_quality
+
+    heuristic = score_answer_quality(question, draft)
+    challenge_payload = _strategic_challenge_for_draft(question, draft, heuristic, refined=refined)
+    Conversation.objects.create(session=session, question=question, role="user", content=draft.strip())
+    Conversation.objects.create(session=session, question=question, role="assistant", content=challenge_payload["follow_up_question"].strip())
+    return Response({
+        **challenge_payload,
+        "documents_searched": 0,
+        "context_used": False,
+        "sources": [],
+        "graph_concepts": [],
+        "evaluation": None,
+    }, status=status.HTTP_200_OK)
 
     # 4. RAG context (user docs scoped to request.user + ai_knowledge)
     rag_sources = []
@@ -3101,7 +3162,7 @@ def answer_ai_suggestion_draft(request, pk):
 
     CONTEXT:
     Current question: {question_text}
-    User draft: {draft}
+    User answer: {draft}
     Foundation (if any): {foundation or "None"}
     Brand Profile: {brand_profile_summary}
     History: {json.dumps(history_messages, ensure_ascii=False, indent=2) if history_messages else "None"}
@@ -4594,7 +4655,7 @@ def session_update_foundation_summary(request, pk):
 def answer_ai_suggestions(request, pk):
     """
     Called while user is typing.
-    Classifies draft internally, then returns warm coaching recommendations.
+    Classifies the answer internally, then returns warm coaching recommendations.
     """
     from user_sessions.services.answer_quality import (
         build_quality_prompt_context,
@@ -4631,7 +4692,7 @@ def answer_ai_suggestions(request, pk):
         retrieval = retrieve_context(
             (
                 "AI answer suggestion for Brand Godfather discovery question. "
-                f"Question: {question.text.strip()} Draft: {hints}"
+                f"Question: {question.text.strip()} Answer: {hints}"
             ),
             user=request.user,
             session=session,
@@ -4693,8 +4754,8 @@ Mode instruction: {intent_labels.get(intent)}
 Question being answered:
 {question.text.strip()}
 
-User draft, if any:
-{hints or "No draft yet."}
+User answer, if any:
+{hints or "No answer yet."}
 
 User's custom question, if any:
 {custom_question or "None"}
@@ -4735,7 +4796,7 @@ Retrieved brand/RAG context from the active pipeline:
                 "why": "This matters because your answer becomes part of the emotional and strategic foundation of the Brand Book.",
                 "hint": "Start with: 'We believe...' then finish with something only your brand would truly stand behind.",
                 "explain": "In simple terms, this question is asking what you really believe and why anyone should feel it.",
-                "ask": "Use the question, your draft, and the brand truth you already know as the source of the answer.",
+                "ask": "Use the question, your answer, and the brand truth you already know as the source of the answer.",
             }
             return Response({
                 "mode": intent,
@@ -4752,32 +4813,38 @@ Retrieved brand/RAG context from the active pipeline:
 
     system_prompt = """You are THE BRAND GODFATHER — a world-class brand strategist coach.
 
-You evaluate a user's partial or full answer draft against the specific question they are answering.
+You evaluate a user's partial or full answer against the specific question they are answering.
 
 Your job:
-1) Classify the draft into exactly ONE internal quality tier:
-    - too_weak → quality_label must be "Good start — let's give it more soul"
-    - vendor_thought → quality_label must be "Nice direction — let's make it feel more ownable"
-    - strong → quality_label must be "This has a strong spark — let's sharpen it"
+1) Classify the answer into exactly ONE internal quality tier:
+    - too_weak → quality_label must be an empty string
+    - vendor_thought → quality_label must be an empty string
+    - strong → quality_label must be an empty string
 
 2) Give a one-sentence reason that feels like a supportive strategist, not a harsh judge.
     Never say "weak", "too weak", "bad", "lacks", or "vendor pitch" in user-facing copy.
+    Never use the word "draft" in user-facing copy; say "your answer" when needed.
+    Do not use old quality-heading phrases; keep the reason conversational and respectful.
+    Write in English only.
 
 3) Give 2–3 strings in "suggestions" — each MUST be only the final answer text the user pastes in (one sentence).
    Never wrap with "Rewrite with...", "Try this instead:", or "like '...'".
+    Every suggestion must be strong enough for the Brand Godfather ORB gate: it answers this exact question, names a belief or deeper purpose, includes a specific human change or behavior, and avoids product/service/vendor language.
 
-4) If phase_number is 2 or higher, include "suggestion_quote": a short original strategic quote, grounded in the retrieved context and the user's draft, that can sit above the suggestions. If phase_number is 1, return an empty string.
+4) If phase_number is 2 or higher, include "suggestion_quote": a short original strategic quote, grounded in the retrieved context and the user's answer, that can sit above the suggestions. If phase_number is 1, return an empty string.
 
 Rules:
 - Vendor trap = "we provide solutions", "unmet market needs", generic services talk, sounding hireable not memorable.
 - Weak = too short, generic buzzwords, no felt truth, no proof of behavior.
 - Strong = specific, ownable, emotional or behavioral truth that fits the question.
 - Use the question profile and heuristic hint; override only if clearly wrong.
+- For "beyond what you sell" or purpose questions, the suggestion must name the deeper human change the brand exists to create and why that matters.
+- Reject poetic but unclear copy inside your own reasoning; do not output it as a recommendation.
 
 Output JSON only:
 {
   "quality": "too_weak|vendor_thought|strong",
-    "quality_label": "Good start — let's give it more soul|Nice direction — let's make it feel more ownable|This has a strong spark — let's sharpen it",
+    "quality_label": "",
   "reason": "...",
     "suggestion_quote": "...",
   "suggestions": ["...", "..."]
@@ -4790,7 +4857,7 @@ Include suggestion quote: {"yes" if include_suggestion_quote else "no"}
 
 Question: {question.text.strip()}
 
-User draft: {hints}
+User answer: {hints}
 
 Retrieved brand/RAG context from the active pipeline:
 {rag_context[:2500] if rag_context else "No retrieved context available."}
@@ -4860,18 +4927,27 @@ Retrieved brand/RAG context from the active pipeline:
 def _fallback_suggestions(heuristic: dict) -> list:
     """Rule-based suggestions when AI JSON parsing fails."""
     q = heuristic.get("quality", "too_weak")
+    profile = heuristic.get("profile") or {}
+    step = str(profile.get("step") or "").lower()
+
+    if "culture" in step or "purpose" in step:
+        return [
+            "We exist to help people feel the shift from being managed by the market to moving with their own conviction, because that is where lasting trust begins.",
+            "Beyond what we sell, our purpose is to make people feel seen, steadier, and brave enough to choose a different standard for themselves.",
+        ]
+
     if q == "vendor_thought":
         return [
-            "Lead with what you believe — not what you sell.",
-            "Describe how people should feel around your brand, with one real behavior that proves it.",
+            "We believe people remember the brands that change how they feel and act, so every decision we make must create trust before it creates a transaction.",
+            "Our brand stands for refusing the easy, forgettable answer and building the kind of clarity people can feel in the room.",
         ]
     if q == "strong":
         return [
-            "Keep this truth — now add one vivid moment that proves it in real life.",
+            "We carry this belief into the way we show up: direct enough to create clarity, warm enough to earn trust, and disciplined enough to repeat it every time.",
         ]
     return [
-        "Name one emotion your brand refuses to compromise on, and why.",
-        "Replace generic words with a sentence only your brand could say.",
+        "We believe our work should leave people feeling clearer, braver, and less willing to accept the ordinary version of what they came for.",
+        "The deeper reason we exist is to turn uncertainty into conviction, so people can move forward with a standard they actually believe in.",
     ]
 
 

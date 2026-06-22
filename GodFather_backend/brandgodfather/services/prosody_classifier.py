@@ -25,9 +25,11 @@ HEDGE_WORDS: List[str] = [
 ]
 
 VENDOR_PHRASES: List[str] = [
-    "we offer", "our services", "i provide", "quality service",
+    "we provide", "we offer", "our services", "i provide", "quality service",
+    "professional service", "quality professional service", "reliable solutions",
     "competitive pricing", "tailored solutions", "we specialize",
-    "our team", "client satisfaction", "deliverables",
+    "our team", "client satisfaction", "deliverables", "best service",
+    "high quality", "world-class", "trusted partner", "one-stop solution",
 ]
 
 MONEY_KEYWORDS: List[str] = [

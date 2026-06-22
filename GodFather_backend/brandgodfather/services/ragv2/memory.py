@@ -68,7 +68,6 @@ def write_memory(
         "user_id": session_state["user_id"],
         "question_id": int(session_state["current_question"]),
         "raw_answer": session_state["raw_answer"],
-        "answer_embedding": answer_embedding or [],
         "prosody_flags": prosody_result.get("flags", {}),
         "emotional_weight": float((prosody_result.get("flags") or {}).get("emotional_weight", {}).get("emotional_weight", 0.5)),
         "resistance_level": prosody_result.get("resistance_level", "medium"),
@@ -78,6 +77,8 @@ def write_memory(
         "document_type": "answer",
         "timestamp": now,
     }
+    if answer_embedding:
+        session_doc["answer_embedding"] = answer_embedding
     result = es.index(index=SESSION_INDEX, document=session_doc, refresh=True)
     es_doc_id = result.get("_id", "")
 

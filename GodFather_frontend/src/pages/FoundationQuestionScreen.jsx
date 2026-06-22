@@ -1958,6 +1958,24 @@ export default function FoundationQuestionScreen() {
 
       localStorage.setItem("session", JSON.stringify(sessionObj));
       if (sessionObj.id) localStorage.setItem("sessionId", sessionObj.id);
+      if (sessionObj.id) {
+        try {
+          await authService.startSession(sessionObj.id);
+        } catch {
+          /* non-fatal */
+        }
+        try {
+          await authService.ensureBrandGodFatherSession({
+            sourceSessionId: String(sessionObj.id),
+            contextData: {
+              frontend_page: "FoundationQuestionScreen",
+              orb_journey_start: true,
+            },
+          });
+        } catch {
+          /* non-fatal: first answer submission will retry */
+        }
+      }
 
       setSession(sessionObj);
       setShowTitleModal(false);

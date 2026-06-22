@@ -8,13 +8,13 @@ import re
 from typing import Any, Dict, List, Tuple
 
 QUALITY_LABELS = {
-    "too_weak": "Good start — let's give it more soul",
-    "vendor_thought": "Nice direction — let's make it feel more ownable",
-    "strong": "This has a strong spark — let's sharpen it",
+    "too_weak": "",
+    "vendor_thought": "",
+    "strong": "",
 }
 
 QUALITY_REASONS = {
-    "too_weak": "Good start. Add one real feeling, one specific reason, or one behavior so it feels more memorable.",
+    "too_weak": "Your answer has a useful beginning. Add one real feeling, one specific reason, or one behavior so it feels more memorable.",
     "vendor_thought": "You're on the right track. Let's shift it from service language into belief, behavior, and emotional truth.",
     "strong": "This already has something useful. A sharper detail or vivid moment can make it land even better.",
 }
@@ -36,7 +36,22 @@ GENERIC_BUZZWORDS = {
     "dedicated",
     "excellence",
     "trusted partner",
+    "empowered",
+    "potential",
+    "meaningful",
+    "transform",
 }
+
+GENERIC_SUGGESTION_PHRASES = [
+    r"\bsee their potential\b",
+    r"\btake bold steps\b",
+    r"\blife that truly matters\b",
+    r"\bmeaningful connections\b",
+    r"\btransform their communities\b",
+    r"\bfeel seen, valued, and empowered\b",
+    r"\binspire people\b",
+    r"\bspark the courage\b",
+]
 
 VENDOR_PHRASES = [
     r"\bwe provide\b",
@@ -163,15 +178,18 @@ def get_question_profile(question) -> Dict[str, Any]:
     base = dict(STAGE_DEFAULTS.get(stage, STAGE_DEFAULTS[1]))
     base.update(CATEGORY_PROFILES.get(category, CATEGORY_PROFILES["other"]))
 
-    if stage == 1 and order in PHASE1_ORDER_PROFILES:
-        base.update(PHASE1_ORDER_PROFILES[order])
-        base["profile_source"] = f"phase1_step:{PHASE1_ORDER_PROFILES[order]['step']}"
+    phase1_order_index = order - 1 if order > 0 else order
+    if stage == 1 and phase1_order_index in PHASE1_ORDER_PROFILES:
+        base.update(PHASE1_ORDER_PROFILES[phase1_order_index])
+        base["profile_source"] = f"phase1_step:{PHASE1_ORDER_PROFILES[phase1_order_index]['step']}"
     else:
         base["profile_source"] = f"stage:{stage}/category:{category}"
 
     base["stage"] = stage
     base["order"] = order
+    base["order_index"] = phase1_order_index
     base["category"] = category
+    base["question_text"] = str(getattr(question, "text", "") or "")
     return base
 
 
@@ -228,22 +246,22 @@ def score_answer_quality(question, answer_text: str) -> Dict[str, Any]:
 
     if wc < max(6, min_words - 4) or char_len < max(25, min_chars - 20):
         quality = "too_weak"
-        reason = f"Good start for {step_name}. Add one real feeling, behavior, or proof so it has more depth."
+        reason = f"Your answer has a useful beginning for {step_name}. Add one real feeling, behavior, or proof so it has more depth."
     elif vendor_hits >= 2 or (vendor_hits >= 1 and vendor_score >= vendor_cutoff and length_score < 0.75):
         quality = "vendor_thought"
-        reason = f"Nice direction for {step_name}. Let's move it from service language into belief, behavior, and emotional truth."
+        reason = f"Your answer is pointing toward something useful for {step_name}. Let's move it from service language into belief, behavior, and emotional truth."
     elif generic_density >= 0.22 and length_score < 0.65:
         quality = "too_weak"
-        reason = f"Good direction for {step_name}. Now replace broad words with something only your brand would say."
+        reason = f"Your answer is moving in the right direction for {step_name}. Now replace broad words with something only your brand would say."
     elif strength < weak_cutoff:
         quality = "too_weak"
-        reason = f"Good start for {step_name}. A bit more emotional truth and specificity will make it much sharper."
+        reason = f"Your answer has a useful beginning for {step_name}. A bit more emotional truth and specificity will make it much sharper."
     elif vendor_score >= vendor_cutoff and specificity_hits == 0:
         quality = "vendor_thought"
         reason = f"You're close for {step_name}. Let's show who you are, not just what you sell."
     else:
         quality = "strong"
-        reason = f"Strong spark for {step_name}. Add one vivid detail if you want it to land even harder."
+        reason = f"Your answer has a strong signal for {step_name}. Add one vivid detail if you want it to land even harder."
 
     return {
         "quality": quality,
@@ -273,16 +291,31 @@ Heuristic reason: {heuristic.get('reason')}
 
 Score signals: {heuristic.get('scores')}
 
-Classify the user's draft into exactly one quality (you may override heuristic if clearly wrong):
-- too_weak → label "Good start — let's give it more soul"
-- vendor_thought → label "Nice direction — let's make it feel more ownable"
-- strong → label "This has a strong spark — let's sharpen it"
+Classify the user's answer into exactly one quality (you may override heuristic if clearly wrong):
+- too_weak -> quality_label ""
+- vendor_thought -> quality_label ""
+- strong -> quality_label ""
+
+User-facing copy rules:
+- Write in English only.
+- Never use the word "draft" in reason, title, or suggestion copy; say "your answer" when needed.
+- Do not use old quality-heading phrases; keep the reason conversational and respectful.
 
 Then give 2–3 items in "suggestions" — each must be ONLY the final answer sentence the user can paste into the form.
 - No coaching wrapper (never start with "Rewrite with", "Try this", or "like '...'").
 - too_weak: one strong rewritten answer per suggestion
 - vendor_thought: brand-belief rewrite, not service/vendor language
-- strong: one polished answer variant"""
+- strong: one polished answer variant
+
+ORB pass criteria for every suggestion:
+- It must answer the exact question being asked, not a neighboring Brand Godfather question.
+- It must contain a belief, emotional truth, specific change, or observable behavior.
+- It must not rely on products, features, services, solutions, quality, or professionalism.
+- It must be specific enough that a strategist could infer what the brand stands against or stands for.
+- For purpose questions, name the deeper human change the brand exists to create and why that matters.
+- For founder/identity questions, name the role or posture the founder embodies without describing an offer.
+
+Do not return a suggestion that the ORB would likely reject for being poetic, vague, generic, or service-led."""
 
 
 def sanitize_suggestion_text(raw: str) -> str:
@@ -319,17 +352,28 @@ def normalize_ai_quality_response(result: dict, heuristic: Dict[str, Any]) -> Di
 
     label = QUALITY_LABELS[quality]
 
+    profile = heuristic.get("profile") or {}
     suggestions = result.get("suggestions") or []
     if not isinstance(suggestions, list):
         suggestions = []
-    suggestions = [
-        t
-        for s in suggestions[:4]
-        if s and (t := sanitize_suggestion_text(str(s)))
-    ]
+    suggestions = []
+    for suggestion in (result.get("suggestions") or [])[:4]:
+        if suggestion and (text := sanitize_suggestion_text(str(suggestion))):
+            if _is_orb_ready_suggestion(text, profile):
+                suggestions.append(text)
+
+    if len(suggestions) < 2:
+        for fallback in _orb_ready_fallback_suggestions(profile, quality):
+            if fallback not in suggestions and _is_orb_ready_suggestion(fallback, profile):
+                suggestions.append(fallback)
+            if len(suggestions) >= 3:
+                break
 
     reason = (result.get("reason") or heuristic.get("reason") or QUALITY_REASONS.get(quality, "")).strip()
     harsh_markers = [
+        "draft",
+        "draft is",
+        "too brief",
         "too short",
         "too weak",
         "lacks",
@@ -340,6 +384,7 @@ def normalize_ai_quality_response(result: dict, heuristic: Dict[str, Any]) -> Di
     ]
     if not reason or any(marker in reason.lower() for marker in harsh_markers):
         reason = QUALITY_REASONS.get(quality, reason)
+    reason = re.sub(r"\b(the\s+)?draft\b", "your answer", reason, flags=re.I)
 
     return {
         "quality": quality,
@@ -347,5 +392,77 @@ def normalize_ai_quality_response(result: dict, heuristic: Dict[str, Any]) -> Di
         "reason": reason,
         "suggestions": suggestions,
         "scores": heuristic.get("scores"),
-        "profile_source": (heuristic.get("profile") or {}).get("profile_source"),
+        "profile_source": profile.get("profile_source"),
     }
+
+
+def _is_orb_ready_suggestion(text: str, profile: Dict[str, Any]) -> bool:
+    lowered = (text or "").strip().lower()
+    if not lowered:
+        return False
+
+    words = re.findall(r"\b[\w']+\b", lowered)
+    if len(words) < 14:
+        return False
+    if _count_pattern_hits(lowered, VENDOR_PHRASES) > 0:
+        return False
+    if _count_pattern_hits(lowered, GENERIC_SUGGESTION_PHRASES) > 0:
+        return False
+
+    question_text = str(profile.get("question_text") or "").lower()
+    step = str(profile.get("step") or "").lower()
+    is_purpose_question = any(marker in question_text for marker in ["beyond what you sell", "deeper purpose", "purpose of your business"]) or "culture" in step
+
+    belief_hits = _count_pattern_hits(lowered, [
+        r"\bwe believe\b",
+        r"\bwe exist to\b",
+        r"\bour purpose is\b",
+        r"\bour brand stands for\b",
+        r"\bwe stand for\b",
+        r"\bwe refuse to\b",
+        r"\bbeyond what we sell\b",
+    ])
+    depth_hits = _count_pattern_hits(lowered, [
+        r"\bbecause\b",
+        r"\bso that\b",
+        r"\bfrom .+ to\b",
+        r"\bshift\b",
+        r"\bchange\b",
+        r"\btrust\b",
+        r"\bconviction\b",
+        r"\bclarity\b",
+        r"\bbrave\b",
+        r"\bfeel\b",
+        r"\bact\b",
+    ])
+
+    if is_purpose_question:
+        return belief_hits >= 1 and depth_hits >= 2
+    return belief_hits + depth_hits >= 2
+
+
+def _orb_ready_fallback_suggestions(profile: Dict[str, Any], quality: str) -> List[str]:
+    question_text = str(profile.get("question_text") or "").lower()
+    step = str(profile.get("step") or "").lower()
+    is_purpose_question = any(marker in question_text for marker in ["beyond what you sell", "deeper purpose", "purpose of your business"]) or "culture" in step
+
+    if is_purpose_question:
+        return [
+            "Beyond what we sell, our purpose is to move people from uncertainty to conviction, because a brand should change how they choose, trust, and act.",
+            "We exist to help people feel clear enough to reject the ordinary option and brave enough to choose the standard they actually believe in.",
+            "Our purpose is to turn scattered ambition into focused belief, so people leave with more clarity, more trust, and a stronger reason to move.",
+        ]
+
+    if quality == "vendor_thought":
+        return [
+            "We believe people remember the brands that change how they feel and act, so every decision we make must create trust before it creates a transaction.",
+            "Our brand stands for refusing the easy, forgettable answer and building the kind of clarity people can feel in the room.",
+        ]
+    if quality == "strong":
+        return [
+            "We carry this belief into the way we show up: direct enough to create clarity, warm enough to earn trust, and disciplined enough to repeat it every time.",
+        ]
+    return [
+        "We believe our work should leave people feeling clearer, braver, and less willing to accept the ordinary version of what they came for.",
+        "The deeper reason we exist is to turn uncertainty into conviction, so people can move forward with a standard they actually believe in.",
+    ]

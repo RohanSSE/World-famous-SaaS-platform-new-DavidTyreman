@@ -860,6 +860,216 @@
   margin-top: 8px;
 }
 
+.pq-orb-verdict {
+  width: 100%;
+  padding: 12px 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(142, 229, 255, 0.34);
+  background: rgba(8, 15, 35, 0.96);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 0 24px rgba(142, 229, 255, 0.05);
+  box-sizing: border-box;
+  animation: pqNudgeIn 0.34s ease-out both;
+}
+
+.pq-orb-verdict--pass {
+  border-color: rgba(34, 197, 94, 0.56);
+}
+
+.pq-orb-verdict--reject {
+  border-color: rgba(248, 113, 113, 0.62);
+}
+
+.pq-orb-verdict--unavailable {
+  border-color: rgba(250, 204, 21, 0.52);
+}
+
+.pq-orb-verdict-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.pq-orb-verdict-head span,
+.pq-orb-verdict-grid span {
+  color: rgba(192, 249, 255, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.pq-orb-verdict-head strong {
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(142, 229, 255, 0.13);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.pq-orb-verdict--pass .pq-orb-verdict-head strong {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.pq-orb-verdict--reject .pq-orb-verdict-head strong {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.16);
+}
+
+.pq-vendor-block {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 10px 11px;
+  border: 1px solid rgba(248, 113, 113, 0.58);
+  border-radius: 8px;
+  background: rgba(127, 29, 29, 0.28);
+}
+
+.pq-vendor-block span {
+  color: #fecaca;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pq-vendor-block strong {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.pq-vendor-block p {
+  margin: 0;
+  color: rgba(254, 226, 226, 0.92);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pq-contradiction-block {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 10px 11px;
+  border: 1px solid rgba(251, 191, 36, 0.62);
+  border-radius: 8px;
+  background: rgba(120, 53, 15, 0.28);
+}
+
+.pq-contradiction-block span {
+  color: #fde68a;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pq-contradiction-block strong {
+  color: #fff7ed;
+  font-size: 12px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.pq-contradiction-block p {
+  margin: 0;
+  color: rgba(255, 237, 213, 0.94);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pq-adaptive-block {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 10px 11px;
+  border: 1px solid rgba(142, 229, 255, 0.55);
+  border-radius: 8px;
+  background: rgba(8, 47, 73, 0.34);
+}
+
+.pq-adaptive-block span {
+  color: #a5f3fc;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pq-adaptive-block strong {
+  color: #ecfeff;
+  font-size: 12px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.pq-adaptive-block p {
+  margin: 0;
+  color: rgba(207, 250, 254, 0.92);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pq-breakthrough-block {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 10px 11px;
+  border: 1px solid rgba(74, 222, 128, 0.58);
+  border-radius: 8px;
+  background: rgba(20, 83, 45, 0.3);
+}
+
+.pq-breakthrough-block span {
+  color: #bbf7d0;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pq-breakthrough-block strong {
+  color: #f0fdf4;
+  font-size: 12px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.pq-breakthrough-block p {
+  margin: 0;
+  color: rgba(220, 252, 231, 0.92);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pq-orb-verdict-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 10px;
+  margin-bottom: 9px;
+}
+
+.pq-orb-verdict-grid strong {
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.pq-orb-verdict p {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.9);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .pq-bgf-help {
   width: 100%;
   margin: 10px 0 8px;

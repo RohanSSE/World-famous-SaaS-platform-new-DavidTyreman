@@ -40,6 +40,49 @@ const BGF_HELP_ACTIONS = [
 // Temporarily hidden until the client approves the expanded Ask BGF helper.
 const SHOW_BGF_HELP_PANEL = false;
 
+function resolveOrbQuestionId(question, questionIndex, phaseId) {
+  const rawId = question?.raw?.q_id || question?.raw?.brandgodfather_q_id;
+  if (rawId) {
+    const normalized = String(rawId).trim();
+    return normalized.toUpperCase().startsWith("Q") ? normalized.toUpperCase() : `Q${normalized}`;
+  }
+
+  const order = Number(question?.raw?.order ?? question?.order);
+  if (Number.isFinite(order) && order > 0) return `Q${order}`;
+
+  const phaseNumber = Number(phaseId) || 1;
+  const fallbackOffset = phaseNumber === 1 ? 0 : (phaseNumber - 1) * 10;
+  return `Q${fallbackOffset + Number(questionIndex ?? 0) + 1}`;
+}
+
+function normalizeOrbResult(orbResult) {
+  const status = String(orbResult?.status || "UNKNOWN").toUpperCase();
+  const blockedPhrases = Array.isArray(orbResult?.blocked_phrases)
+    ? orbResult.blocked_phrases.filter(Boolean)
+    : [];
+  return {
+    status,
+    reply: String(orbResult?.reply || "Let's go deeper before we move on.").trim(),
+    next_q_id: orbResult?.next_q_id || "Awaiting stronger answer",
+    depth_score: orbResult?.depth_score ?? "not scored",
+    interruption_type: orbResult?.interruption_type || null,
+    challenge_type: orbResult?.challenge_type || null,
+    pressure_used: orbResult?.pressure_used ?? null,
+    resistance_count: orbResult?.resistance_count ?? 0,
+    blocked_phrases: blockedPhrases,
+    prosody_flags: Array.isArray(orbResult?.prosody_flags) ? orbResult.prosody_flags : [],
+    contradiction_result: orbResult?.contradiction_result || null,
+    contradiction_message: orbResult?.contradiction_message || null,
+    breakthrough_detected: Boolean(orbResult?.breakthrough_detected),
+    breakthrough_score: orbResult?.breakthrough_score ?? 0,
+    breakthrough_type: orbResult?.breakthrough_type || null,
+    breakthrough_reason: orbResult?.breakthrough_reason || null,
+    breakthrough_seed: orbResult?.breakthrough_seed || null,
+    breakthrough_criteria: orbResult?.breakthrough_criteria || {},
+    sessionId: orbResult?.brandgodfather_session_id || null,
+  };
+}
+
 function SessionTitleModal({
   open,
   title,
@@ -155,6 +198,8 @@ export default function PhaseQuestionPage() {
   const [nudgeQuote, setNudgeQuote] = useState(null);
   const [nudgeIndex, setNudgeIndex] = useState(0);
   const [nudgesLoading, setNudgesLoading] = useState(false);
+  const [orbVerdict, setOrbVerdict] = useState(null);
+  const [orbChecking, setOrbChecking] = useState(false);
   const [bgfHelpLoading, setBgfHelpLoading] = useState(false);
   const [bgfHelpResponse, setBgfHelpResponse] = useState(null);
   const [bgfAskText, setBgfAskText] = useState("");
@@ -448,6 +493,8 @@ export default function PhaseQuestionPage() {
     setNudges([]);
     setNudgeQuality(null);
     setNudgeQuote(null);
+    setOrbVerdict(null);
+    setOrbChecking(false);
     setNudgeIndex(0);
     setNudgesLoading(false);
     setBgfHelpResponse(null);
@@ -478,10 +525,10 @@ export default function PhaseQuestionPage() {
       } else if (res && typeof res === "object") {
         list = res.suggestions ?? res.suggestion ?? [];
         setNudgeQuote(res.suggestion_quote?.enabled ? res.suggestion_quote : null);
-        if (res.quality && res.quality_label) {
+        if (res.quality || res.reason) {
           setNudgeQuality(normalizeAnswerQualityCopy({
             quality: res.quality,
-            quality_label: res.quality_label,
+            quality_label: res.quality_label || "",
             reason: res.reason || "",
           }));
         }
@@ -631,6 +678,20 @@ export default function PhaseQuestionPage() {
           /* non-fatal */
         }
       }
+
+      try {
+        const sourceSessionId = String(sessionObj.id ?? sessionObj.pk);
+        await authService.ensureBrandGodFatherSession({
+          sourceSessionId,
+          contextData: {
+            frontend_page: "PhaseQuestionPage",
+            phase_id: 1,
+            orb_journey_start: true,
+          },
+        });
+      } catch {
+        /* non-fatal: answer submission will retry ORB session start */
+      }
       navigate("/phase-intro/1");
     } catch (err) {
       setModalError(err?.message || "Failed to create session");
@@ -668,6 +729,55 @@ export default function PhaseQuestionPage() {
       return null;
     }
     setSubmitError("");
+
+    setOrbChecking(true);
+    setOrbVerdict(null);
+
+    let orb;
+    try {
+      const orbQId = resolveOrbQuestionId(currentQuestion, currentIdx, phaseId);
+      const orbResponse = await authService.submitBrandGodFatherAnswer({
+        sourceSessionId: sessionId,
+        qId: orbQId,
+        answer: value,
+        contextData: {
+          frontend_page: "PhaseQuestionPage",
+          phase_id: phaseId,
+          question_id: currentQuestion.raw?.id ?? currentQuestion.id,
+          question_text: currentQuestion.text,
+          question_bank: {
+            [orbQId]: currentQuestion.text,
+          },
+        },
+      });
+      orb = normalizeOrbResult(orbResponse);
+      setOrbVerdict(orb);
+    } catch (err) {
+      const fallback = {
+        status: "UNAVAILABLE",
+        reply: err?.message || "ORB engine unavailable. Please try again when the backend is ready.",
+        next_q_id: "ORB retry required",
+        depth_score: "not scored",
+      };
+      setOrbVerdict(fallback);
+      setSubmitError(fallback.reply);
+      throw err;
+    } finally {
+      setOrbChecking(false);
+    }
+
+    if (orb.status === "REJECT") {
+      setSubmitError(
+        orb.interruption_type === "vendor_language"
+          ? "Vendor trap caught. The ORB will not save a vendor answer; bring back the brand truth before you move on."
+          : orb.interruption_type === "contradiction"
+            ? "Contradiction caught. Resolve the earlier answer against this one before moving on."
+            : orb.interruption_type === "adaptive_coaching"
+              ? "Adaptive challenge raised. The ORB needs a sharper answer before you move on."
+          : "ORB rejected this answer. Go deeper before saving it.",
+      );
+      return null;
+    }
 
     const nextAnswers = { ...answers, [currentQuestion.key]: value };
     persistAnswers(nextAnswers);
@@ -776,24 +886,9 @@ export default function PhaseQuestionPage() {
     const value = inputValue.trim();
     let nextAnswers = { ...answers };
     if (value) {
-      nextAnswers = { ...answers, [q.key]: value };
-      persistAnswers(nextAnswers);
-      const sid = sessionId;
-      const apiQuestionId = q.raw?.id ?? q.id;
-      if (sid && apiQuestionId) {
-        try {
-          const wasAiAccepted = currentInputAiDraftRef.current;
-          await authService.createAnswer(sid, {
-            question: Number(apiQuestionId),
-            answer_text: value,
-            is_ai_accepted: wasAiAccepted,
-            ai_suggestion: wasAiAccepted ? value : undefined,
-          });
-          currentInputAiDraftRef.current = false;
-        } catch {
-          /* non-fatal for local save */
-        }
-      }
+      const saved = await saveCurrentAnswer();
+      if (!saved) return;
+      nextAnswers = saved;
     }
 
     const answeredInPhase =
@@ -882,7 +977,9 @@ export default function PhaseQuestionPage() {
       ? "1 answer away from Level Clear."
       : `${remainingQuestions} answers away from Level Clear.`;
   const submitLabel = submitting
-    ? "Saving…"
+    ? orbChecking
+      ? "ORB checking…"
+      : "Saving…"
     : isFinalPhase && allPhaseAnswered
       ? "Save to Finish"
       : allPhaseAnswered
@@ -1054,11 +1151,6 @@ export default function PhaseQuestionPage() {
                   )}
                   {!nudgesLoading && nudgeQuality && (
                     <div className="pq-nudges-panel">
-                      <p
-                        className={`pq-nudge-quality pq-nudge-quality--${nudgeQuality.quality || "too_weak"}`}
-                      >
-                        {nudgeQuality.quality_label}
-                      </p>
                       {nudgeQuality.reason && (
                         <p className="pq-nudges-reason">{nudgeQuality.reason}</p>
                       )}
@@ -1097,6 +1189,70 @@ export default function PhaseQuestionPage() {
                         Keep typing — we&apos;ll suggest stronger replies.
                       </p>
                     )}
+                  {(orbChecking || orbVerdict) && (
+                    <div
+                      className={`pq-orb-verdict pq-orb-verdict--${String(
+                        orbVerdict?.status || "checking",
+                      ).toLowerCase()}`}
+                    >
+                      <div className="pq-orb-verdict-head">
+                        <span>ORB Intelligence</span>
+                        <strong>{orbChecking ? "CHECKING" : orbVerdict.status}</strong>
+                      </div>
+                      {!orbChecking && orbVerdict?.interruption_type === "vendor_language" && (
+                        <div className="pq-vendor-block" role="alert">
+                          <span>Vendor trap caught</span>
+                          {orbVerdict.blocked_phrases?.length > 0 && (
+                            <strong>{orbVerdict.blocked_phrases.join(", ")}</strong>
+                          )}
+                          <p>Others can be vendors. This brand cannot. Replace service talk with what you stand for, who you are here for, and why they should care.</p>
+                        </div>
+                      )}
+                      {!orbChecking && orbVerdict?.interruption_type === "contradiction" && (
+                        <div className="pq-contradiction-block" role="alert">
+                          <span>Contradiction caught</span>
+                          {orbVerdict.contradiction_result?.conflicting_q_id && (
+                            <strong>Conflicts with {orbVerdict.contradiction_result.conflicting_q_id}</strong>
+                          )}
+                          <p>{orbVerdict.contradiction_message || "This answer conflicts with an earlier answer. Resolve the truth before moving on."}</p>
+                        </div>
+                      )}
+                      {!orbChecking && orbVerdict?.interruption_type === "adaptive_coaching" && (
+                        <div className="pq-adaptive-block" role="alert">
+                          <span>Adaptive challenge raised</span>
+                          <strong>Pressure {orbVerdict.pressure_used || "n/a"} · Resistance {orbVerdict.resistance_count || 0}</strong>
+                          <p>The ORB is increasing intensity because this answer is still avoiding the deeper brand truth.</p>
+                        </div>
+                      )}
+                      {!orbChecking && orbVerdict?.breakthrough_detected && (
+                        <div className="pq-breakthrough-block" role="status">
+                          <span>Breakthrough recognized</span>
+                          <strong>{orbVerdict.breakthrough_seed || "Brand seed captured"}</strong>
+                          <p>{orbVerdict.breakthrough_reason || "That is the truth/edge. The ORB captured it as a brand seed."}</p>
+                        </div>
+                      )}
+                      <div className="pq-orb-verdict-grid">
+                        <span>status</span>
+                        <strong>{orbChecking ? "CHECKING" : orbVerdict.status}</strong>
+                        <span>challenge_type</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.challenge_type || "none"}</strong>
+                        <span>pressure_used</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.pressure_used ?? "n/a"}</strong>
+                        <span>resistance_count</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.resistance_count ?? 0}</strong>
+                        <span>next_q_id</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.next_q_id}</strong>
+                        <span>depth_score</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.depth_score}</strong>
+                        <span>breakthrough</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.breakthrough_detected ? `yes · ${orbVerdict.breakthrough_score}` : "no"}</strong>
+                        <span>breakthrough_seed</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.breakthrough_seed || "none"}</strong>
+                        <span>reply</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.reply}</strong>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
