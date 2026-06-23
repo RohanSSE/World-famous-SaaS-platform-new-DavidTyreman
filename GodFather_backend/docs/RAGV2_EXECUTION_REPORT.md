@@ -1,6 +1,6 @@
 # RAGv2 Execution Report
 
-Date: 2026-06-10
+Date: 2026-06-23
 Workspace: World-famous-SaaS-platform-new-DavidTyreman
 
 ## Scope Completed
@@ -9,6 +9,7 @@ Workspace: World-famous-SaaS-platform-new-DavidTyreman
 2. Added ES Node2 setup command for RAGv2-focused indices.
 3. Updated ingestion command to support:
    - default input directory (`RAG-docsv2`)
+  - PDF, Markdown, and text source files
    - `--dry-run`
    - `--sync` inline ingestion mode
 4. Added backup command that exports embeddings/index docs to `RAGprocessdata`.
@@ -44,7 +45,15 @@ Command:
 `python manage.py ingest_brandgodfather_pdfs --dir ./RAG-docsv2 --dry-run`
 
 Result:
-- Found 2 PDFs under `GodFather_backend/RAG-docsv2`
+- Found 7 source files under `GodFather_backend/RAG-docsv2`
+- Files found:
+  - `BrandGodFather_Logic_Schema_v1.2.pdf`
+  - `Vessel & Craft FINAL Brand Book.pdf`
+  - `The_Constitution_Derived_Control.md`
+  - `ORB_Principles_Derived_Control.md`
+  - `Transformation_Journey_Derived_Control.md`
+  - `Intelligence_Framework_Derived_Control.md`
+  - `Foundational_Pillars_Derived_Control.md`
 - Dry run completed successfully
 
 ### 2) ES Node2 setup
@@ -61,11 +70,36 @@ Command:
 `python manage.py ingest_brandgodfather_pdfs --dir ./RAG-docsv2 --sync`
 
 Result:
-- Ingested 2 files
-- Indexed 74 chunks
+- Ingested 7 source files
+- Indexed 104 chunks
 - Failed chunks: 0
 
-### 4) Backup to RAGprocessdata
+Source chunk counts in `brandgodfather_brand_chunks` after sync:
+
+| Source File | RAGv2 Chunks |
+|---|---:|
+| `BrandGodFather_Logic_Schema_v1.2.pdf` | 37 |
+| `Vessel & Craft FINAL Brand Book.pdf` | 37 |
+| `Foundational_Pillars_Derived_Control.md` | 8 |
+| `ORB_Principles_Derived_Control.md` | 8 |
+| `Intelligence_Framework_Derived_Control.md` | 5 |
+| `Transformation_Journey_Derived_Control.md` | 5 |
+| `The_Constitution_Derived_Control.md` | 4 |
+
+### 4) Live RAGv2 retrieval proof
+
+Command:
+`python scripts/capture_ragv2_retrieval_proof.py`
+
+Result:
+- Retrieval proof generated at [RAGV2_RETRIEVAL_PROOF_2026-06-23.md](../../RAGV2_RETRIEVAL_PROOF_2026-06-23.md)
+- PASS: Constitution content retrieved from `The_Constitution_Derived_Control.md`
+- PASS: ORB principles content retrieved from `ORB_Principles_Derived_Control.md`
+- PASS: Intelligence Framework content retrieved from `Intelligence_Framework_Derived_Control.md`
+- PASS: Transformation Journey content retrieved from `Transformation_Journey_Derived_Control.md`
+- PASS: foundational pillars content retrieved from `Foundational_Pillars_Derived_Control.md`
+
+### 5) Backup to RAGprocessdata
 Command:
 `python manage.py backup_ragv2_indices --output-dir ./RAGprocessdata`
 
@@ -85,15 +119,17 @@ Includes:
 
 ## Operational Notes
 
-1. The RAG-docsv2 source path is functioning and was ingested successfully.
+1. The RAG-docsv2 source path is functioning and was ingested successfully with 2 PDFs plus 5 derived methodology Markdown controls.
 2. Full RAGv2 memory/session backup coverage requires `brandgodfather_sessions`, `brandgodfather_episodic`, and `brandgodfather_chunks_v2` to exist and be reachable on the active ES node.
 3. Some optional NLP/runtime dependencies are unavailable in this environment (`spacy`, some HF model downloads), but core PDF ingest + ES write succeeded.
+4. The methodology controls are derived recovery controls, not original David-authored source files. They make RAGv2 retrieval work now, but final original-IP completion still requires David's original documents or explicit validation.
 
 ## Recommended Next Runtime Step
 
 Run after ES node stability is confirmed:
 1. `python manage.py setup_es_node2`
 2. `python manage.py ingest_brandgodfather_pdfs --dir ./RAG-docsv2 --sync`
-3. `python manage.py backup_ragv2_indices --output-dir ./RAGprocessdata`
+3. `python scripts/capture_ragv2_retrieval_proof.py`
+4. `python manage.py backup_ragv2_indices --output-dir ./RAGprocessdata`
 
 This will ensure all RAGv2 indices are present and fully included in backups.

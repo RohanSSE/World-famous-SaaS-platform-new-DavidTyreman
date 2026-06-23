@@ -1,5 +1,7 @@
 from types import SimpleNamespace
+from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
+from pathlib import Path
 
 from django.test import SimpleTestCase
 from rest_framework.test import APIRequestFactory, force_authenticate
@@ -7,6 +9,8 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 from brandgodfather.services.breakthrough_recognition import BreakthroughRecognitionService
 from brandgodfather.services.orchestrator import QuestionOrchestrator
 from brandgodfather.services.output_mode import CampaignIdea
+from brandgodfather.services.pdf_ingestion import PDFIngestionService
+from brandgodfather.services.prompt_assembler import PromptAssembler
 from brandgodfather.views import BrandGodFatherOutputCampaignAPIView
 
 
@@ -281,6 +285,55 @@ class BreakthroughRecognitionTests(SimpleTestCase):
             self.strong_answer.rstrip("."),
         )
         self.assertTrue(session_patch["all_answers"][0]["breakthrough_detected"])
+
+
+class PromptMethodologyGovernanceTests(SimpleTestCase):
+    def test_prompt_includes_methodology_governance_guardrails(self):
+        prompt = PromptAssembler().assemble(
+            session={"brand_seed": "founders tell the truth", "thread_index": {}},
+            q_id="Q1",
+            question_text="What are you really here to change?",
+            user_answer="We provide quality professional service.",
+            prosody_result={"vendor_language_detected": True, "vendor_phrases_found": ["quality professional service"]},
+            rag_context={},
+            contradiction_result={"has_contradiction": False},
+            pressure_level=3,
+        )
+
+        self.assertIn("[2] Methodology Governance", prompt.system_prompt)
+        self.assertIn("truth_before_copy", prompt.system_prompt)
+        self.assertIn("Do not rewrite or polish a weak answer", prompt.system_prompt)
+        self.assertIn("Interrupt everyone-language", prompt.system_prompt)
+        self.assertIn("contradiction_requires_resolution", prompt.system_prompt)
+        self.assertIn("breakthrough_becomes_seed", prompt.system_prompt)
+        self.assertIn("derived_controls_indexed_pending_original_client_sources", prompt.system_prompt)
+
+
+class RAGv2TextIngestionTests(SimpleTestCase):
+    def test_markdown_source_document_chunks_with_source_metadata(self):
+        with TemporaryDirectory() as tmp_dir:
+            source_path = Path(tmp_dir) / "Intelligence_Framework_Derived_Control.md"
+            source_path.write_text(
+                "# Intelligence Framework\n\n"
+                "The Intelligence Framework defines how ORB decides whether to pass, reject, challenge, store, or escalate an answer. "
+                "It combines contradiction, emotional truth, memory conflict, resistance pattern, and output readiness.\n\n"
+                "## Decision Rules\n\n"
+                "Reject vendor language and unresolved contradiction. Pass only when the answer is specific and useful as future brand memory.",
+                encoding="utf-8",
+            )
+
+            service = PDFIngestionService.__new__(PDFIngestionService)
+            service.classify_chunk = Mock(return_value="challenge_language")
+
+            chunks = service.chunk_document(
+                str(source_path),
+                metadata={"source_file": source_path.name, "source_extension": ".md"},
+            )
+
+        self.assertGreaterEqual(len(chunks), 1)
+        self.assertIn("Intelligence Framework", chunks[0]["text"])
+        self.assertEqual(chunks[0]["metadata"]["source_file"], "Intelligence_Framework_Derived_Control.md")
+        self.assertEqual(chunks[0]["metadata"]["source_path"], str(source_path))
 
 
 class CampaignOutputDemoTests(SimpleTestCase):
