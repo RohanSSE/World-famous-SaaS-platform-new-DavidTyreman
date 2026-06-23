@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from celery.result import AsyncResult
 from elasticsearch_dsl import connections
 from rest_framework import status
@@ -7,6 +9,7 @@ from rest_framework.views import APIView
 
 from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS
 from brandgodfather.services.orchestrator import QuestionOrchestrator
+from brandgodfather.services.output_mode import OutputModeEngine
 from brandgodfather.services.question_router import QuestionRouter
 from brandgodfather.services.ragv2.discovery_metadata import build_discovery_metadata
 from brandgodfather.services.session_manager import SessionManager
@@ -199,6 +202,20 @@ class _BrandGodFatherOutputBaseAPIView(APIView):
 
     def get(self, request, session_id: str):
         es = connections.get_connection(alias=BRANDGODFATHER_NODE_2_ALIAS)
+        src = self._latest_output(es=es, session_id=session_id)
+        if not src:
+            generated_response = self._generate_missing_output(es=es, session_id=session_id)
+            if generated_response is not None:
+                return generated_response
+
+            src = self._latest_output(es=es, session_id=session_id)
+
+        if not src:
+            return Response({"detail": "Output not found for this session."}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(self._response_payload(session_id=session_id, src=src, generated=False), status=status.HTTP_200_OK)
+
+    def _latest_output(self, *, es, session_id: str):
         body = {
             "size": 1,
             "query": {
@@ -213,21 +230,117 @@ class _BrandGodFatherOutputBaseAPIView(APIView):
         }
         resp = es.search(index="brandgodfather_output_content", body=body)
         hits = resp.get("hits", {}).get("hits", [])
-        if not hits:
-            return Response({"detail": "Output not found for this session."}, status=status.HTTP_404_NOT_FOUND)
+        if hits:
+            return hits[0].get("_source", {})
+        return None
 
-        src = hits[0].get("_source", {})
+    def _generate_missing_output(self, *, es, session_id: str):
+        session_source = self._load_session_source(es=es, session_id=session_id)
+        if session_source is None:
+            return Response({"detail": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not self._session_ready_for_output(session_source):
+            return Response(
+                {
+                    "detail": (
+                        "Campaign/output generation requires a completed Q30 session or a seeded session with brand_seed."
+                    )
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        try:
+            engine = OutputModeEngine()
+            content = self._generate_content(engine=engine, session_id=session_id)
+        except Exception as exc:
+            return Response(
+                {"detail": f"Output generation failed: {exc}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        brand_filter_result = self._brand_filter_payload(content)
+        self._store_output(es=es, session_id=session_id, content=content, brand_filter_result=brand_filter_result)
         return Response(
-            {
-                "session_id": session_id,
-                "content_type": self.content_type,
-                "content": src.get("content"),
-                "week_number": src.get("week_number"),
-                "brand_filter_result": src.get("brand_filter_result", {}),
-                "created_at": src.get("created_at"),
-            },
+            self._response_payload(
+                session_id=session_id,
+                src={
+                    "content": content,
+                    "week_number": int(datetime.now(timezone.utc).isocalendar().week),
+                    "brand_filter_result": brand_filter_result,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                },
+                generated=True,
+            ),
             status=status.HTTP_200_OK,
         )
+
+    def _load_session_source(self, *, es, session_id: str):
+        body = {
+            "size": 1,
+            "query": {"bool": {"filter": [{"term": {"session_id": session_id}}]}},
+            "sort": [{"updated_at": {"order": "desc", "unmapped_type": "date"}}],
+        }
+        resp = es.search(index="brandgodfather_sessions", body=body)
+        hits = resp.get("hits", {}).get("hits", [])
+        if not hits:
+            return None
+        return hits[0].get("_source", {})
+
+    @staticmethod
+    def _session_ready_for_output(session_source) -> bool:
+        if OutputModeEngine.eligible_completed_session(session_source):
+            return True
+        return bool(str(session_source.get("brand_seed", "") or "").strip())
+
+    def _generate_content(self, *, engine: OutputModeEngine, session_id: str):
+        if self.content_type == "campaign":
+            generated = engine.generate_monthly_campaign(session_id=session_id)
+        elif self.content_type == "social":
+            generated = engine.generate_weekly_social(session_id=session_id)
+        elif self.content_type == "outreach":
+            generated = engine.generate_weekly_outreach(session_id=session_id)
+        else:
+            raise ValueError(f"Unsupported output content_type: {self.content_type}")
+
+        if isinstance(generated, list):
+            return [item.model_dump() if hasattr(item, "model_dump") else dict(item) for item in generated]
+        return generated.model_dump() if hasattr(generated, "model_dump") else dict(generated)
+
+    @staticmethod
+    def _brand_filter_payload(content):
+        if isinstance(content, list):
+            return [dict(item.get("brand_filter_result", {}) or {}) for item in content]
+        if isinstance(content, dict):
+            return dict(content.get("brand_filter_result", {}) or {})
+        return {}
+
+    def _store_output(self, *, es, session_id: str, content, brand_filter_result) -> None:
+        now = datetime.now(timezone.utc).isoformat()
+        doc = {
+            "session_id": session_id,
+            "content_type": self.content_type,
+            "content": content,
+            "week_number": int(datetime.now(timezone.utc).isocalendar().week),
+            "brand_filter_result": brand_filter_result,
+            "created_at": now,
+        }
+        es.update(
+            index="brandgodfather_output_content",
+            id=f"{session_id}:{self.content_type}:{now}",
+            body={"doc": doc, "doc_as_upsert": True},
+            refresh=True,
+        )
+
+    def _response_payload(self, *, session_id: str, src, generated: bool) -> dict:
+        return {
+            "session_id": session_id,
+            "content_type": self.content_type,
+            "content": src.get("content"),
+            "week_number": src.get("week_number"),
+            "brand_filter_result": src.get("brand_filter_result", {}),
+            "created_at": src.get("created_at"),
+            "generated": generated,
+        }
 
 
 class BrandGodFatherOutputSocialAPIView(_BrandGodFatherOutputBaseAPIView):

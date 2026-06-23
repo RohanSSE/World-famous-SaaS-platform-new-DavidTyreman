@@ -31,6 +31,7 @@ Client expectation to honor in every step: the system must not behave like a wri
 | API namespace | `/api/brandgodfather/*`. |
 | Evidence capture | Record browser screen, network payloads, and one API response per behavior. |
 | Data hygiene | Use a fresh normal session so ORB bridge starts at Q1 and state is not polluted by earlier demos. |
+| Automated API rehearsal | Run [GodFather_backend/scripts/recovery-demo-rehearsal.ps1](GodFather_backend/scripts/recovery-demo-rehearsal.ps1) before the browser demo to capture repeatable JSON evidence. |
 
 ## Required Environment Variables For API Smoke
 
@@ -41,6 +42,23 @@ $BaseUrl = "http://localhost:8000/api"
 $Token = "<JWT access token>"
 $Headers = @{ Authorization = "Bearer $Token"; "Content-Type" = "application/json" }
 $UserId = "<authenticated-user-id>"
+```
+
+## Automated API Rehearsal Script
+
+Run this before the client-facing browser rehearsal:
+
+```powershell
+Set-Location "GodFather_backend"
+./scripts/recovery-demo-rehearsal.ps1 -BaseUrl "http://localhost:8000/api" -Token "<JWT access token>" -UserId "<authenticated-user-id>" -OutputDir "../recovery-demo-evidence-2026-06-22"
+```
+
+Expected: the output folder contains JSON evidence for session start, live ORB answer, strategic challenge, vendor interruption, contradiction setup/detection, three adaptive coaching attempts, breakthrough recognition, session detail, campaign output, and complete journey notes.
+
+If a known completed BrandGodFather session should be used for campaign proof, pass it explicitly:
+
+```powershell
+./scripts/recovery-demo-rehearsal.ps1 -BaseUrl "http://localhost:8000/api" -Token "<JWT access token>" -UserId "<authenticated-user-id>" -CampaignSessionId "<completed-or-seeded-brandgodfather-session-id>" -OutputDir "../recovery-demo-evidence-2026-06-22"
 ```
 
 ## 10-Step Live Demo Script
@@ -78,7 +96,16 @@ $OrbSessionId
 
 Expected: response includes `session_id` and `current_q_id`/`first_question`.
 
-### 2. Vendor Interruption
+### 2. Strategic Challenge
+
+```powershell
+$Body = @{ session_id = $OrbSessionId; q_id = "Q1"; answer = "We help everyone grow."; async = $false } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "$BaseUrl/brandgodfather/answer/" -Headers $Headers -Body $Body
+```
+
+Expected: ORB returns a challenge/reject response, does not rewrite the answer, and asks for exclusion, line in the sand, or sharper audience specificity.
+
+### 3. Vendor Interruption
 
 ```powershell
 $Body = @{ session_id = $OrbSessionId; q_id = "Q1"; answer = "We provide quality professional service."; async = $false } | ConvertTo-Json
@@ -87,7 +114,18 @@ Invoke-RestMethod -Method Post -Uri "$BaseUrl/brandgodfather/answer/" -Headers $
 
 Expected: `status: REJECT`, `interruption_type: vendor_language`, `blocked_phrases` populated.
 
-### 3. Breakthrough Recognition
+### 4. Adaptive Coaching
+
+```powershell
+$Weak = @{ session_id = $OrbSessionId; q_id = "Q1"; answer = "I help people."; async = $false } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "$BaseUrl/brandgodfather/answer/" -Headers $Headers -Body $Weak
+Invoke-RestMethod -Method Post -Uri "$BaseUrl/brandgodfather/answer/" -Headers $Headers -Body $Weak
+Invoke-RestMethod -Method Post -Uri "$BaseUrl/brandgodfather/answer/" -Headers $Headers -Body $Weak
+```
+
+Expected: each response is `REJECT` with `interruption_type: adaptive_coaching`; `pressure_used` and `resistance_count` are visible and repeated answers produce sharper coaching.
+
+### 5. Breakthrough Recognition
 
 ```powershell
 $Body = @{ session_id = $OrbSessionId; q_id = "Q1"; answer = "I built this because founders like me hide behind expertise when they are afraid to be seen."; async = $false } | ConvertTo-Json
@@ -96,7 +134,7 @@ Invoke-RestMethod -Method Post -Uri "$BaseUrl/brandgodfather/answer/" -Headers $
 
 Expected: `status: PASS`, `breakthrough_detected: true`, `breakthrough_seed` populated.
 
-### 4. Contradiction Detection
+### 6. Contradiction Detection
 
 ```powershell
 $Premium = @{ session_id = $OrbSessionId; q_id = "Q2"; answer = "We are premium and not price-led because our best clients hire us when clarity matters more than saving money."; async = $false } | ConvertTo-Json
@@ -108,15 +146,15 @@ Invoke-RestMethod -Method Post -Uri "$BaseUrl/brandgodfather/answer/" -Headers $
 
 Expected on second call: `status: REJECT`, `interruption_type: contradiction`, `contradiction_result.has_contradiction: true`.
 
-### 5. Campaign Output
+### 7. Campaign Output
 
 ```powershell
 Invoke-RestMethod -Method Get -Uri "$BaseUrl/brandgodfather/output/$OrbSessionId/campaign/" -Headers $Headers
 ```
 
-Expected for a completed/pre-generated session: `content_type: campaign`, campaign content fields, and `brand_filter_result.passed: true`.
+Expected for a completed or seeded session: `content_type: campaign`, campaign content fields, `generated: true` when no stored output existed, and `brand_filter_result.passed: true`.
 
-If this returns `404`, do not hide it. Record: campaign output generation is not available for that session yet, then rerun against a seeded completed session or generate/store campaign output before the client demo.
+If this returns `409`, do not hide it. Record: the session is not completed or seeded with `brand_seed`, then rerun against a completed/seeded session before the client demo.
 
 ## QA Acceptance Checklist
 
@@ -161,7 +199,7 @@ recovery-demo-evidence-2026-06-22/
 | Contradiction not detected | Prior answer not stored or rule failed. | Reset session and verify episodic memory/rule. |
 | Adaptive pressure not visible | Resistance count not persisting. | Verify episodic entry for same q id. |
 | Breakthrough not detected | Criteria or gate regressed. | Run backend smoke for `BreakthroughRecognitionService`. |
-| Campaign endpoint returns 404 | Output not generated for session. | Use completed/seeded session or run output generation task before demo. |
+| Campaign endpoint returns 409 or failed JSON | Session is not completed/seeded with a `brand_seed`, or generation dependencies are unavailable. | Use a completed/seeded session, verify Azure/ES dependencies, and rerun the rehearsal before client demo. |
 
 ## Final Demo Rule
 

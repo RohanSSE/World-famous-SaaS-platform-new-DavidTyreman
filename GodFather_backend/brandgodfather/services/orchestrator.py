@@ -41,6 +41,8 @@ class OrchestratorResult(BaseModel):
     resistance_count: int = 0
     blocked_phrases: List[str] = []
     prosody_flags: List[str] = []
+    emotional_state: str = "neutral"
+    tone_mode: str = "direct_challenge"
     contradiction_result: Optional[Dict[str, Any]] = None
     contradiction_message: Optional[str] = None
     breakthrough_detected: bool = False
@@ -80,6 +82,9 @@ class QuestionOrchestrator:
         resistance_count = self._get_resistance_count(session_id=session_id, q_id=q_id)
         pressure_level = self._pressure_level(prosody_result=prosody_result, resistance_count=resistance_count)
         challenge_type = self._challenge_type(prosody_result)
+        emotional_state = self._emotional_state(answer=user_answer, prosody_result=prosody_result)
+        tone_mode = self._tone_mode(emotional_state=emotional_state, challenge_type=challenge_type)
+        prosody_result = {**prosody_result, "emotional_state": emotional_state, "tone_mode": tone_mode}
 
         # 3) Gate 1 immediate reject on vendor language
         if not bool(prosody_result.get("gate_1_pass", True)):
@@ -89,6 +94,7 @@ class QuestionOrchestrator:
                 f"I hear '{called_out}'. That's the vendor trap. People rarely remember vendors. "
                 "Give me the brand: what do you stand for, who is it for, and why should they care?"
             )
+            reply = self._calibrate_reply_tone(reply=reply, emotional_state=emotional_state)
             self._increment_resistance_and_write_episodic(
                 session_id=session_id,
                 q_id=q_id,
@@ -111,6 +117,8 @@ class QuestionOrchestrator:
                 resistance_count=resistance_count + 1,
                 blocked_phrases=vendor_phrases,
                 prosody_flags=self._prosody_flags(prosody_result),
+                emotional_state=emotional_state,
+                tone_mode=tone_mode,
             )
 
         # 4) Run ContradictionEngine
@@ -127,6 +135,10 @@ class QuestionOrchestrator:
 
         if bool(contradiction_payload.get("has_contradiction")):
             contradiction_message = self._contradiction_message(contradiction_payload)
+            contradiction_message = self._calibrate_reply_tone(
+                reply=contradiction_message,
+                emotional_state=emotional_state,
+            )
             self._increment_resistance_and_write_episodic(
                 session_id=session_id,
                 q_id=q_id,
@@ -148,6 +160,8 @@ class QuestionOrchestrator:
                 pressure_used=pressure_level,
                 resistance_count=resistance_count + 1,
                 prosody_flags=self._prosody_flags(prosody_result),
+                emotional_state=emotional_state,
+                tone_mode=tone_mode,
                 contradiction_result=contradiction_payload,
                 contradiction_message=contradiction_message,
             )
@@ -158,6 +172,7 @@ class QuestionOrchestrator:
                 pressure_level=pressure_level,
                 resistance_count=resistance_count,
                 challenge_type=challenge_type,
+                emotional_state=emotional_state,
             )
             self._increment_resistance_and_write_episodic(
                 session_id=session_id,
@@ -180,6 +195,8 @@ class QuestionOrchestrator:
                 pressure_used=pressure_level,
                 resistance_count=resistance_count + 1,
                 prosody_flags=self._prosody_flags(prosody_result),
+                emotional_state=emotional_state,
+                tone_mode=tone_mode,
                 contradiction_result=contradiction_payload,
             )
 
@@ -240,6 +257,7 @@ class QuestionOrchestrator:
 
         # 11) REJECT path
         if str(parsed.status).upper() == "REJECT":
+            reply = self._calibrate_reply_tone(reply=parsed.reply, emotional_state=emotional_state)
             self._increment_resistance_and_write_episodic(
                 session_id=session_id,
                 q_id=q_id,
@@ -252,13 +270,15 @@ class QuestionOrchestrator:
             )
             return OrchestratorResult(
                 status="REJECT",
-                reply=parsed.reply,
+                reply=reply,
                 next_q_id=None,
                 depth_score=self._depth_score(prosody_result=prosody_result, session=session, answer=user_answer),
                 session_updated=False,
                 challenge_type=challenge_type,
                 pressure_used=pressure_level,
                 resistance_count=resistance_count + 1,
+                emotional_state=emotional_state,
+                tone_mode=tone_mode,
                 contradiction_result=contradiction_payload,
                 contradiction_message=self._contradiction_message(contradiction_payload) if contradiction_payload.get("has_contradiction") else None,
             )
@@ -360,6 +380,8 @@ class QuestionOrchestrator:
             challenge_type=challenge_type,
             pressure_used=pressure_level,
             resistance_count=0,
+            emotional_state=emotional_state,
+            tone_mode=tone_mode,
             contradiction_result=contradiction_payload,
             contradiction_message=self._contradiction_message(contradiction_payload) if contradiction_payload.get("has_contradiction") else None,
             breakthrough_detected=breakthrough_detected,
@@ -390,23 +412,124 @@ class QuestionOrchestrator:
         return "adaptive_coaching"
 
     @staticmethod
-    def _adaptive_coaching_reply(user_answer: str, pressure_level: int, resistance_count: int, challenge_type: str) -> str:
+    def _emotional_state(answer: str, prosody_result: Dict[str, Any]) -> str:
+        lower = (answer or "").lower()
+        states = [
+            ("confused", ("confused", "unclear", "lost", "stuck", "overwhelmed", "not sure", "don't know", "dont know")),
+            ("discouraged", ("discouraged", "frustrated", "tired", "exhausted", "defeated", "hopeless", "struggling")),
+            ("afraid", ("afraid", "scared", "fear", "worried", "anxious", "nervous", "terrified", "judged")),
+            ("excited", ("excited", "energized", "ready", "inspired", "passionate", "love", "can't wait", "cant wait")),
+        ]
+        for state, markers in states:
+            if any(marker in lower for marker in markers):
+                return state
+        if bool(prosody_result.get("deflection_detected")) or float(prosody_result.get("hedge_score", 0.0) or 0.0) > 0.15:
+            return "avoidant"
+        if float(prosody_result.get("emotional_weight", 0.0) or 0.0) >= 0.75:
+            return "engaged"
+        return "neutral"
+
+    @staticmethod
+    def _tone_mode(emotional_state: str, challenge_type: str) -> str:
+        if emotional_state == "confused":
+            return "clarifying_challenge"
+        if emotional_state in {"discouraged", "afraid"}:
+            return "supportive_challenge"
+        if emotional_state in {"excited", "engaged"}:
+            return "energized_challenge"
+        if emotional_state == "avoidant" or challenge_type in {"deflection", "question_echo"}:
+            return "firm_challenge"
+        return "direct_challenge"
+
+    @staticmethod
+    def _calibrate_reply_tone(reply: str, emotional_state: str) -> str:
+        text = str(reply or "").strip()
+        if not text:
+            return text
+        if emotional_state == "confused":
+            return f"Stay with the question. The confusion is useful if we make it specific. {text}"
+        if emotional_state in {"discouraged", "afraid"}:
+            return f"This may feel uncomfortable, but it is workable. {text}"
+        if emotional_state in {"excited", "engaged"}:
+            return f"Use that energy with precision. {text}"
+        if emotional_state == "avoidant":
+            return f"Do not dodge this. {text}"
+        return text
+
+    @staticmethod
+    def _adaptive_coaching_reply(
+        user_answer: str,
+        pressure_level: int,
+        resistance_count: int,
+        challenge_type: str,
+        emotional_state: str = "neutral",
+    ) -> str:
         pressure = max(1, min(5, int(pressure_level or 3)))
         if pressure >= 5:
+            if emotional_state == "confused":
+                return (
+                    "Slow down. The confusion is useful, but repeating the same surface answer will keep the brand blurry. "
+                    "Name the belief, the tension, or the truth you are avoiding."
+                )
+            if emotional_state in {"discouraged", "afraid"}:
+                return (
+                    "I can hear the hesitation. I am still not going to soften the standard: "
+                    "the market will not see a brand here yet. Name the truth you are afraid to say plainly."
+                )
+            if emotional_state in {"excited", "engaged"}:
+                return (
+                    "Use that energy with precision. You are still giving me the same surface answer. "
+                    "Name the belief, the tension, or the truth that makes this impossible to ignore."
+                )
             return (
                 "Stop there. You are giving me the same surface answer again. "
                 "At this level, the market will not see a brand; it will see another option. "
                 "Name the belief, the tension, or the truth you are avoiding."
             )
         if pressure == 4 or resistance_count > 0:
+            if emotional_state == "confused":
+                return (
+                    "You are circling the question because the point is still fuzzy. "
+                    "Make one concrete choice: what truth are you trying to protect here?"
+                )
+            if emotional_state in {"discouraged", "afraid"}:
+                return (
+                    "This is the hard part, and that is why it matters. "
+                    "Say the uncomfortable truth behind this answer instead of sanding it down."
+                )
+            if emotional_state in {"excited", "engaged"}:
+                return (
+                    "Good energy, but it needs an edge. "
+                    "Say the point of view underneath this before the language gets cleaner."
+                )
             return (
                 "You are circling the question, not answering it. "
                 "This answer still hides the point of view. Say the uncomfortable truth behind it."
             )
         if challenge_type == "deflection":
+            if emotional_state in {"discouraged", "afraid"}:
+                return (
+                    "This is deflection, and I am not treating that as failure. "
+                    "It is the doorway. What do you actually believe here?"
+                )
             return (
                 "This is deflection. You are describing around the answer instead of revealing it. "
                 "What do you actually believe here?"
+            )
+        if emotional_state == "confused":
+            return (
+                "You do not need polish yet; you need a sharper choice. "
+                "Pick the belief or truth beneath this answer and say it plainly."
+            )
+        if emotional_state in {"discouraged", "afraid"}:
+            return (
+                "The hesitation is allowed, but hiding behind a thin answer is not. "
+                "Give me the truth a competitor would avoid saying."
+            )
+        if emotional_state in {"excited", "engaged"}:
+            return (
+                "There is energy here. Now make it useful. "
+                "Go beneath the obvious answer and name the point of view."
             )
         return (
             "This is still too thin to build a brand from. "
@@ -562,6 +685,8 @@ class QuestionOrchestrator:
             "q_id": q_id,
             "raw_answer": user_answer,
             "emotional_weight": float(prosody_result.get("emotional_weight", 0.0) or 0.0),
+            "emotional_state": str(prosody_result.get("emotional_state", "neutral") or "neutral"),
+            "tone_mode": str(prosody_result.get("tone_mode", "direct_challenge") or "direct_challenge"),
             "resistance_level": str(prosody_result.get("resistance_level", "medium") or "medium"),
             "resistance_count": resistance_count,
             "prosody_flags": self._prosody_flags(prosody_result),

@@ -1888,6 +1888,8 @@ function formatOrbCoachReply(orbResult) {
     `challenge_type: ${orbResult?.challenge_type || "none"}`,
     `pressure_used: ${orbResult?.pressure_used ?? "n/a"}`,
     `resistance_count: ${orbResult?.resistance_count ?? 0}`,
+    `emotional_state: ${orbResult?.emotional_state || "neutral"}`,
+    `tone_mode: ${orbResult?.tone_mode || "direct_challenge"}`,
     `next_q_id: ${nextQuestion}`,
     `depth_score: ${depthScore}`,
   ];

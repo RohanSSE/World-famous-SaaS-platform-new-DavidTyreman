@@ -121,6 +121,7 @@ class BreakthroughRecognitionService:
             and criteria["specificity"]
             and criteria["emotional_truth"]
             and criteria["vendor_language_removed"]
+            and criteria["contradiction_resolved"]
             and not bool(prosody_result.get("question_echo"))
         )
 

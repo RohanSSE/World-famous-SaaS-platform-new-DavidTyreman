@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 
 from elasticsearch_dsl import connections
 from openai import AzureOpenAI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS
 from brandgodfather.services.BrandBook_generator import CLICHE_PHRASES, GENERIC_BUZZWORDS
@@ -30,6 +30,7 @@ class SocialIdea(BaseModel):
     hook_line: str
     platform_suggestion: str
     brand_seed_connection: str
+    brand_filter_result: Dict[str, Any] = Field(default_factory=dict)
 
 
 class CampaignIdea(BaseModel):
@@ -37,6 +38,7 @@ class CampaignIdea(BaseModel):
     core_message: str
     call_to_action: str
     what_it_protects: str
+    brand_filter_result: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OutreachTemplate(BaseModel):
@@ -45,6 +47,7 @@ class OutreachTemplate(BaseModel):
     opening: str
     trust_signal: str
     cta: str
+    brand_filter_result: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OutputModeEngine:

@@ -69,6 +69,8 @@ function normalizeOrbResult(orbResult) {
     challenge_type: orbResult?.challenge_type || null,
     pressure_used: orbResult?.pressure_used ?? null,
     resistance_count: orbResult?.resistance_count ?? 0,
+    emotional_state: orbResult?.emotional_state || "neutral",
+    tone_mode: orbResult?.tone_mode || "direct_challenge",
     blocked_phrases: blockedPhrases,
     prosody_flags: Array.isArray(orbResult?.prosody_flags) ? orbResult.prosody_flags : [],
     contradiction_result: orbResult?.contradiction_result || null,
@@ -1240,6 +1242,10 @@ export default function PhaseQuestionPage() {
                         <strong>{orbChecking ? "..." : orbVerdict.pressure_used ?? "n/a"}</strong>
                         <span>resistance_count</span>
                         <strong>{orbChecking ? "..." : orbVerdict.resistance_count ?? 0}</strong>
+                        <span>emotional_state</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.emotional_state || "neutral"}</strong>
+                        <span>tone_mode</span>
+                        <strong>{orbChecking ? "..." : orbVerdict.tone_mode || "direct_challenge"}</strong>
                         <span>next_q_id</span>
                         <strong>{orbChecking ? "..." : orbVerdict.next_q_id}</strong>
                         <span>depth_score</span>
