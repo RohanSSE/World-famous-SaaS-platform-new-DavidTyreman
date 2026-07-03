@@ -1,0 +1,378 @@
+{
+  "generated_at": "2026-06-23T07:55:13.491062+00:00",
+  "summary": {
+    "current_supported_assets": 17,
+    "current_assets_by_root": {
+      "RAG-docsv2": 7,
+      "Rag_doc": 8,
+      "Rag_docs": 2
+    },
+    "ai_knowledge_state_status": "ready",
+    "ai_knowledge_state_chunk_count": 191,
+    "ai_knowledge_db_chunk_rows": 191,
+    "dry_run_ai_knowledge_chunk_count": 191,
+    "needs_rebuild": false,
+    "rebuild_reason": "up_to_date",
+    "last_built_at": "2026-06-23T07:47:58.823490+00:00",
+    "stored_fingerprint": "82a74f048a86c70a2ab86938ffb0b580b151c76de0338685cf062d32ab9570a9"
+  },
+  "required_client_assets": [
+    {
+      "client_requirement": "Original source documents shared by David",
+      "status": "Indexed",
+      "matched_assets": [
+        "GodFather_backend/RAG-docsv2/BrandGodFather_Logic_Schema_v1.2.pdf",
+        "GodFather_backend/RAG-docsv2/Vessel & Craft FINAL Brand Book.pdf",
+        "GodFather_backend/Rag_docs/7_Dumbass_Branding_Mistakes_23.pdf",
+        "GodFather_backend/Rag_docs/World Famous Complete 9-25-08 for MVP.pdf"
+      ],
+      "derived_assets": [],
+      "original_assets": [
+        "GodFather_backend/RAG-docsv2/BrandGodFather_Logic_Schema_v1.2.pdf",
+        "GodFather_backend/RAG-docsv2/Vessel & Craft FINAL Brand Book.pdf",
+        "GodFather_backend/Rag_docs/7_Dumbass_Branding_Mistakes_23.pdf",
+        "GodFather_backend/Rag_docs/World Famous Complete 9-25-08 for MVP.pdf"
+      ],
+      "indexed_chunk_count": 120,
+      "dry_run_chunk_count": 120,
+      "acceptance": "The four David-shared source PDFs under Rag_docs/ and RAG-docsv2/ are present, indexed, and chunk counts are known."
+    },
+    {
+      "client_requirement": "The Constitution",
+      "status": "Derived control indexed; separate original methodology source still required or David validation needed",
+      "matched_assets": [
+        "GodFather_backend/RAG-docsv2/The_Constitution_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/the-constitution-derived-control.md"
+      ],
+      "derived_assets": [
+        "GodFather_backend/RAG-docsv2/The_Constitution_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/the-constitution-derived-control.md"
+      ],
+      "original_assets": [],
+      "indexed_chunk_count": 6,
+      "dry_run_chunk_count": 6,
+      "acceptance": "Constitution file is present and indexed."
+    },
+    {
+      "client_requirement": "ORB principles",
+      "status": "Derived control indexed; separate original methodology source still required or David validation needed",
+      "matched_assets": [
+        "GodFather_backend/RAG-docsv2/ORB_Principles_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/orb-principles-derived-control.md"
+      ],
+      "derived_assets": [
+        "GodFather_backend/RAG-docsv2/ORB_Principles_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/orb-principles-derived-control.md"
+      ],
+      "original_assets": [],
+      "indexed_chunk_count": 9,
+      "dry_run_chunk_count": 9,
+      "acceptance": "ORB principle document is present and indexed, not only UI component files."
+    },
+    {
+      "client_requirement": "Transformation Journey",
+      "status": "Derived control indexed; separate original methodology source still required or David validation needed",
+      "matched_assets": [
+        "GodFather_backend/RAG-docsv2/Transformation_Journey_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/transformation-journey-derived-control.md"
+      ],
+      "derived_assets": [
+        "GodFather_backend/RAG-docsv2/Transformation_Journey_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/transformation-journey-derived-control.md"
+      ],
+      "original_assets": [],
+      "indexed_chunk_count": 6,
+      "dry_run_chunk_count": 6,
+      "acceptance": "Transformation Journey source is present and indexed."
+    },
+    {
+      "client_requirement": "Intelligence Framework",
+      "status": "Derived control indexed; separate original methodology source still required or David validation needed",
+      "matched_assets": [
+        "GodFather_backend/RAG-docsv2/Intelligence_Framework_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/intelligence-framework-derived-control.md"
+      ],
+      "derived_assets": [
+        "GodFather_backend/RAG-docsv2/Intelligence_Framework_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/intelligence-framework-derived-control.md"
+      ],
+      "original_assets": [],
+      "indexed_chunk_count": 8,
+      "dry_run_chunk_count": 8,
+      "acceptance": "Intelligence Framework source is present and indexed."
+    },
+    {
+      "client_requirement": "Brand Godfather foundational pillars",
+      "status": "Derived control indexed; separate original methodology source still required or David validation needed",
+      "matched_assets": [
+        "GodFather_backend/RAG-docsv2/Foundational_Pillars_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/foundational-pillars-derived-control.md"
+      ],
+      "derived_assets": [
+        "GodFather_backend/RAG-docsv2/Foundational_Pillars_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/foundational-pillars-derived-control.md"
+      ],
+      "original_assets": [],
+      "indexed_chunk_count": 4,
+      "dry_run_chunk_count": 4,
+      "acceptance": "Foundational pillars source is present and indexed."
+    },
+    {
+      "client_requirement": "Breakthrough recognition criteria",
+      "status": "Indexed",
+      "matched_assets": [
+        "GodFather_backend/RAG-docsv2/BrandGodFather_Logic_Schema_v1.2.pdf"
+      ],
+      "derived_assets": [],
+      "original_assets": [
+        "GodFather_backend/RAG-docsv2/BrandGodFather_Logic_Schema_v1.2.pdf"
+      ],
+      "indexed_chunk_count": 45,
+      "dry_run_chunk_count": 45,
+      "acceptance": "Breakthrough criteria source is present and indexed or explicitly implemented/tested."
+    },
+    {
+      "client_requirement": "Coaching rules and behavioral framework",
+      "status": "Indexed",
+      "matched_assets": [
+        "GodFather_backend/RAG-docsv2/Intelligence_Framework_Derived_Control.md",
+        "GodFather_backend/Rag_doc/branding/training-AI-tool.txt",
+        "GodFather_backend/Rag_doc/methodology/intelligence-framework-derived-control.md"
+      ],
+      "derived_assets": [
+        "GodFather_backend/RAG-docsv2/Intelligence_Framework_Derived_Control.md",
+        "GodFather_backend/Rag_doc/methodology/intelligence-framework-derived-control.md"
+      ],
+      "original_assets": [
+        "GodFather_backend/Rag_doc/branding/training-AI-tool.txt"
+      ],
+      "indexed_chunk_count": 38,
+      "dry_run_chunk_count": 38,
+      "acceptance": "Coaching rules/behavior framework source is present and indexed."
+    }
+  ],
+  "current_asset_inventory": [
+    {
+      "path": "GodFather_backend/RAG-docsv2/BrandGodFather_Logic_Schema_v1.2.pdf",
+      "file_name": "BrandGodFather_Logic_Schema_v1.2.pdf",
+      "source_root": "RAG-docsv2",
+      "extension": ".pdf",
+      "size_bytes": 218786,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "branding",
+      "indexed_chunk_count": 45,
+      "dry_run_chunk_count": 45,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/RAG-docsv2/Foundational_Pillars_Derived_Control.md",
+      "file_name": "Foundational_Pillars_Derived_Control.md",
+      "source_root": "RAG-docsv2",
+      "extension": ".md",
+      "size_bytes": 1892,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 2,
+      "dry_run_chunk_count": 2,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/RAG-docsv2/Intelligence_Framework_Derived_Control.md",
+      "file_name": "Intelligence_Framework_Derived_Control.md",
+      "source_root": "RAG-docsv2",
+      "extension": ".md",
+      "size_bytes": 2130,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 4,
+      "dry_run_chunk_count": 4,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/RAG-docsv2/ORB_Principles_Derived_Control.md",
+      "file_name": "ORB_Principles_Derived_Control.md",
+      "source_root": "RAG-docsv2",
+      "extension": ".md",
+      "size_bytes": 1857,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 7,
+      "dry_run_chunk_count": 7,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/RAG-docsv2/The_Constitution_Derived_Control.md",
+      "file_name": "The_Constitution_Derived_Control.md",
+      "source_root": "RAG-docsv2",
+      "extension": ".md",
+      "size_bytes": 1945,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 3,
+      "dry_run_chunk_count": 3,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/RAG-docsv2/Transformation_Journey_Derived_Control.md",
+      "file_name": "Transformation_Journey_Derived_Control.md",
+      "source_root": "RAG-docsv2",
+      "extension": ".md",
+      "size_bytes": 1940,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 3,
+      "dry_run_chunk_count": 3,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/RAG-docsv2/Vessel & Craft FINAL Brand Book.pdf",
+      "file_name": "Vessel & Craft FINAL Brand Book.pdf",
+      "source_root": "RAG-docsv2",
+      "extension": ".pdf",
+      "size_bytes": 247807,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "branding",
+      "indexed_chunk_count": 23,
+      "dry_run_chunk_count": 23,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/Rag_doc/README.md",
+      "file_name": "README.md",
+      "source_root": "Rag_doc",
+      "extension": ".md",
+      "size_bytes": 2654,
+      "configured_for_ai_knowledge": false,
+      "configured_category": "",
+      "indexed_chunk_count": 0,
+      "dry_run_chunk_count": 0,
+      "dry_run_error": "",
+      "indexed_status": "Not indexed in ai_knowledge evidence"
+    },
+    {
+      "path": "GodFather_backend/Rag_doc/branding/training-AI-tool.txt",
+      "file_name": "training-AI-tool.txt",
+      "source_root": "Rag_doc",
+      "extension": ".txt",
+      "size_bytes": 14230,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "branding",
+      "indexed_chunk_count": 30,
+      "dry_run_chunk_count": 30,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/Rag_doc/manifesto/after-manifesto-ai-tool.txt",
+      "file_name": "after-manifesto-ai-tool.txt",
+      "source_root": "Rag_doc",
+      "extension": ".txt",
+      "size_bytes": 4195,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "manifesto",
+      "indexed_chunk_count": 8,
+      "dry_run_chunk_count": 8,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/Rag_doc/methodology/foundational-pillars-derived-control.md",
+      "file_name": "foundational-pillars-derived-control.md",
+      "source_root": "Rag_doc",
+      "extension": ".md",
+      "size_bytes": 1909,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 2,
+      "dry_run_chunk_count": 2,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/Rag_doc/methodology/intelligence-framework-derived-control.md",
+      "file_name": "intelligence-framework-derived-control.md",
+      "source_root": "Rag_doc",
+      "extension": ".md",
+      "size_bytes": 2113,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 4,
+      "dry_run_chunk_count": 4,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/Rag_doc/methodology/orb-principles-derived-control.md",
+      "file_name": "orb-principles-derived-control.md",
+      "source_root": "Rag_doc",
+      "extension": ".md",
+      "size_bytes": 1989,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 2,
+      "dry_run_chunk_count": 2,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/Rag_doc/methodology/the-constitution-derived-control.md",
+      "file_name": "the-constitution-derived-control.md",
+      "source_root": "Rag_doc",
+      "extension": ".md",
+      "size_bytes": 2027,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 3,
+      "dry_run_chunk_count": 3,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/Rag_doc/methodology/transformation-journey-derived-control.md",
+      "file_name": "transformation-journey-derived-control.md",
+      "source_root": "Rag_doc",
+      "extension": ".md",
+      "size_bytes": 1933,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "methodology",
+      "indexed_chunk_count": 3,
+      "dry_run_chunk_count": 3,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/Rag_docs/7_Dumbass_Branding_Mistakes_23.pdf",
+      "file_name": "7_Dumbass_Branding_Mistakes_23.pdf",
+      "source_root": "Rag_docs",
+      "extension": ".pdf",
+      "size_bytes": 1302883,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "branding",
+      "indexed_chunk_count": 10,
+      "dry_run_chunk_count": 10,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    },
+    {
+      "path": "GodFather_backend/Rag_docs/World Famous Complete 9-25-08 for MVP.pdf",
+      "file_name": "World Famous Complete 9-25-08 for MVP.pdf",
+      "source_root": "Rag_docs",
+      "extension": ".pdf",
+      "size_bytes": 1015183,
+      "configured_for_ai_knowledge": true,
+      "configured_category": "strategy",
+      "indexed_chunk_count": 42,
+      "dry_run_chunk_count": 42,
+      "dry_run_error": "",
+      "indexed_status": "Indexed"
+    }
+  ],
+  "indexed_only_missing_from_current_folders": []
+}

@@ -13,6 +13,7 @@ def with_azure_retry(
     fn: Callable[[], T],
     max_attempts: int = 3,
     base_delay: float = 1.0,
+    operation_name: str | None = None,
 ) -> T:
     last_err = None
     for attempt in range(max_attempts):
@@ -28,6 +29,7 @@ def with_azure_retry(
             if not transient or attempt >= max_attempts - 1:
                 raise
             delay = base_delay * (2 ** attempt)
-            logger.warning("Azure/OpenAI retry %s/%s: %s", attempt + 1, max_attempts, e)
+            label = f" for {operation_name}" if operation_name else ""
+            logger.warning("Azure/OpenAI retry%s %s/%s: %s", label, attempt + 1, max_attempts, e)
             time.sleep(delay)
     raise last_err  # type: ignore[misc]

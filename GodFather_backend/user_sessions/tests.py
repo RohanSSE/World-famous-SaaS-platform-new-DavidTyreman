@@ -6,6 +6,7 @@ from accounts.models import User
 from user_sessions.models import Answer
 from user_sessions.models import Question
 from user_sessions.models import Session
+from user_sessions.views import _strategic_challenge_for_draft
 
 
 class SessionAnswerPermissionTests(TestCase):
@@ -66,3 +67,41 @@ class SessionAnswerPermissionTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["detail"], "Access denied")
+
+
+class StrategicChallengeDraftTests(TestCase):
+    def test_challenge_first_payload_keeps_original_answer(self):
+        question = Question(text="Who do you most want to serve?", category="brand_identity")
+        draft = "We help everyone grow."
+
+        payload = _strategic_challenge_for_draft(
+            question,
+            draft,
+            {
+                "quality": "too_weak",
+                "profile": {"step": "ideal client"},
+                "reason": "Everyone-language needs a trade-off.",
+            },
+            refined=True,
+        )
+
+        self.assertEqual(payload["improved_answer"], draft)
+        self.assertTrue(payload["rewrite_blocked"])
+        self.assertEqual(payload["mode"], "challenge_first")
+        self.assertEqual(payload["challenge_type"], "shallow_answer")
+        self.assertIn("I am not polishing this yet", payload["follow_up_question"])
+
+    def test_vendor_thought_payload_challenges_before_copy(self):
+        question = Question(text="What does the brand stand for?", category="brand_identity")
+        draft = "We provide quality professional service."
+
+        payload = _strategic_challenge_for_draft(
+            question,
+            draft,
+            {"quality": "vendor_thought", "profile": {"step": "origin"}},
+        )
+
+        self.assertEqual(payload["improved_answer"], draft)
+        self.assertTrue(payload["rewrite_blocked"])
+        self.assertEqual(payload["challenge_type"], "vendor_thought")
+        self.assertIn("Before we touch the wording", payload["follow_up_question"])

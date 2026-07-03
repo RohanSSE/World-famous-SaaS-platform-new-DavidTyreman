@@ -90,7 +90,11 @@ class PDFIngestionService:
         return [s.strip() for s in sentences if s.strip()]
 
     def extract_text(self, pdf_path: str) -> str:
-        """Extract text from PDF with pdfplumber, with unstructured fallback."""
+        """Extract text from a PDF, Markdown, or text source file."""
+        source_path = Path(pdf_path)
+        if source_path.suffix.lower() in {".md", ".markdown", ".txt"}:
+            return source_path.read_text(encoding="utf-8", errors="replace").strip()
+
         pages: List[str] = []
         with pdfplumber.open(pdf_path) as pdf:
             for page in pdf.pages:
@@ -319,6 +323,7 @@ class PDFIngestionService:
                 "question_id": chunk["question_id"],
                 "brand_type": chunk["brand_type"],
                 "emotional_register": chunk["emotional_register"],
+                "metadata": chunk.get("metadata", {}),
             }
             actions.append(
                 {

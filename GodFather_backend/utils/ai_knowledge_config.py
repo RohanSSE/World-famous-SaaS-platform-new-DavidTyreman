@@ -14,10 +14,12 @@ BACKEND_DIR = UTILS_DIR.parent
 RAG_DOC_DIR = BACKEND_DIR / "Rag_doc"
 RAG_DOC_ADDITIONAL_DIRS = [
     BACKEND_DIR / "Rag_docs",
+    BACKEND_DIR / "RAG-docsv2",
 ]
 RAG_DOC_CATEGORIES = [
     "branding",
     "manifesto",
+    "methodology",
     "psychology",
     "strategy",
     "positioning",

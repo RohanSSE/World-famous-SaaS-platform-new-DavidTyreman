@@ -5,6 +5,9 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
+from brandgodfather.services.methodology_governance import MethodologyGovernanceService
+from brandgodfather.services.phase1_frameworks import ORB_PHASE1_GUIDANCE, framework_json
+
 
 class AssembledPrompt(BaseModel):
     system_prompt: str
@@ -72,29 +75,43 @@ class PromptAssembler:
         pressure_level: int,
     ) -> AssembledPrompt:
         normalized_pressure = self._normalize_pressure(pressure_level)
+        methodology_governance = MethodologyGovernanceService().prompt_section()
 
         sections = [
             self._section_header(1, "Core Identity"),
             self._core_identity_section(),
-            self._section_header(2, "Current Session State"),
+            self._section_header(2, "Methodology Governance"),
+            methodology_governance,
+            self._section_header(3, "Current Session State"),
             self._session_state_section(session=session, q_id=q_id),
-            self._section_header(3, "Shadow Profile Injection"),
+            self._section_header(4, "Shadow Profile Injection"),
             self._shadow_profile_section(session=session),
-            self._section_header(4, "Prosody Context"),
+            self._section_header(5, "Prosody Context"),
             self._prosody_context_section(prosody_result=prosody_result),
-            self._section_header(5, "Contradiction Injection"),
+            self._section_header(6, "Contradiction Injection"),
             self._contradiction_section(contradiction_result=contradiction_result),
-            self._section_header(6, "RAG Context"),
+            self._section_header(7, "RAG Context"),
             self._rag_context_section(rag_context=rag_context),
-            self._section_header(7, "Thread Index"),
+            self._section_header(8, "Thread Index"),
             self._thread_index_section(session=session),
-            self._section_header(8, "Pressure Level Instructions"),
+            self._section_header(9, "Pressure Level Instructions"),
             self._pressure_section(pressure_level=normalized_pressure),
-            self._section_header(9, "Enforcement Rule"),
+            self._section_header(10, "Enforcement Rule"),
             self._enforcement_rule_section(q_id=q_id),
-            self._section_header(10, "Output Format Requirement"),
-            self._output_requirement_section(),
         ]
+
+        # Phase 1 (Q1-Q8) look_for/avoid framework + ORB behavioral protocols.
+        phase1_section = self._phase1_framework_section(q_id=q_id)
+        if phase1_section:
+            sections.extend([
+                self._section_header(11, "Phase 1 Answer Framework"),
+                phase1_section,
+            ])
+
+        sections.extend([
+            self._section_header(12, "Output Format Requirement"),
+            self._output_requirement_section(),
+        ])
 
         system_prompt = "\n\n".join(sections).strip()
         user_prompt = self._user_prompt_section(question_text=question_text, user_answer=user_answer)
@@ -243,6 +260,17 @@ class PromptAssembler:
             "Do not soften challenge if contradiction, vendor language, or deflection is detected."
         )
         return template.safe_substitute({"q_id": q_id})
+
+    @staticmethod
+    def _phase1_framework_section(q_id: str) -> Optional[str]:
+        fw_json = framework_json(q_id)
+        if not fw_json:
+            return None
+        return (
+            "{guidance}\n\n"
+            "EVALUATION FRAMEWORK (evaluate the user's latest answer against this):\n"
+            "{framework}"
+        ).format(guidance=ORB_PHASE1_GUIDANCE, framework=fw_json)
 
     def _output_requirement_section(self) -> str:
         template = Template(

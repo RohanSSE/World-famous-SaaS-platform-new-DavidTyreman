@@ -25,9 +25,11 @@ HEDGE_WORDS: List[str] = [
 ]
 
 VENDOR_PHRASES: List[str] = [
-    "we offer", "our services", "i provide", "quality service",
+    "we provide", "we offer", "our services", "i provide", "quality service",
+    "professional service", "quality professional service", "reliable solutions",
     "competitive pricing", "tailored solutions", "we specialize",
-    "our team", "client satisfaction", "deliverables",
+    "our team", "client satisfaction", "deliverables", "best service",
+    "high quality", "world-class", "trusted partner", "one-stop solution",
 ]
 
 MONEY_KEYWORDS: List[str] = [
@@ -202,7 +204,7 @@ class ProsodyClassifier:
         try:
             results = self.emotion_pipeline(
                 text[:512],
-                return_all_scores=True,
+                top_k=None,
             )
             scores = {item["label"].lower(): item["score"] for item in results[0]}
             positive = scores.get("joy", 0.0) + scores.get("surprise", 0.0)

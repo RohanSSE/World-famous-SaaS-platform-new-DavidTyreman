@@ -19,6 +19,7 @@ TOPICS: Dict[str, Sequence[str]] = {
     "motivation": ("why", "motivation", "drive", "reason", "purpose"),
     "identity": ("identity", "who i am", "who we are", "self", "brand self"),
     "market_position": ("market", "position", "category", "space", "niche"),
+    "pricing_position": ("premium", "price", "price-led", "cheap", "cheaper", "cheapest", "affordable", "expensive", "luxury", "value-led"),
     "client_definition": ("client", "audience", "customer", "buyer", "who for"),
     "differentiation": ("different", "unique", "edge", "advantage", "distinct"),
     "values": ("value", "belief", "principle", "stand for", "non-negotiable"),
@@ -35,6 +36,9 @@ class ContradictionResult(BaseModel):
     conflicting_q_id: Optional[str]
     contradiction_summary: Optional[str]
     topic: str
+    conflicting_answer: Optional[str] = None
+    current_answer: Optional[str] = None
+    contradiction_type: Optional[str] = None
 
 
 class ContradictionEngine:
@@ -53,9 +57,6 @@ class ContradictionEngine:
         current_embedding: Optional[List[float]],
     ) -> ContradictionResult:
         topic = self._detect_topic(current_answer)
-        if current_embedding is None:
-            current_embedding = self._embed_answer(current_answer)
-
         previous = self._fetch_previous_answers(session_id=session_id, exclude_q_id=q_id)
         same_topic = [row for row in previous if self._row_topic(row) == topic]
 
@@ -66,7 +67,18 @@ class ContradictionEngine:
 
         for row in same_topic:
             prev_text = str(row.get("raw_answer", "") or "")
+            logical_conflict = self._direct_logical_conflict(current_answer, prev_text)
+
+            if logical_conflict:
+                direct_conflict = True
+                best_similarity = -1.0
+                best_conflict_q = str(row.get("q_id", ""))
+                best_conflict_text = prev_text
+                break
+
             prev_emb = row.get("answer_embedding")
+            if current_embedding is None:
+                current_embedding = self._embed_answer(current_answer)
             if not prev_emb:
                 prev_emb = self._embed_answer(prev_text)
                 self._update_episodic_fields(
@@ -75,10 +87,6 @@ class ContradictionEngine:
                 )
 
             similarity = self._cosine_similarity(current_embedding, prev_emb)
-            logical_conflict = self._direct_logical_conflict(current_answer, prev_text)
-
-            if logical_conflict:
-                direct_conflict = True
 
             if logical_conflict or similarity < 0.25:
                 if similarity < best_similarity:
@@ -89,8 +97,10 @@ class ContradictionEngine:
         has_contradiction = best_conflict_q is not None
         normalized_conflict_q = self._normalize_q_label(best_conflict_q) if has_contradiction else None
         summary = None
+        contradiction_type = "direct_logical_conflict" if direct_conflict else None
 
         if has_contradiction:
+            contradiction_type = contradiction_type or "semantic_conflict"
             summary = (
                 f"User said '{best_conflict_text}' in {normalized_conflict_q} but now says "
                 f"'{current_answer}'. Use this specific contradiction to deepen the challenge."
@@ -112,6 +122,9 @@ class ContradictionEngine:
             conflicting_q_id=normalized_conflict_q,
             contradiction_summary=summary,
             topic=topic,
+            conflicting_answer=best_conflict_text,
+            current_answer=current_answer if has_contradiction else None,
+            contradiction_type=contradiction_type,
         )
 
     def _fetch_previous_answers(self, session_id: str, exclude_q_id: str) -> List[Dict[str, Any]]:
@@ -139,7 +152,7 @@ class ContradictionEngine:
         session_id: str,
         q_id: str,
         answer: str,
-        embedding: List[float],
+        embedding: Optional[List[float]],
         topic: str,
         contradiction_flags: List[str],
     ) -> None:
@@ -148,11 +161,12 @@ class ContradictionEngine:
             "session_id": session_id,
             "q_id": q_id,
             "raw_answer": answer,
-            "answer_embedding": embedding,
             "topic": topic,
             "contradiction_flags": contradiction_flags,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+        if embedding:
+            doc["answer_embedding"] = embedding
 
         self.es.update(
             index=self.EPISODIC_INDEX,
@@ -217,6 +231,10 @@ class ContradictionEngine:
         return dot / (math.sqrt(n1) * math.sqrt(n2))
 
     def _direct_logical_conflict(self, current: str, previous: str) -> bool:
+        pricing_conflict = self._pricing_position_conflict(current=current, previous=previous)
+        if pricing_conflict:
+            return True
+
         cur = self._normalize_tokens(current)
         prev = self._normalize_tokens(previous)
 
@@ -228,6 +246,48 @@ class ContradictionEngine:
             prev["is_negative"] and cur["is_affirmative"]
         )
         return polarity_flip
+
+    @staticmethod
+    def _pricing_position_conflict(current: str, previous: str) -> bool:
+        cur = ContradictionEngine._pricing_position(current)
+        prev = ContradictionEngine._pricing_position(previous)
+        return bool(cur and prev and cur != prev)
+
+    @staticmethod
+    def _pricing_position(text: str) -> Optional[str]:
+        lower = (text or "").lower()
+        premium_markers = (
+            "premium",
+            "luxury",
+            "high-end",
+            "high end",
+            "not price-led",
+            "not price led",
+            "not cheap",
+            "not cheapest",
+            "not the cheapest",
+            "price is not",
+            "quality over price",
+        )
+        price_led_markers = (
+            "cheap",
+            "cheaper",
+            "cheapest",
+            "lowest price",
+            "low price",
+            "low-cost",
+            "low cost",
+            "affordable",
+            "budget",
+            "discount",
+            "price-led",
+            "price led",
+        )
+        if any(marker in lower for marker in premium_markers):
+            return "premium_not_price_led"
+        if any(marker in lower for marker in price_led_markers):
+            return "price_led"
+        return None
 
     @staticmethod
     def _normalize_tokens(text: str) -> Dict[str, Any]:

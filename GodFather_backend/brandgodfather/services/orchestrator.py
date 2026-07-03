@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -12,9 +13,10 @@ from pydantic import BaseModel
 
 from document.utils.embedding_service import _normalize_azure_endpoint
 from brandgodfather.documents import BRANDGODFATHER_NODE_2_ALIAS
+from brandgodfather.services.breakthrough_recognition import BreakthroughRecognitionService
 from brandgodfather.services.contradiction_engine import ContradictionEngine
 from brandgodfather.services.prompt_assembler import PromptAssembler
-from brandgodfather.services.prosody_classifier import get_classifier
+from brandgodfather.services.prosody_classifier import HEDGE_WORDS, MONEY_KEYWORDS, VENDOR_PHRASES, get_classifier
 from brandgodfather.services.question_router import QuestionRouter
 from brandgodfather.services.rag_retrieval import HybridRAGService
 from brandgodfather.services.shadow_profile import ShadowProfileService
@@ -28,12 +30,34 @@ class LLMResponse(BaseModel):
     coach_reasoning: str
 
 
+class CoachReply(BaseModel):
+    reply: str
+    follow_up_question: str = ""
+
+
 class OrchestratorResult(BaseModel):
     status: str
     reply: str
     next_q_id: Optional[str]
     depth_score: float
     session_updated: bool
+    interruption_type: Optional[str] = None
+    challenge_type: Optional[str] = None
+    follow_up_question: Optional[str] = None
+    pressure_used: Optional[int] = None
+    resistance_count: int = 0
+    blocked_phrases: List[str] = []
+    prosody_flags: List[str] = []
+    emotional_state: str = "neutral"
+    tone_mode: str = "direct_challenge"
+    contradiction_result: Optional[Dict[str, Any]] = None
+    contradiction_message: Optional[str] = None
+    breakthrough_detected: bool = False
+    breakthrough_score: float = 0.0
+    breakthrough_type: Optional[str] = None
+    breakthrough_reason: Optional[str] = None
+    breakthrough_seed: Optional[str] = None
+    breakthrough_criteria: Dict[str, bool] = {}
 
 
 class QuestionOrchestrator:
@@ -43,6 +67,7 @@ class QuestionOrchestrator:
     def __init__(self) -> None:
         self.es = connections.get_connection(alias=BRANDGODFATHER_NODE_2_ALIAS)
         self.prosody = get_classifier()
+        self.breakthrough_service = BreakthroughRecognitionService()
         self.contradiction_engine = ContradictionEngine()
         self.shadow_service = ShadowProfileService()
         self.rag_service = HybridRAGService()
@@ -50,7 +75,9 @@ class QuestionOrchestrator:
         self.router = QuestionRouter()
         self.llm = self._build_llm_client()
 
-    def process_answer(self, session_id: str, q_id: str, user_answer: str) -> OrchestratorResult:
+    def process_answer(self, session_id: str, q_id: str, user_answer: str, dry_run: bool = False) -> OrchestratorResult:
+        # dry_run=True runs the full evaluation pipeline read-only: no resistance
+        # increment, no episodic/session writes, no shadow-profile persistence.
         # 1) Load session from ES Node 2
         session_doc_id, session = self._load_session(session_id)
         if not session_doc_id:
@@ -61,31 +88,59 @@ class QuestionOrchestrator:
 
         # 2) Run ProsodyClassifier on answer
         prosody_result = self._run_prosody(answer=user_answer, question=question_text, phase=current_phase)
+        resistance_count = self._get_resistance_count(session_id=session_id, q_id=q_id)
+        pressure_level = self._pressure_level(prosody_result=prosody_result, resistance_count=resistance_count)
+        challenge_type = self._challenge_type(prosody_result)
+        emotional_state = self._emotional_state(answer=user_answer, prosody_result=prosody_result)
+        tone_mode = self._tone_mode(emotional_state=emotional_state, challenge_type=challenge_type)
+        prosody_result = {**prosody_result, "emotional_state": emotional_state, "tone_mode": tone_mode}
 
         # 3) Gate 1 immediate reject on vendor language
         if not bool(prosody_result.get("gate_1_pass", True)):
             vendor_phrases = prosody_result.get("vendor_phrases_found", []) or []
             called_out = vendor_phrases[0] if vendor_phrases else "vendor language"
             reply = (
-                f"I hear '{called_out}' in your answer. That's vendor framing, not brand truth. "
-                "Say what you believe, not what you offer."
+                f"I hear '{called_out}'. That's the vendor trap. People rarely remember vendors. "
+                "Give me the brand: what do you stand for, who is it for, and why should they care?"
             )
-            self._increment_resistance_and_write_episodic(
-                session_id=session_id,
+            reply, follow_up_question = self._generate_coach_reply(
                 q_id=q_id,
+                question_text=question_text,
                 user_answer=user_answer,
-                prosody_result=prosody_result,
-                contradiction_result=None,
-                pressure_used=int(prosody_result.get("pressure_recommendation", 3) or 3),
-                status="REJECT",
-                answer_embedding=None,
+                situation=f"The answer leans on vendor language ('{called_out}') instead of a brand belief or truth.",
+                challenge_type="vendor_language",
+                emotional_state=emotional_state,
+                pressure_level=pressure_level,
+                resistance_count=resistance_count,
+                fallback=reply,
             )
+            reply = self._calibrate_reply_tone(reply=reply, emotional_state=emotional_state)
+            if not dry_run:
+                self._increment_resistance_and_write_episodic(
+                    session_id=session_id,
+                    q_id=q_id,
+                    user_answer=user_answer,
+                    prosody_result=prosody_result,
+                    contradiction_result=None,
+                    pressure_used=pressure_level,
+                    status="REJECT",
+                    answer_embedding=None,
+                )
             return OrchestratorResult(
                 status="REJECT",
                 reply=reply,
                 next_q_id=None,
                 depth_score=self._depth_score(prosody_result=prosody_result, session=session, answer=user_answer),
                 session_updated=False,
+                interruption_type="vendor_language",
+                challenge_type="vendor_language",
+                follow_up_question=follow_up_question,
+                pressure_used=pressure_level,
+                resistance_count=resistance_count + 1,
+                blocked_phrases=vendor_phrases,
+                prosody_flags=self._prosody_flags(prosody_result),
+                emotional_state=emotional_state,
+                tone_mode=tone_mode,
             )
 
         # 4) Run ContradictionEngine
@@ -96,22 +151,114 @@ class QuestionOrchestrator:
             current_embedding=None,
         )
 
-        # 5) Run ShadowProfileService.update_profile()
-        updated_shadow = self.shadow_service.update_profile(
-            session_id=session_id,
-            q_id=q_id,
-            prosody_result={**prosody_result, "raw_answer": user_answer},
-            answer_embedding=None,
+        contradiction_payload = (
+            contradiction_result.model_dump() if hasattr(contradiction_result, "model_dump") else dict(contradiction_result)
         )
 
-        # 6) Determine pressure_level
-        resistance_count = self._get_resistance_count(session_id=session_id, q_id=q_id)
-        pressure_reco = int(prosody_result.get("pressure_recommendation", 3) or 3)
-        if resistance_count == 0:
-            pressure_level = pressure_reco
+        if bool(contradiction_payload.get("has_contradiction")):
+            contradiction_message = self._contradiction_message(contradiction_payload)
+            contradiction_message = self._calibrate_reply_tone(
+                reply=contradiction_message,
+                emotional_state=emotional_state,
+            )
+            if not dry_run:
+                self._increment_resistance_and_write_episodic(
+                    session_id=session_id,
+                    q_id=q_id,
+                    user_answer=user_answer,
+                    prosody_result=prosody_result,
+                    contradiction_result=contradiction_payload,
+                    pressure_used=pressure_level,
+                    status="REJECT",
+                    answer_embedding=None,
+                )
+            return OrchestratorResult(
+                status="REJECT",
+                reply=contradiction_message,
+                next_q_id=None,
+                depth_score=self._depth_score(prosody_result=prosody_result, session=session, answer=user_answer),
+                session_updated=False,
+                interruption_type="contradiction",
+                challenge_type="contradiction",
+                pressure_used=pressure_level,
+                resistance_count=resistance_count + 1,
+                prosody_flags=self._prosody_flags(prosody_result),
+                emotional_state=emotional_state,
+                tone_mode=tone_mode,
+                contradiction_result=contradiction_payload,
+                contradiction_message=contradiction_message,
+            )
+
+        if not bool(prosody_result.get("gate_2_pass", True)):
+            adaptive_fallback = self._adaptive_coaching_reply(
+                user_answer=user_answer,
+                pressure_level=pressure_level,
+                resistance_count=resistance_count,
+                challenge_type=challenge_type,
+                emotional_state=emotional_state,
+            )
+            adaptive_reply, follow_up_question = self._generate_coach_reply(
+                q_id=q_id,
+                question_text=question_text,
+                user_answer=user_answer,
+                situation="The answer is still too shallow or generic and hides the real belief, tension, or truth.",
+                challenge_type=challenge_type,
+                emotional_state=emotional_state,
+                pressure_level=pressure_level,
+                resistance_count=resistance_count,
+                fallback=adaptive_fallback,
+            )
+            if not dry_run:
+                self._increment_resistance_and_write_episodic(
+                    session_id=session_id,
+                    q_id=q_id,
+                    user_answer=user_answer,
+                    prosody_result=prosody_result,
+                    contradiction_result=contradiction_payload,
+                    pressure_used=pressure_level,
+                    status="REJECT",
+                    answer_embedding=None,
+                )
+            return OrchestratorResult(
+                status="REJECT",
+                reply=adaptive_reply,
+                next_q_id=None,
+                depth_score=self._depth_score(prosody_result=prosody_result, session=session, answer=user_answer),
+                session_updated=False,
+                interruption_type="adaptive_coaching",
+                challenge_type=challenge_type,
+                follow_up_question=follow_up_question,
+                pressure_used=pressure_level,
+                resistance_count=resistance_count + 1,
+                prosody_flags=self._prosody_flags(prosody_result),
+                emotional_state=emotional_state,
+                tone_mode=tone_mode,
+                contradiction_result=contradiction_payload,
+            )
+
+        breakthrough_result = self.breakthrough_service.analyze(
+            answer=user_answer,
+            q_id=q_id,
+            question_text=question_text,
+            prosody_result=prosody_result,
+            contradiction_result=contradiction_payload,
+        )
+        breakthrough_payload = (
+            breakthrough_result.model_dump() if hasattr(breakthrough_result, "model_dump") else breakthrough_result.dict()
+        )
+        breakthrough_seed = str(breakthrough_payload.get("brand_seed_candidate") or "").strip()
+        breakthrough_detected = bool(breakthrough_payload.get("breakthrough_detected"))
+
+        # 5) Run ShadowProfileService.update_profile()
+        if dry_run:
+            updated_shadow = session.get("shadow_profile", {}) or {}
         else:
-            pressure_level = pressure_reco + 1
-        pressure_level = max(1, min(5, pressure_level))
+            updated_shadow = self.shadow_service.update_profile(
+                session_id=session_id,
+                q_id=q_id,
+                prosody_result={**prosody_result, "raw_answer": user_answer},
+                answer_embedding=None,
+            )
 
         # 7) Run HybridRAGService.get_question_context()
         rag_context = self.rag_service.get_question_context(
@@ -134,36 +281,58 @@ class QuestionOrchestrator:
             pressure_level=pressure_level,
         )
 
-        # 9) Call Azure OpenAI Chat Completion with instructor
-        llm_response = self._call_llm(assembled.system_prompt, assembled.user_prompt)
-
-        # 10) Parse LLMResponse (already typed by instructor)
-        parsed = llm_response
+        # 9) Breakthrough answers are an active PASS gate; otherwise ask the LLM.
+        if breakthrough_detected:
+            parsed = LLMResponse(
+                status="PASS",
+                reply="",
+                extracted={"brand_seed": breakthrough_seed, "key_phrase": breakthrough_seed},
+                pressure_used=pressure_level,
+                coach_reasoning="Deterministic breakthrough recognition criteria met.",
+            )
+        else:
+            llm_response = self._call_llm(assembled.system_prompt, assembled.user_prompt)
+            parsed = llm_response
 
         # 11) REJECT path
         if str(parsed.status).upper() == "REJECT":
-            self._increment_resistance_and_write_episodic(
-                session_id=session_id,
-                q_id=q_id,
-                user_answer=user_answer,
-                prosody_result=prosody_result,
-                contradiction_result=contradiction_result.model_dump() if hasattr(contradiction_result, "model_dump") else contradiction_result,
-                pressure_used=pressure_level,
-                status="REJECT",
-                answer_embedding=None,
-            )
+            reply = self._calibrate_reply_tone(reply=parsed.reply, emotional_state=emotional_state)
+            if not dry_run:
+                self._increment_resistance_and_write_episodic(
+                    session_id=session_id,
+                    q_id=q_id,
+                    user_answer=user_answer,
+                    prosody_result=prosody_result,
+                    contradiction_result=contradiction_result.model_dump() if hasattr(contradiction_result, "model_dump") else contradiction_result,
+                    pressure_used=pressure_level,
+                    status="REJECT",
+                    answer_embedding=None,
+                )
             return OrchestratorResult(
                 status="REJECT",
-                reply=parsed.reply,
+                reply=reply,
                 next_q_id=None,
                 depth_score=self._depth_score(prosody_result=prosody_result, session=session, answer=user_answer),
                 session_updated=False,
+                challenge_type=challenge_type,
+                pressure_used=pressure_level,
+                resistance_count=resistance_count + 1,
+                emotional_state=emotional_state,
+                tone_mode=tone_mode,
+                contradiction_result=contradiction_payload,
+                contradiction_message=self._contradiction_message(contradiction_payload) if contradiction_payload.get("has_contradiction") else None,
             )
 
         # 12) PASS path
         cfg = self.router.get_question(q_id)
         next_q_id = cfg.next if cfg else self._next_q_id(q_id)
         extracted = parsed.extracted or {}
+        reply = parsed.reply
+        if breakthrough_detected:
+            reply = (
+                "That is the truth/edge. Keep that as a brand seed. "
+                f"{breakthrough_payload.get('breakthrough_reason')}"
+            )
 
         self._write_episodic_entry(
             session_id=session_id,
@@ -175,17 +344,33 @@ class QuestionOrchestrator:
             resistance_count=0,
             status="PASS",
             answer_embedding=None,
-        )
+            breakthrough_result=breakthrough_payload,
+        ) if not dry_run else None
 
         thread_index = dict(session.get("thread_index", {}) or {})
-        if extracted.get("brand_seed"):
-            thread_index["brand_seed"] = extracted.get("brand_seed")
+        brand_seed_value = str(extracted.get("brand_seed") or breakthrough_seed or "").strip()
+        if brand_seed_value:
+            thread_index["brand_seed"] = brand_seed_value
         if extracted.get("tension"):
             thread_index["tension"] = extracted.get("tension")
         if extracted.get("key_phrase"):
             phrases = list(thread_index.get("key_phrases", []) or [])
             phrases.append(extracted.get("key_phrase"))
             thread_index["key_phrases"] = phrases[-20:]
+        if breakthrough_detected:
+            breakthrough_moments = list(thread_index.get("breakthrough_moments", []) or [])
+            breakthrough_moments.append(
+                {
+                    "q_id": q_id,
+                    "seed": breakthrough_seed,
+                    "score": breakthrough_payload.get("breakthrough_score"),
+                    "type": breakthrough_payload.get("breakthrough_type"),
+                    "reason": breakthrough_payload.get("breakthrough_reason"),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+            thread_index["breakthrough_moments"] = breakthrough_moments[-10:]
+            thread_index["latest_breakthrough_seed"] = breakthrough_seed
 
         all_answers = list(session.get("all_answers", []) or [])
         all_answers.append(
@@ -193,6 +378,9 @@ class QuestionOrchestrator:
                 "q_id": q_id,
                 "raw_answer": user_answer,
                 "status": "PASS",
+                "breakthrough_detected": breakthrough_detected,
+                "breakthrough_score": breakthrough_payload.get("breakthrough_score", 0.0),
+                "breakthrough_seed": breakthrough_seed if breakthrough_detected else "",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         )
@@ -203,41 +391,348 @@ class QuestionOrchestrator:
             "current_q_id": next_q_id,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
+        if brand_seed_value:
+            patch["brand_seed"] = brand_seed_value
 
         self.es.update(
             index=self.SESSION_INDEX,
             id=session_doc_id,
             body={"doc": patch},
             refresh=True,
-        )
+        ) if not dry_run else None
 
-        self.router.handle_post_pass(session_id=session_id, q_id=q_id)
+        if not dry_run:
+            self.router.handle_post_pass(session_id=session_id, q_id=q_id)
 
-        # Refresh shadow profile after session update as required.
-        self.shadow_service.update_profile(
-            session_id=session_id,
-            q_id=q_id,
-            prosody_result={**prosody_result, "raw_answer": user_answer},
-            answer_embedding=None,
-        )
+            # Refresh shadow profile after session update as required.
+            self.shadow_service.update_profile(
+                session_id=session_id,
+                q_id=q_id,
+                prosody_result={**prosody_result, "raw_answer": user_answer},
+                answer_embedding=None,
+            )
 
         return OrchestratorResult(
             status="PASS",
-            reply=parsed.reply,
+            reply=reply,
             next_q_id=next_q_id,
             depth_score=self._depth_score(prosody_result=prosody_result, session=session, answer=user_answer),
-            session_updated=True,
+            session_updated=not dry_run,
+            challenge_type=challenge_type,
+            pressure_used=pressure_level,
+            resistance_count=0,
+            emotional_state=emotional_state,
+            tone_mode=tone_mode,
+            contradiction_result=contradiction_payload,
+            contradiction_message=self._contradiction_message(contradiction_payload) if contradiction_payload.get("has_contradiction") else None,
+            breakthrough_detected=breakthrough_detected,
+            breakthrough_score=float(breakthrough_payload.get("breakthrough_score", 0.0) or 0.0),
+            breakthrough_type=breakthrough_payload.get("breakthrough_type"),
+            breakthrough_reason=breakthrough_payload.get("breakthrough_reason"),
+            breakthrough_seed=breakthrough_seed if breakthrough_detected else None,
+            breakthrough_criteria=dict(breakthrough_payload.get("criteria") or {}),
+        )
+
+    @staticmethod
+    def _pressure_level(prosody_result: Dict[str, Any], resistance_count: int) -> int:
+        pressure_reco = int(prosody_result.get("pressure_recommendation", 3) or 3)
+        return max(1, min(5, pressure_reco + max(0, int(resistance_count or 0))))
+
+    @staticmethod
+    def _challenge_type(prosody_result: Dict[str, Any]) -> str:
+        if bool(prosody_result.get("deflection_detected")):
+            return "deflection"
+        if bool(prosody_result.get("avoidance_length")):
+            return "shallow_answer"
+        if bool(prosody_result.get("question_echo")):
+            return "question_echo"
+        if float(prosody_result.get("hedge_score", 0.0) or 0.0) > 0.15:
+            return "hedging"
+        if bool(prosody_result.get("money_motivation")):
+            return "money_motivation"
+        return "adaptive_coaching"
+
+    @staticmethod
+    def _emotional_state(answer: str, prosody_result: Dict[str, Any]) -> str:
+        lower = (answer or "").lower()
+        states = [
+            ("confused", ("confused", "unclear", "lost", "stuck", "overwhelmed", "not sure", "don't know", "dont know")),
+            ("discouraged", ("discouraged", "frustrated", "tired", "exhausted", "defeated", "hopeless", "struggling")),
+            ("afraid", ("afraid", "scared", "fear", "worried", "anxious", "nervous", "terrified", "judged")),
+            ("excited", ("excited", "energized", "ready", "inspired", "passionate", "love", "can't wait", "cant wait")),
+        ]
+        for state, markers in states:
+            if any(marker in lower for marker in markers):
+                return state
+        if bool(prosody_result.get("deflection_detected")) or float(prosody_result.get("hedge_score", 0.0) or 0.0) > 0.15:
+            return "avoidant"
+        if float(prosody_result.get("emotional_weight", 0.0) or 0.0) >= 0.75:
+            return "engaged"
+        return "neutral"
+
+    @staticmethod
+    def _tone_mode(emotional_state: str, challenge_type: str) -> str:
+        if emotional_state == "confused":
+            return "clarifying_challenge"
+        if emotional_state in {"discouraged", "afraid"}:
+            return "supportive_challenge"
+        if emotional_state in {"excited", "engaged"}:
+            return "energized_challenge"
+        if emotional_state == "avoidant" or challenge_type in {"deflection", "question_echo"}:
+            return "firm_challenge"
+        return "direct_challenge"
+
+    @staticmethod
+    def _calibrate_reply_tone(reply: str, emotional_state: str) -> str:
+        text = str(reply or "").strip()
+        if not text:
+            return text
+        if emotional_state == "confused":
+            return f"Stay with the question. The confusion is useful if we make it specific. {text}"
+        if emotional_state in {"discouraged", "afraid"}:
+            return f"This may feel uncomfortable, but it is workable. {text}"
+        if emotional_state in {"excited", "engaged"}:
+            return f"Use that energy with precision. {text}"
+        if emotional_state == "avoidant":
+            return f"Do not dodge this. {text}"
+        return text
+
+    @staticmethod
+    def _split_reply_and_question(text: str) -> Tuple[str, str]:
+        """Split a coaching reply into a leading statement and a trailing follow-up
+        question. The last '?'-terminated sentence becomes the follow-up question;
+        everything before it is the statement. Returns (statement, "") when there is
+        no question."""
+        value = (text or "").strip()
+        if "?" not in value:
+            return value, ""
+        chunks = re.split(r"(?<=[.!?])\s+", value)
+        q_idx = -1
+        for idx, chunk in enumerate(chunks):
+            if chunk.strip().endswith("?"):
+                q_idx = idx
+        if q_idx < 0:
+            return value, ""
+        statement = " ".join(chunks[:q_idx]).strip()
+        follow = " ".join(chunks[q_idx:]).strip()
+        return statement, follow
+
+    def _generate_coach_reply(
+        self,
+        *,
+        q_id: str,
+        question_text: str,
+        user_answer: str,
+        situation: str,
+        challenge_type: str,
+        emotional_state: str,
+        pressure_level: int,
+        resistance_count: int,
+        fallback: str,
+    ) -> Tuple[str, str]:
+        """LLM-generated, varied coaching reply. Returns (statement, follow_up_question):
+        the statement guides and challenges; the follow-up question pulls the user deeper.
+        Falls back to splitting the deterministic template on any failure."""
+        try:
+            from brandgodfather.services.phase1_frameworks import get_framework
+
+            framework_text = "No fixed framework; use brand-thinking judgment."
+            fw = get_framework(q_id)
+            if fw:
+                criteria = fw["orb_analysis_framework"]
+                framework_text = (
+                    "LOOK FOR (what a strong answer contains):\n- "
+                    + "\n- ".join(criteria["look_for"])
+                    + "\nAVOID (vendor traps / weak thinking):\n- "
+                    + "\n- ".join(criteria["avoid"])
+                )
+
+            tone_guidance = {
+                "confused": "The user seems confused. Reduce tension, be encouraging, make the next step concrete.",
+                "discouraged": "The user seems discouraged. Stay warm but do not lower the standard.",
+                "afraid": "The user seems afraid. Reassure briefly, then ask for the honest truth.",
+                "excited": "The user is energized. Channel that energy toward a sharper, specific point of view.",
+                "engaged": "The user is engaged. Push for depth and a distinct belief.",
+                "avoidant": "The user is avoiding the point. Name it directly, without being harsh.",
+            }.get(emotional_state, "Keep a direct, warm, challenging tone.")
+
+            system_prompt = (
+                "You are ORB, the Brand Godfather: a world-class brand strategist and coach who "
+                "moves founders from vendor thinking to brand thinking. Return two fields. "
+                "'reply' is a short guiding, challenging statement (1-2 sentences) grounded in the "
+                "user's own words, containing NO question. 'follow_up_question' is a single sharp "
+                "question that pulls the user deeper and ends with a question mark. Never accept a "
+                "shallow, generic, or vendor answer. Vary your wording every time so you never "
+                "sound templated. No markdown, no quotes."
+            )
+            user_prompt = (
+                f"Question being explored:\n{question_text}\n\n"
+                f"User's latest answer:\n{user_answer}\n\n"
+                f"Why it is not strong enough yet: {situation}\n"
+                f"Detected weakness: {challenge_type}\n"
+                f"Pressure level (1-5): {pressure_level}. Resistance so far: {resistance_count}.\n"
+                f"Tone guidance: {tone_guidance}\n\n"
+                f"Evaluation framework for this question:\n{framework_text}"
+            )
+
+            model = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o")
+            result = self.llm.chat.completions.create(
+                model=model,
+                response_model=CoachReply,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.85,
+            )
+            statement = str(getattr(result, "reply", "") or "").strip()
+            follow = str(getattr(result, "follow_up_question", "") or "").strip()
+            # Guard against the model repeating a question inside the statement.
+            if follow:
+                trimmed, trailing_q = self._split_reply_and_question(statement)
+                if trailing_q:
+                    statement = trimmed
+            else:
+                statement, follow = self._split_reply_and_question(statement)
+            fb_statement, fb_follow = self._split_reply_and_question(fallback)
+            return (statement or fb_statement, follow or fb_follow)
+        except Exception:
+            logging.getLogger(__name__).warning("coach reply generation failed; using fallback", exc_info=True)
+            return self._split_reply_and_question(fallback)
+
+    @staticmethod
+    def _adaptive_coaching_reply(
+        user_answer: str,
+        pressure_level: int,
+        resistance_count: int,
+        challenge_type: str,
+        emotional_state: str = "neutral",
+    ) -> str:
+        pressure = max(1, min(5, int(pressure_level or 3)))
+        if pressure >= 5:
+            if emotional_state == "confused":
+                return (
+                    "Slow down. The confusion is useful, but repeating the same surface answer will keep the brand blurry. "
+                    "Name the belief, the tension, or the truth you are avoiding."
+                )
+            if emotional_state in {"discouraged", "afraid"}:
+                return (
+                    "I can hear the hesitation. I am still not going to soften the standard: "
+                    "the market will not see a brand here yet. Name the truth you are afraid to say plainly."
+                )
+            if emotional_state in {"excited", "engaged"}:
+                return (
+                    "Use that energy with precision. You are still giving me the same surface answer. "
+                    "Name the belief, the tension, or the truth that makes this impossible to ignore."
+                )
+            return (
+                "Stop there. You are giving me the same surface answer again. "
+                "At this level, the market will not see a brand; it will see another option. "
+                "Name the belief, the tension, or the truth you are avoiding."
+            )
+        if pressure == 4 or resistance_count > 0:
+            if emotional_state == "confused":
+                return (
+                    "You are circling the question because the point is still fuzzy. "
+                    "Make one concrete choice: what truth are you trying to protect here?"
+                )
+            if emotional_state in {"discouraged", "afraid"}:
+                return (
+                    "This is the hard part, and that is why it matters. "
+                    "Say the uncomfortable truth behind this answer instead of sanding it down."
+                )
+            if emotional_state in {"excited", "engaged"}:
+                return (
+                    "Good energy, but it needs an edge. "
+                    "Say the point of view underneath this before the language gets cleaner."
+                )
+            return (
+                "You are circling the question, not answering it. "
+                "This answer still hides the point of view. Say the uncomfortable truth behind it."
+            )
+        if challenge_type == "deflection":
+            if emotional_state in {"discouraged", "afraid"}:
+                return (
+                    "This is deflection, and I am not treating that as failure. "
+                    "It is the doorway. What do you actually believe here?"
+                )
+            return (
+                "This is deflection. You are describing around the answer instead of revealing it. "
+                "What do you actually believe here?"
+            )
+        if emotional_state == "confused":
+            return (
+                "You do not need polish yet; you need a sharper choice. "
+                "Pick the belief or truth beneath this answer and say it plainly."
+            )
+        if emotional_state in {"discouraged", "afraid"}:
+            return (
+                "The hesitation is allowed, but hiding behind a thin answer is not. "
+                "Give me the truth a competitor would avoid saying."
+            )
+        if emotional_state in {"excited", "engaged"}:
+            return (
+                "There is energy here. Now make it useful. "
+                "Go beneath the obvious answer and name the point of view."
+            )
+        return (
+            "This is still too thin to build a brand from. "
+            "Go beneath the obvious answer and give me the truth a competitor would not say."
+        )
+
+    @staticmethod
+    def _contradiction_message(contradiction_result: Dict[str, Any]) -> str:
+        previous = str(contradiction_result.get("conflicting_answer") or "your earlier answer").strip()
+        current = str(contradiction_result.get("current_answer") or "this answer").strip()
+        q_ref = str(contradiction_result.get("conflicting_q_id") or "an earlier question").strip()
+        return (
+            f"Hold on. In {q_ref}, you said '{previous}'. Now you're saying '{current}'. "
+            "Those cannot both lead the brand. Resolve the truth before we move on."
         )
 
     def _run_prosody(self, answer: str, question: str, phase: str) -> Dict[str, Any]:
         if self.prosody is None:
             # Safe fallback if preload was skipped.
+            lower = (answer or "").lower()
+            words = re.findall(r"[a-z0-9']+", lower)
+            vendor_phrases_found = [phrase for phrase in VENDOR_PHRASES if phrase in lower]
+            hedge_hits = sum(1 for hedge in HEDGE_WORDS if hedge in lower)
+            feature_words = ("feature", "service", "offer", "provide", "solution", "product", "tool", "platform", "system")
+            emotion_words = ("feel", "love", "hate", "fear", "hope", "believe", "care", "passion", "trust", "excited")
+            feature_count = sum(1 for word in feature_words if word in lower)
+            emotion_count = sum(1 for word in emotion_words if word in lower)
+            avoidance_length = len(words) < 15
+            deflection_detected = feature_count > emotion_count or lower.strip() in {"i help people", "we help people", "i help clients", "we help clients"}
+            question_tokens = set(re.findall(r"[a-z0-9']+", (question or "").lower()))
+            answer_tokens = set(words)
+            question_echo = bool(answer_tokens) and len(answer_tokens.intersection(question_tokens)) >= max(3, min(6, len(answer_tokens)))
+            money_motivation = any(keyword in lower for keyword in MONEY_KEYWORDS)
+            signals_fired = sum(
+                [
+                    bool(vendor_phrases_found),
+                    hedge_hits > 0,
+                    deflection_detected,
+                    question_echo,
+                    avoidance_length,
+                    money_motivation,
+                ]
+            )
+            resistance_level = "high" if signals_fired >= 4 else "medium" if signals_fired >= 2 else "low"
+            pressure_recommendation = 5 if signals_fired >= 4 else 3 if signals_fired >= 2 else 2
             return {
-                "gate_1_pass": True,
-                "vendor_phrases_found": [],
-                "pressure_recommendation": 3,
+                "gate_1_pass": not bool(vendor_phrases_found),
+                "vendor_language_detected": bool(vendor_phrases_found),
+                "vendor_phrases_found": vendor_phrases_found,
+                "pressure_recommendation": pressure_recommendation,
                 "emotional_weight": 0.5,
-                "hedge_score": 0.5,
+                "hedge_score": min(1.0, hedge_hits / max(len(words), 1)),
+                "deflection_detected": deflection_detected,
+                "passive_voice": False,
+                "question_echo": question_echo,
+                "avoidance_length": avoidance_length,
+                "money_motivation": money_motivation,
+                "resistance_level": resistance_level,
+                "gate_2_pass": signals_fired < 2,
             }
         result = self.prosody.analyze(answer=answer, question=question, phase=phase)
         if hasattr(result, "model_dump"):
@@ -272,6 +767,14 @@ class QuestionOrchestrator:
         return instructor.patch(client)
 
     def _load_session(self, session_id: str) -> Tuple[Optional[str], Dict[str, Any]]:
+        try:
+            doc = self.es.get(index=self.SESSION_INDEX, id=session_id)
+            source = doc.get("_source", {})
+            if source:
+                return doc.get("_id"), source
+        except Exception:
+            pass
+
         body = {
             "size": 1,
             "query": {"bool": {"filter": [{"term": {"session_id": session_id}}]}},
@@ -315,6 +818,7 @@ class QuestionOrchestrator:
         resistance_count: int,
         status: str,
         answer_embedding: Optional[List[float]],
+        breakthrough_result: Optional[Dict[str, Any]] = None,
     ) -> None:
         contradiction_flags = []
         if contradiction_result and contradiction_result.get("conflicting_q_id"):
@@ -325,6 +829,8 @@ class QuestionOrchestrator:
             "q_id": q_id,
             "raw_answer": user_answer,
             "emotional_weight": float(prosody_result.get("emotional_weight", 0.0) or 0.0),
+            "emotional_state": str(prosody_result.get("emotional_state", "neutral") or "neutral"),
+            "tone_mode": str(prosody_result.get("tone_mode", "direct_challenge") or "direct_challenge"),
             "resistance_level": str(prosody_result.get("resistance_level", "medium") or "medium"),
             "resistance_count": resistance_count,
             "prosody_flags": self._prosody_flags(prosody_result),
@@ -332,10 +838,18 @@ class QuestionOrchestrator:
             "contradiction_flags": contradiction_flags,
             "pressure_level_used": int(pressure_used),
             "brand_seed_echo": self._brand_seed_echo(session_id=session_id, answer=user_answer),
-            "answer_embedding": answer_embedding,
             "status": status,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+        if breakthrough_result:
+            doc["breakthrough_detected"] = bool(breakthrough_result.get("breakthrough_detected"))
+            doc["breakthrough_score"] = float(breakthrough_result.get("breakthrough_score", 0.0) or 0.0)
+            doc["breakthrough_type"] = str(breakthrough_result.get("breakthrough_type") or "none")
+            doc["breakthrough_reason"] = str(breakthrough_result.get("breakthrough_reason") or "")
+            doc["breakthrough_seed"] = str(breakthrough_result.get("brand_seed_candidate") or "")
+            doc["breakthrough_criteria"] = dict(breakthrough_result.get("criteria") or {})
+        if answer_embedding:
+            doc["answer_embedding"] = answer_embedding
 
         doc_id = f"{session_id}:{q_id}"
         self.es.update(
@@ -370,12 +884,20 @@ class QuestionOrchestrator:
         )
 
     def _resolve_question_text(self, session: Dict[str, Any], q_id: str) -> str:
-        cfg = self.router.get_question(q_id)
-        if cfg:
-            return cfg.prompt
+        context_data = session.get("context_data", {}) or {}
+        if isinstance(context_data, dict):
+            bank = context_data.get("question_bank", {}) or {}
+            if isinstance(bank, dict) and bank.get(q_id):
+                return str(bank.get(q_id))
+            if context_data.get("question_text"):
+                return str(context_data.get("question_text"))
+
         bank = session.get("question_bank", {})
         if isinstance(bank, dict) and bank.get(q_id):
             return str(bank.get(q_id))
+        cfg = self.router.get_question(q_id)
+        if cfg:
+            return cfg.prompt
         return f"Question {q_id}"
 
     @staticmethod
@@ -392,9 +914,56 @@ class QuestionOrchestrator:
         emotional_weight = float(prosody_result.get("emotional_weight", 0.0) or 0.0)
         hedge_score = float(prosody_result.get("hedge_score", 1.0) or 1.0)
         brand_seed_echo = 1.0 if self._brand_seed_echo_from_session(session, answer) else 0.0
+        intrinsic_depth = self._intrinsic_depth_score(answer)
 
-        score = (emotional_weight * 0.4) + ((1.0 - hedge_score) * 0.3) + (brand_seed_echo * 0.3)
+        score = (
+            (emotional_weight * 0.3)
+            + ((1.0 - hedge_score) * 0.2)
+            + (brand_seed_echo * 0.2)
+            + (intrinsic_depth * 0.3)
+        )
         return round(max(0.0, min(1.0, score)), 4)
+
+    @staticmethod
+    def _intrinsic_depth_score(answer: str) -> float:
+        text = (answer or "").strip().lower()
+        if not text:
+            return 0.0
+
+        words = re.findall(r"\b[\w']+\b", text)
+        word_count = len(words)
+        markers = [
+            r"\bwe believe\b",
+            r"\bi believe\b",
+            r"\bwe exist to\b",
+            r"\bour purpose is\b",
+            r"\bbeyond what we sell\b",
+            r"\bbecause\b",
+            r"\bso that\b",
+            r"\bstand for\b",
+            r"\brefuse to\b",
+            r"\bpeople feel\b",
+            r"\bchange\b",
+            r"\btrust\b",
+            r"\bconviction\b",
+            r"\bclarity\b",
+        ]
+        vendor_markers = [
+            r"\bwe provide\b",
+            r"\bwe offer\b",
+            r"\bour services\b",
+            r"\bsolutions\b",
+            r"\bquality\b",
+            r"\bprofessional\b",
+        ]
+
+        marker_hits = sum(1 for pattern in markers if re.search(pattern, text))
+        vendor_hits = sum(1 for pattern in vendor_markers if re.search(pattern, text))
+        length_score = min(1.0, word_count / 18)
+        marker_score = min(1.0, marker_hits / 3)
+        vendor_penalty = min(0.45, vendor_hits * 0.15)
+
+        return round(max(0.0, min(1.0, (length_score * 0.45) + (marker_score * 0.55) - vendor_penalty)), 4)
 
     @staticmethod
     def _prosody_flags(prosody_result: Dict[str, Any]) -> List[str]:

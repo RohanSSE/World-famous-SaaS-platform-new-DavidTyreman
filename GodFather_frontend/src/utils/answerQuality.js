@@ -1,14 +1,14 @@
 /** Client-side mirror of backend answer quality labels (instant feedback while API loads). */
 
 export const QUALITY_LABELS = {
-  too_weak: "Good start — let’s give it more soul",
-  vendor_thought: "Nice direction — let’s make it feel more ownable",
-  strong: "This has a strong spark — let’s sharpen it",
+  too_weak: "",
+  vendor_thought: "",
+  strong: "",
 };
 
 const QUALITY_REASONS = {
   too_weak:
-    "Acha start hai. Add one real feeling, one specific reason, or one behavior so it feels more memorable.",
+    "Your answer has a useful beginning. Add one real feeling, one specific reason, or one behavior so it feels more memorable.",
   vendor_thought:
     "You’re on the right track. Let’s shift it from service language into belief, behavior, and emotional truth.",
   strong:
@@ -26,6 +26,8 @@ export function normalizeAnswerQualityCopy(raw = {}) {
     !raw.reason ||
     reason.includes("too short") ||
     reason.includes("too weak") ||
+    reason.includes("too brief") ||
+    reason.includes("draft") ||
     reason.includes("lacks") ||
     reason.includes("generic words") ||
     reason.includes("vendor pitch") ||
@@ -39,7 +41,7 @@ export function normalizeAnswerQualityCopy(raw = {}) {
     ...raw,
     quality,
     quality_label: QUALITY_LABELS[quality],
-    reason: friendlyReason,
+    reason: String(friendlyReason || "").replace(/\b(the\s+)?draft\b/gi, "your answer"),
   };
 }
 
@@ -138,13 +140,13 @@ export function scoreAnswerQualityLocal(question, text) {
 
   if (wc < Math.max(6, minWords - 4) || draft.length < 28) {
     quality = "too_weak";
-    reason = `Acha start hai. Add a little more emotional truth and aim for around ${minWords} words.`;
+    reason = `Your answer has a useful beginning. Add a little more emotional truth and aim for around ${minWords} words.`;
   } else if (vendorHits >= 2 || (vendorHits >= 1 && genericDensity > 0.15)) {
     quality = "vendor_thought";
     reason = QUALITY_REASONS.vendor_thought;
   } else if (genericDensity >= 0.2 && wc < minWords) {
     quality = "too_weak";
-    reason = "Good direction. Now replace broad words with a detail only your brand would say.";
+    reason = "Your answer is moving in the right direction. Now replace broad words with a detail only your brand would say.";
   } else if (vendorHits >= 1 && wc < minWords + 2) {
     quality = "vendor_thought";
     reason = QUALITY_REASONS.vendor_thought;

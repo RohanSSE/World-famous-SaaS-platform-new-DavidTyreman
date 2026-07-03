@@ -20,6 +20,14 @@ def _infer_category_from_name(file_path: Path) -> str:
     """Infer category for flat legacy Rag_docs files."""
     name = file_path.stem.lower()
     keyword_categories = (
+        ("constitution", "methodology"),
+        ("orb", "methodology"),
+        ("intelligence framework", "methodology"),
+        ("framework", "methodology"),
+        ("transformation journey", "methodology"),
+        ("journey", "methodology"),
+        ("foundational", "methodology"),
+        ("pillar", "methodology"),
         ("manifesto", "manifesto"),
         ("position", "positioning"),
         ("psycholog", "psychology"),

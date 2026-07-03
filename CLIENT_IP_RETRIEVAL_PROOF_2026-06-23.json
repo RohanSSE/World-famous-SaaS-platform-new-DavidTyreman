@@ -1,0 +1,239 @@
+{
+  "generated_at": "2026-06-23T07:55:40.874492+00:00",
+  "proof_scope": "Keyword retrieval proof from indexed ai_knowledge chunks.",
+  "rows": [
+    {
+      "requirement": "The Constitution",
+      "terms": [
+        "constitution",
+        "truth before copy",
+        "operating law"
+      ],
+      "expected_control_file": "the-constitution-derived-control.md",
+      "retrieval_status": "Retrieved derived control",
+      "original_source_status": "Original client-authored source not present in repo evidence",
+      "hits": [
+        {
+          "chunk_id": 66,
+          "title": "# The Constitution - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/the-constitution-derived-control.md",
+          "derived_control": true,
+          "snippet": "# The Constitution - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, client recovery requirements, and indexed training/logic material. This is not David Tyreman's origi..."
+        },
+        {
+          "chunk_id": 67,
+          "title": "## Operating Law The Brand Godfather ORB",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/the-constitution-derived-control.md",
+          "derived_control": true,
+          "snippet": "## Operating Law The Brand Godfather ORB exists to protect truth before polish. It must not behave like a generic chatbot, copy editor, questionnaire helper, or vendor-language beautifier. Its constitutional duty is to challenge weak thi..."
+        },
+        {
+          "chunk_id": 68,
+          "title": "7. Breakthrough must be recognized: when the user names a specific emotionally honest edge, ORB should mark it, store it, and use it as brand seed.",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/the-constitution-derived-control.md",
+          "derived_control": true,
+          "snippet": "7. Breakthrough must be recognized: when the user names a specific emotionally honest edge, ORB should mark it, store it, and use it as brand seed. ## ORB Behavior Translation In prompts, this Constitution means ORB must ask sharper ques..."
+        },
+        {
+          "chunk_id": 434,
+          "title": "# The Constitution - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "RAG-docsv2/The_Constitution_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "# The Constitution - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, David Tyreman's recovery email requirements, and indexed Brand Godfather training/logic material. Th..."
+        },
+        {
+          "chunk_id": 435,
+          "title": "## Operating Law The Brand Godfather ORB",
+          "category": "methodology",
+          "file": "RAG-docsv2/The_Constitution_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "## Operating Law The Brand Godfather ORB exists to protect truth before polish. It must not behave like a generic chatbot, copy editor, questionnaire helper, or vendor-language beautifier. Its constitutional duty is to challenge weak thi..."
+        }
+      ]
+    },
+    {
+      "requirement": "ORB principles",
+      "terms": [
+        "orb principles",
+        "strategic intelligence layer",
+        "interruption is a feature"
+      ],
+      "expected_control_file": "orb-principles-derived-control.md",
+      "retrieval_status": "Retrieved derived control",
+      "original_source_status": "Original client-authored source not present in repo evidence",
+      "hits": [
+        {
+          "chunk_id": 64,
+          "title": "# ORB Principles - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/orb-principles-derived-control.md",
+          "derived_control": true,
+          "snippet": "# ORB Principles - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, client recovery requirements, and indexed training/logic material. This is not the original ORB princi..."
+        },
+        {
+          "chunk_id": 65,
+          "title": "## ORB Behavior Translation In the",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/orb-principles-derived-control.md",
+          "derived_control": true,
+          "snippet": "## ORB Behavior Translation In the prompt layer, these principles require challenge-first response behavior, adaptive pressure, contradiction blocking, breakthrough capture, and session-memory use. In evidence reports, ORB principles mus..."
+        },
+        {
+          "chunk_id": 427,
+          "title": "# ORB Principles - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "RAG-docsv2/ORB_Principles_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "# ORB Principles - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, David Tyreman's recovery email requirements, and indexed Brand Godfather training/logic material. This..."
+        },
+        {
+          "chunk_id": 428,
+          "title": "## ORB Is A Strategic Intelligence Layer ORB",
+          "category": "methodology",
+          "file": "RAG-docsv2/ORB_Principles_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "## ORB Is A Strategic Intelligence Layer ORB is not a passive assistant. It exists to notice avoidance, vendor language, contradiction, shallow positioning, and hidden emotional truth. It must preserve the user's raw answer, challenge it..."
+        },
+        {
+          "chunk_id": 429,
+          "title": "## Interruption Is A Feature When the",
+          "category": "methodology",
+          "file": "RAG-docsv2/ORB_Principles_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "## Interruption Is A Feature When the user gives generic language, ORB must interrupt. It should name the pattern, explain why it weakens the brand, and ask for a sharper truth. It must not quietly rewrite weak input into acceptable mark..."
+        }
+      ]
+    },
+    {
+      "requirement": "Transformation Journey",
+      "terms": [
+        "transformation journey",
+        "journey stages",
+        "surface answer"
+      ],
+      "expected_control_file": "transformation-journey-derived-control.md",
+      "retrieval_status": "Retrieved derived control",
+      "original_source_status": "Original client-authored source not present in repo evidence",
+      "hits": [
+        {
+          "chunk_id": 69,
+          "title": "# Transformation Journey - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/transformation-journey-derived-control.md",
+          "derived_control": true,
+          "snippet": "# Transformation Journey - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, client recovery requirements, and indexed training/logic material. This is not the original Tr..."
+        },
+        {
+          "chunk_id": 71,
+          "title": "7. Output: campaign, brand book, manifesto, or social idea uses the stored truth instead of generic category copy.",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/transformation-journey-derived-control.md",
+          "derived_control": true,
+          "snippet": "7. Output: campaign, brand book, manifesto, or social idea uses the stored truth instead of generic category copy. ## Transformation Standards A passing answer should describe a change in identity, confidence, clarity, courage, behavior,..."
+        },
+        {
+          "chunk_id": 437,
+          "title": "# Transformation Journey - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "RAG-docsv2/Transformation_Journey_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "# Transformation Journey - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, David Tyreman's recovery email requirements, and indexed Brand Godfather training/logic materi..."
+        },
+        {
+          "chunk_id": 439,
+          "title": "7. Output: campaign, brand book, manifesto, or social idea uses the stored truth instead of generic category copy.",
+          "category": "methodology",
+          "file": "RAG-docsv2/Transformation_Journey_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "7. Output: campaign, brand book, manifesto, or social idea uses the stored truth instead of generic category copy. ## Transformation Standards A passing answer should describe a change in identity, confidence, clarity, courage, behavior,..."
+        }
+      ]
+    },
+    {
+      "requirement": "Intelligence Framework",
+      "terms": [
+        "intelligence framework",
+        "decision rules",
+        "answer-quality signals"
+      ],
+      "expected_control_file": "intelligence-framework-derived-control.md",
+      "retrieval_status": "Retrieved derived control",
+      "original_source_status": "Original client-authored source not present in repo evidence",
+      "hits": [
+        {
+          "chunk_id": 60,
+          "title": "# Intelligence Framework - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/intelligence-framework-derived-control.md",
+          "derived_control": true,
+          "snippet": "# Intelligence Framework - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, client recovery requirements, and indexed training/logic material. This is not the original In..."
+        },
+        {
+          "chunk_id": 61,
+          "title": "## Framework Purpose The",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/intelligence-framework-derived-control.md",
+          "derived_control": true,
+          "snippet": "## Framework Purpose The intelligence framework defines how ORB decides whether to pass, reject, challenge, store, or escalate an answer. It should combine answer quality, prosody, contradiction, session memory, source-grounded methodolo..."
+        },
+        {
+          "chunk_id": 63,
+          "title": "7. Output readiness: whether the answer can produce a non-generic campaign, brand seed, or strategic message.",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/intelligence-framework-derived-control.md",
+          "derived_control": true,
+          "snippet": "7. Output readiness: whether the answer can produce a non-generic campaign, brand seed, or strategic message. ## Decision Rules Reject when vendor language, contradiction, shallow specificity, or unresolved avoidance dominates. Challenge..."
+        },
+        {
+          "chunk_id": 423,
+          "title": "# Intelligence Framework - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "RAG-docsv2/Intelligence_Framework_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "# Intelligence Framework - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, David Tyreman's recovery email requirements, and indexed Brand Godfather training/logic materi..."
+        },
+        {
+          "chunk_id": 424,
+          "title": "## Framework Purpose The Intelligence Framework",
+          "category": "methodology",
+          "file": "RAG-docsv2/Intelligence_Framework_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "## Framework Purpose The Intelligence Framework defines how ORB decides whether to pass, reject, challenge, store, or escalate an answer. It should combine answer quality, prosody, contradiction, session memory, source-grounded methodolo..."
+        }
+      ]
+    },
+    {
+      "requirement": "Brand Godfather foundational pillars",
+      "terms": [
+        "foundational pillars",
+        "loved brands are built on belief",
+        "differentiation requires exclusion"
+      ],
+      "expected_control_file": "foundational-pillars-derived-control.md",
+      "retrieval_status": "Retrieved derived control",
+      "original_source_status": "Original client-authored source not present in repo evidence",
+      "hits": [
+        {
+          "chunk_id": 58,
+          "title": "# Foundational Pillars - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "Rag_doc/methodology/foundational-pillars-derived-control.md",
+          "derived_control": true,
+          "snippet": "# Foundational Pillars - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, client recovery requirements, and indexed training/logic material. This is not the original foun..."
+        },
+        {
+          "chunk_id": 421,
+          "title": "# Foundational Pillars - Derived Control Provenance:",
+          "category": "methodology",
+          "file": "RAG-docsv2/Foundational_Pillars_Derived_Control.md",
+          "derived_control": false,
+          "snippet": "# Foundational Pillars - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, David Tyreman's recovery email requirements, and indexed Brand Godfather training/logic material..."
+        }
+      ]
+    }
+  ]
+}

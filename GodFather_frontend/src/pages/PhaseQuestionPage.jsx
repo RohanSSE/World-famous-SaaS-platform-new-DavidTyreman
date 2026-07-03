@@ -40,6 +40,80 @@ const BGF_HELP_ACTIONS = [
 // Temporarily hidden until the client approves the expanded Ask BGF helper.
 const SHOW_BGF_HELP_PANEL = false;
 
+function resolveOrbQuestionId(question, questionIndex, phaseId) {
+  const rawId = question?.raw?.q_id || question?.raw?.brandgodfather_q_id;
+  if (rawId) {
+    const normalized = String(rawId).trim();
+    return normalized.toUpperCase().startsWith("Q") ? normalized.toUpperCase() : `Q${normalized}`;
+  }
+
+  const order = Number(question?.raw?.order ?? question?.order);
+  if (Number.isFinite(order) && order > 0) return `Q${order}`;
+
+  const phaseNumber = Number(phaseId) || 1;
+  const fallbackOffset = phaseNumber === 1 ? 0 : (phaseNumber - 1) * 10;
+  return `Q${fallbackOffset + Number(questionIndex ?? 0) + 1}`;
+}
+
+function splitFollowUp(text) {
+  const value = String(text || "").trim();
+  if (!value.includes("?")) return { statement: value, followUp: "" };
+  const chunks = value.split(/(?<=[.!?])\s+/);
+  let qIdx = -1;
+  chunks.forEach((chunk, idx) => {
+    if (chunk.trim().endsWith("?")) qIdx = idx;
+  });
+  if (qIdx < 0) return { statement: value, followUp: "" };
+  const statement = chunks.slice(0, qIdx).join(" ").trim();
+  const followUp = chunks.slice(qIdx).join(" ").trim();
+  return { statement, followUp };
+}
+
+function normalizeOrbResult(orbResult) {
+  const status = String(orbResult?.status || "UNKNOWN").toUpperCase();
+  const blockedPhrases = Array.isArray(orbResult?.blocked_phrases)
+    ? orbResult.blocked_phrases.filter(Boolean)
+    : [];
+  const rawReply = String(orbResult?.reply || "Let's go deeper before we move on.").trim();
+  let followUp = String(orbResult?.follow_up_question || "").trim();
+  let statement = rawReply;
+  if (followUp) {
+    const parts = splitFollowUp(rawReply);
+    if (parts.followUp) statement = parts.statement || rawReply;
+  } else {
+    const parts = splitFollowUp(rawReply);
+    if (parts.statement) {
+      statement = parts.statement;
+      followUp = parts.followUp;
+    }
+  }
+  return {
+    status,
+    reply: statement,
+    raw_reply: rawReply,
+    follow_up_question: followUp,
+    next_q_id: orbResult?.next_q_id || "Awaiting stronger answer",
+    depth_score: orbResult?.depth_score ?? "not scored",
+    interruption_type: orbResult?.interruption_type || null,
+    challenge_type: orbResult?.challenge_type || null,
+    pressure_used: orbResult?.pressure_used ?? null,
+    resistance_count: orbResult?.resistance_count ?? 0,
+    emotional_state: orbResult?.emotional_state || "neutral",
+    tone_mode: orbResult?.tone_mode || "direct_challenge",
+    blocked_phrases: blockedPhrases,
+    prosody_flags: Array.isArray(orbResult?.prosody_flags) ? orbResult.prosody_flags : [],
+    contradiction_result: orbResult?.contradiction_result || null,
+    contradiction_message: orbResult?.contradiction_message || null,
+    breakthrough_detected: Boolean(orbResult?.breakthrough_detected),
+    breakthrough_score: orbResult?.breakthrough_score ?? 0,
+    breakthrough_type: orbResult?.breakthrough_type || null,
+    breakthrough_reason: orbResult?.breakthrough_reason || null,
+    breakthrough_seed: orbResult?.breakthrough_seed || null,
+    breakthrough_criteria: orbResult?.breakthrough_criteria || {},
+    sessionId: orbResult?.brandgodfather_session_id || null,
+  };
+}
+
 function SessionTitleModal({
   open,
   title,
@@ -155,6 +229,13 @@ export default function PhaseQuestionPage() {
   const [nudgeQuote, setNudgeQuote] = useState(null);
   const [nudgeIndex, setNudgeIndex] = useState(0);
   const [nudgesLoading, setNudgesLoading] = useState(false);
+  const [orbVerdict, setOrbVerdict] = useState(null);
+  const [orbChecking, setOrbChecking] = useState(false);
+  const [livePreview, setLivePreview] = useState(null);
+  const [livePreviewChecking, setLivePreviewChecking] = useState(false);
+  const [showApiData, setShowApiData] = useState(false);
+  const [nudgesFading, setNudgesFading] = useState(false);
+  const [replyVisible, setReplyVisible] = useState(false);
   const [bgfHelpLoading, setBgfHelpLoading] = useState(false);
   const [bgfHelpResponse, setBgfHelpResponse] = useState(null);
   const [bgfAskText, setBgfAskText] = useState("");
@@ -167,6 +248,10 @@ export default function PhaseQuestionPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const nudgesDebounceRef = useRef(null);
   const nudgePickedRef = useRef(false);
+  const livePreviewDebounceRef = useRef(null);
+  const livePreviewAbortRef = useRef(null);
+  const livePreviewSeqRef = useRef(0);
+  const replyRevealTimersRef = useRef([]);
   const currentInputAiDraftRef = useRef(false);
   const answerRewardTimeoutRef = useRef(null);
   const questionIndexRestoredRef = useRef(false);
@@ -448,6 +533,13 @@ export default function PhaseQuestionPage() {
     setNudges([]);
     setNudgeQuality(null);
     setNudgeQuote(null);
+    setOrbVerdict(null);
+    setOrbChecking(false);
+    setLivePreview(null);
+    setLivePreviewChecking(false);
+    livePreviewSeqRef.current += 1;
+    if (livePreviewDebounceRef.current) clearTimeout(livePreviewDebounceRef.current);
+    if (livePreviewAbortRef.current) livePreviewAbortRef.current.abort();
     setNudgeIndex(0);
     setNudgesLoading(false);
     setBgfHelpResponse(null);
@@ -462,6 +554,87 @@ export default function PhaseQuestionPage() {
   useLayoutEffect(() => {
     resizeInput();
   }, [inputValue, currentIdx]);
+
+  // Real-time ORB verdict while the user types (read-only dry-run, debounced).
+  useEffect(() => {
+    if (livePreviewDebounceRef.current) clearTimeout(livePreviewDebounceRef.current);
+
+    const q = questions[currentIdx];
+    const value = inputValue.trim();
+    const MIN_PREVIEW_LEN = 12;
+
+    // Don't preview while a real submit is in-flight or after a committed verdict.
+    if (!sessionId || !q || submitting || orbChecking || value.length < MIN_PREVIEW_LEN) {
+      setLivePreview(null);
+      setLivePreviewChecking(false);
+      if (livePreviewAbortRef.current) livePreviewAbortRef.current.abort();
+      return;
+    }
+
+    livePreviewDebounceRef.current = setTimeout(async () => {
+      if (livePreviewAbortRef.current) livePreviewAbortRef.current.abort();
+      const controller = new AbortController();
+      livePreviewAbortRef.current = controller;
+      const seq = ++livePreviewSeqRef.current;
+
+      setLivePreviewChecking(true);
+      try {
+        const orbQId = resolveOrbQuestionId(q, currentIdx, phaseId);
+        const res = await authService.previewBrandGodFatherAnswer({
+          sourceSessionId: sessionId,
+          qId: orbQId,
+          answer: value,
+          contextData: {
+            frontend_page: "PhaseQuestionPage",
+            phase_id: phaseId,
+            question_id: q.raw?.id ?? q.id,
+            question_text: q.text,
+            question_bank: { [orbQId]: q.text },
+            live_preview: true,
+          },
+          signal: controller.signal,
+        });
+        // Ignore stale/cancelled responses.
+        if (seq !== livePreviewSeqRef.current) return;
+        setLivePreview(res ? normalizeOrbResult(res) : null);
+      } catch {
+        if (seq === livePreviewSeqRef.current) setLivePreview(null);
+      } finally {
+        if (seq === livePreviewSeqRef.current) setLivePreviewChecking(false);
+      }
+    }, 800);
+
+    return () => {
+      if (livePreviewDebounceRef.current) clearTimeout(livePreviewDebounceRef.current);
+    };
+  }, [inputValue, currentIdx, questions, sessionId, phaseId, submitting, orbChecking]);
+
+  // Staged reveal: show nudges ~2s, dissolve, then reveal the Brand Godfather reply.
+  useEffect(() => {
+    const verdict = orbVerdict || livePreview;
+    const checking = orbChecking || (livePreviewChecking && !livePreview);
+    const reply = !checking && verdict?.reply ? verdict.reply : null;
+
+    replyRevealTimersRef.current.forEach(clearTimeout);
+    replyRevealTimersRef.current = [];
+
+    if (!reply) {
+      setNudgesFading(false);
+      setReplyVisible(false);
+      return;
+    }
+
+    setReplyVisible(false);
+    setNudgesFading(false);
+    const t1 = setTimeout(() => setNudgesFading(true), 2000);
+    const t2 = setTimeout(() => setReplyVisible(true), 2450);
+    replyRevealTimersRef.current = [t1, t2];
+
+    return () => {
+      replyRevealTimersRef.current.forEach(clearTimeout);
+      replyRevealTimersRef.current = [];
+    };
+  }, [orbVerdict, livePreview, orbChecking, livePreviewChecking]);
 
   const fetchNudges = async (hint, question) => {
     const q = question || questions[currentIdx];
@@ -478,10 +651,10 @@ export default function PhaseQuestionPage() {
       } else if (res && typeof res === "object") {
         list = res.suggestions ?? res.suggestion ?? [];
         setNudgeQuote(res.suggestion_quote?.enabled ? res.suggestion_quote : null);
-        if (res.quality && res.quality_label) {
+        if (res.quality || res.reason) {
           setNudgeQuality(normalizeAnswerQualityCopy({
             quality: res.quality,
-            quality_label: res.quality_label,
+            quality_label: res.quality_label || "",
             reason: res.reason || "",
           }));
         }
@@ -631,6 +804,20 @@ export default function PhaseQuestionPage() {
           /* non-fatal */
         }
       }
+
+      try {
+        const sourceSessionId = String(sessionObj.id ?? sessionObj.pk);
+        await authService.ensureBrandGodFatherSession({
+          sourceSessionId,
+          contextData: {
+            frontend_page: "PhaseQuestionPage",
+            phase_id: 1,
+            orb_journey_start: true,
+          },
+        });
+      } catch {
+        /* non-fatal: answer submission will retry ORB session start */
+      }
       navigate("/phase-intro/1");
     } catch (err) {
       setModalError(err?.message || "Failed to create session");
@@ -668,6 +855,58 @@ export default function PhaseQuestionPage() {
       return null;
     }
     setSubmitError("");
+
+    setOrbChecking(true);
+    setOrbVerdict(null);
+
+    let orb;
+    try {
+      const orbQId = resolveOrbQuestionId(currentQuestion, currentIdx, phaseId);
+      const orbResponse = await authService.submitBrandGodFatherAnswer({
+        sourceSessionId: sessionId,
+        qId: orbQId,
+        answer: value,
+        contextData: {
+          frontend_page: "PhaseQuestionPage",
+          phase_id: phaseId,
+          question_id: currentQuestion.raw?.id ?? currentQuestion.id,
+          question_text: currentQuestion.text,
+          question_bank: {
+            [orbQId]: currentQuestion.text,
+          },
+        },
+      });
+      orb = normalizeOrbResult(orbResponse);
+      setOrbVerdict(orb);
+    } catch (err) {
+      const fallback = {
+        status: "UNAVAILABLE",
+        reply: err?.message || "ORB engine unavailable. Please try again when the backend is ready.",
+        next_q_id: "ORB retry required",
+        depth_score: "not scored",
+      };
+      setOrbVerdict(fallback);
+      setSubmitError(fallback.reply);
+      throw err;
+    } finally {
+      setOrbChecking(false);
+    }
+
+    // Scoring/gating disabled per request: the backend still classifies PASS/REJECT and
+    // the verdict stays visible in the ORB API-result panel, but a weak/REJECT answer no
+    // longer blocks saving or navigating to the next question.
+    // if (orb.status === "REJECT") {
+    //   setSubmitError(
+    //     orb.interruption_type === "vendor_language"
+    //       ? "Vendor trap caught. The ORB will not save a vendor answer; bring back the brand truth before you move on."
+    //       : orb.interruption_type === "contradiction"
+    //         ? "Contradiction caught. Resolve the earlier answer against this one before moving on."
+    //         : orb.interruption_type === "adaptive_coaching"
+    //           ? "Adaptive challenge raised. The ORB needs a sharper answer before you move on."
+    //       : "ORB rejected this answer. Go deeper before saving it.",
+    //   );
+    //   return null;
+    // }
 
     const nextAnswers = { ...answers, [currentQuestion.key]: value };
     persistAnswers(nextAnswers);
@@ -776,24 +1015,9 @@ export default function PhaseQuestionPage() {
     const value = inputValue.trim();
     let nextAnswers = { ...answers };
     if (value) {
-      nextAnswers = { ...answers, [q.key]: value };
-      persistAnswers(nextAnswers);
-      const sid = sessionId;
-      const apiQuestionId = q.raw?.id ?? q.id;
-      if (sid && apiQuestionId) {
-        try {
-          const wasAiAccepted = currentInputAiDraftRef.current;
-          await authService.createAnswer(sid, {
-            question: Number(apiQuestionId),
-            answer_text: value,
-            is_ai_accepted: wasAiAccepted,
-            ai_suggestion: wasAiAccepted ? value : undefined,
-          });
-          currentInputAiDraftRef.current = false;
-        } catch {
-          /* non-fatal for local save */
-        }
-      }
+      const saved = await saveCurrentAnswer();
+      if (!saved) return;
+      nextAnswers = saved;
     }
 
     const answeredInPhase =
@@ -882,12 +1106,20 @@ export default function PhaseQuestionPage() {
       ? "1 answer away from Level Clear."
       : `${remainingQuestions} answers away from Level Clear.`;
   const submitLabel = submitting
-    ? "Saving…"
+    ? orbChecking
+      ? "ORB checking…"
+      : "Saving…"
     : isFinalPhase && allPhaseAnswered
       ? "Save to Finish"
       : allPhaseAnswered
         ? `Complete Level ${phaseNumber}`
         : "Submit";
+
+  // Committed verdict (after Send) takes priority; otherwise show the live preview.
+  const isLiveVerdict = !orbChecking && !orbVerdict && (livePreviewChecking || !!livePreview);
+  const viewVerdict = orbVerdict || livePreview;
+  const viewChecking = orbChecking || (isLiveVerdict && livePreviewChecking && !livePreview);
+  const showVerdictPanel = orbChecking || orbVerdict || livePreviewChecking || !!livePreview;
 
   return (
     <div className="pq-page">
@@ -908,9 +1140,19 @@ export default function PhaseQuestionPage() {
 
       <ChatNavbar
         sessionId={sessionId}
-        onSave={handleSave}
+        onSave={handleSubmitClick}
         showSaveButton
-        saveDisabled={!allJourneyAnswered}
+        saveButtonLabel={submitLabel}
+        saveButtonSavingLabel={submitLabel}
+        saveDisabled={submitting || !allPhaseAnswered}
+        saveButtonDisabledTitle={`Answer all ${totalQuestions} questions to submit`}
+        saveButtonTitle={
+          isFinalPhase && allPhaseAnswered
+            ? "Hit save button"
+            : allPhaseAnswered
+              ? `Complete Level ${phaseNumber}`
+              : undefined
+        }
         showDownloadButton={false}
         showLogoutButton
         phaseStatus={phaseStatus}
@@ -1044,6 +1286,14 @@ export default function PhaseQuestionPage() {
               </div>
 
               <div className="pq-orb-row">
+                {replyVisible && viewVerdict?.follow_up_question && (
+                  <div className="pq-followup-wrap" aria-live="polite">
+                    <div className="pq-followup-bubble pq-followup-bubble--enter">
+                      <span className="pq-followup-badge">Brand Godfather asks</span>
+                      <p>{viewVerdict.follow_up_question}</p>
+                    </div>
+                  </div>
+                )}
                 <OrbPresence className="pq-orb-presence">
                   <BrandOrb size="welcome" />
                 </OrbPresence>
@@ -1052,28 +1302,25 @@ export default function PhaseQuestionPage() {
                   {nudgesLoading && (
                     <p className="pq-nudges-status">Thinking of ideas…</p>
                   )}
-                  {!nudgesLoading && nudgeQuality && (
-                    <div className="pq-nudges-panel">
-                      <p
-                        className={`pq-nudge-quality pq-nudge-quality--${nudgeQuality.quality || "too_weak"}`}
-                      >
-                        {nudgeQuality.quality_label}
-                      </p>
+                  {!nudgesLoading && nudgeQuality && !replyVisible && (
+                    <div className={`pq-nudges-panel${nudgesFading ? " pq-nudges-panel--dissolve" : ""}`}>
                       {nudgeQuality.reason && (
                         <p className="pq-nudges-reason">{nudgeQuality.reason}</p>
                       )}
-                      {nudgeQuote?.quote && (
+                      {/* Hidden per request: rewritten-answer quote bubble (echoed user answer) */}
+                      {/* {nudgeQuote?.quote && (
                         <blockquote className="pq-nudge-quote">
                           {nudgeQuote.quote}
                         </blockquote>
-                      )}
+                      )} */}
                       {activeNudge && (
                         <>
-                          <p className="pq-nudges-lead">
+                          {/* Hidden per request: intermediate "Let's make it sharper" lead text */}
+                          {/* <p className="pq-nudges-lead">
                             {nudgeQuality.quality === "strong"
                               ? "Make it even sharper:"
                               : "Let’s make it stronger like this:"}
-                          </p>
+                          </p> */}
                           <button
                             type="button"
                             className="pq-nudge-chip"
@@ -1097,6 +1344,80 @@ export default function PhaseQuestionPage() {
                         Keep typing — we&apos;ll suggest stronger replies.
                       </p>
                     )}
+                  {replyVisible && viewVerdict?.reply && (
+                    <div className="pq-orb-reply pq-orb-reply--enter" aria-live="polite">
+                      <span className="pq-orb-reply-badge">Brand Godfather says</span>
+                      <p>{viewVerdict.reply}</p>
+                    </div>
+                  )}
+                  {showVerdictPanel && showApiData && (
+                    <div
+                      className={`pq-orb-verdict pq-orb-verdict--${String(
+                        viewVerdict?.status || "checking",
+                      ).toLowerCase()}${isLiveVerdict ? " pq-orb-verdict--live" : ""}`}
+                    >
+                      <div className="pq-orb-verdict-head">
+                        <span>ORB Intelligence{isLiveVerdict ? " · LIVE" : ""}</span>
+                        <strong>{viewChecking ? "CHECKING" : viewVerdict.status}</strong>
+                      </div>
+                      {!viewChecking && viewVerdict?.interruption_type === "vendor_language" && (
+                        <div className="pq-vendor-block" role="alert">
+                          <span>Vendor trap caught</span>
+                          {viewVerdict.blocked_phrases?.length > 0 && (
+                            <strong>{viewVerdict.blocked_phrases.join(", ")}</strong>
+                          )}
+                          <p>Others can be vendors. This brand cannot. Replace service talk with what you stand for, who you are here for, and why they should care.</p>
+                        </div>
+                      )}
+                      {!viewChecking && viewVerdict?.interruption_type === "contradiction" && (
+                        <div className="pq-contradiction-block" role="alert">
+                          <span>Contradiction caught</span>
+                          {viewVerdict.contradiction_result?.conflicting_q_id && (
+                            <strong>Conflicts with {viewVerdict.contradiction_result.conflicting_q_id}</strong>
+                          )}
+                          <p>{viewVerdict.contradiction_message || "This answer conflicts with an earlier answer. Resolve the truth before moving on."}</p>
+                        </div>
+                      )}
+                      {!viewChecking && viewVerdict?.interruption_type === "adaptive_coaching" && (
+                        <div className="pq-adaptive-block" role="alert">
+                          <span>Adaptive challenge raised</span>
+                          <strong>Pressure {viewVerdict.pressure_used || "n/a"} · Resistance {viewVerdict.resistance_count || 0}</strong>
+                          <p>The ORB is increasing intensity because this answer is still avoiding the deeper brand truth.</p>
+                        </div>
+                      )}
+                      {!viewChecking && viewVerdict?.breakthrough_detected && (
+                        <div className="pq-breakthrough-block" role="status">
+                          <span>Breakthrough recognized</span>
+                          <strong>{viewVerdict.breakthrough_seed || "Brand seed captured"}</strong>
+                          <p>{viewVerdict.breakthrough_reason || "That is the truth/edge. The ORB captured it as a brand seed."}</p>
+                        </div>
+                      )}
+                      <div className="pq-orb-verdict-grid">
+                        <span>status</span>
+                        <strong>{viewChecking ? "CHECKING" : viewVerdict.status}</strong>
+                        <span>challenge_type</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.challenge_type || "none"}</strong>
+                        <span>pressure_used</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.pressure_used ?? "n/a"}</strong>
+                        <span>resistance_count</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.resistance_count ?? 0}</strong>
+                        <span>emotional_state</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.emotional_state || "neutral"}</strong>
+                        <span>tone_mode</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.tone_mode || "direct_challenge"}</strong>
+                        <span>next_q_id</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.next_q_id}</strong>
+                        <span>depth_score</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.depth_score}</strong>
+                        <span>breakthrough</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.breakthrough_detected ? `yes · ${viewVerdict.breakthrough_score}` : "no"}</strong>
+                        <span>breakthrough_seed</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.breakthrough_seed || "none"}</strong>
+                        <span>reply</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.reply}</strong>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1226,27 +1547,8 @@ export default function PhaseQuestionPage() {
                   </div>
                 )}
 
+                {/*
                 <div className="pq-footer-row">
-                  <div className="pq-nav-arrows">
-                    <button
-                      type="button"
-                      className="pq-arrow-btn"
-                      onClick={handlePrev}
-                      disabled={currentIdx === 0}
-                      aria-label="Previous question"
-                    >
-                      ←
-                    </button>
-                    <button
-                      type="button"
-                      className="pq-arrow-btn"
-                      onClick={handleNextNav}
-                      disabled={currentIdx >= questions.length - 1}
-                      aria-label="Next question"
-                    >
-                      →
-                    </button>
-                  </div>
                   <button
                     type="button"
                     className={`pq-submit-btn${isFinalPhase && allPhaseAnswered ? " pq-submit-btn--locked" : ""}`}
@@ -1263,7 +1565,38 @@ export default function PhaseQuestionPage() {
                     {submitLabel}
                   </button>
                 </div>
+                */}
               </div>
+
+              <button
+                type="button"
+                className="pq-arrow-btn pq-arrow-btn--left-floating"
+                onClick={handlePrev}
+                disabled={currentIdx === 0}
+                aria-label="Previous question"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                className="pq-arrow-btn pq-arrow-btn--right-floating"
+                onClick={handleNextNav}
+                disabled={currentIdx >= questions.length - 1}
+                aria-label="Next question"
+              >
+                →
+              </button>
+
+              {showVerdictPanel && (
+                <button
+                  type="button"
+                  className="pq-api-data-link"
+                  onClick={() => setShowApiData((v) => !v)}
+                >
+                  {showApiData ? "Hide API data" : "View API data"}
+                  {viewChecking ? " (checking…)" : ""}
+                </button>
+              )}
 
               {submitError && <p className="pq-submit-error">{submitError}</p>}
             </>

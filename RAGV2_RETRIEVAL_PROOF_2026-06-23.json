@@ -1,0 +1,538 @@
+{
+  "generated_at": "2026-06-23T07:43:50.339286+00:00",
+  "index": "brandgodfather_brand_chunks",
+  "proof_scope": "Live keyword retrieval against RAGv2 BrandGodFather Elasticsearch chunks.",
+  "rows": [
+    {
+      "requirement": "The Constitution",
+      "query": "Constitution truth before copy ORB governance vendor interruption contradiction breakthrough seed",
+      "expected_source_file": "The_Constitution_Derived_Control.md",
+      "retrieval_status": "PASS",
+      "source_status": "Derived RAGv2 control; original client-authored source still requires intake or validation",
+      "hits": [
+        {
+          "score": 166.19794,
+          "chunk_id": "The_Constitution_Derived_Control.md-f44dc4b281152234",
+          "source_file": "The_Constitution_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\The_Constitution_Derived_Control.md",
+          "chunk_type": "challenge_language",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Constitution, constitutional principles, truth before copy, vendor interruption, contradiction resolution, breakthrough seed, strategic challenge, ORB governance."
+        },
+        {
+          "score": 58.249424,
+          "chunk_id": "The_Constitution_Derived_Control.md-f6ec034e5a41a8c1",
+          "source_file": "The_Constitution_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\The_Constitution_Derived_Control.md",
+          "chunk_type": "rejection_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "The Brand Godfather ORB exists to protect truth before polish. It must not behave like a generic chatbot, copy editor, questionnaire helper, or vendor-language beautifier. Its constitutional duty is to challenge weak thinking, reveal the user's real strateg..."
+        },
+        {
+          "score": 49.790894,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-c0b14628c5e50a25",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "rejection_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Reject when vendor language, contradiction, shallow specificity, or unresolved avoidance dominates. Challenge when the answer has usable intent but not enough strategic truth. Pass when the answer is specific, emotionally honest, contradiction-safe, and use..."
+        },
+        {
+          "score": 45.48845,
+          "chunk_id": "ORB_Principles_Derived_Control.md-818801a4c07ad57e",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "ORB principles, strategic intelligence layer, interruption is a feature, adaptive pressure, resistance, memory accountability, breakthrough capture."
+        },
+        {
+          "score": 42.54636,
+          "chunk_id": "ORB_Principles_Derived_Control.md-59842638c235ad16",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "A breakthrough is not just a good sentence. It is a strategic truth that can become a brand seed. ORB should preserve the phrase, store it, and use it in later outputs."
+        },
+        {
+          "score": 38.265686,
+          "chunk_id": "ORB_Principles_Derived_Control.md-7412d0c5e522faae",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "ORB is not a passive assistant. It exists to notice avoidance, vendor language, contradiction, shallow positioning, and hidden emotional truth. It must preserve the user's raw answer, challenge it, and make the user decide what they really mean."
+        },
+        {
+          "score": 32.503822,
+          "chunk_id": "ORB_Principles_Derived_Control.md-ef3e9a6d22c55384",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "rejection_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "When the user gives generic language, ORB must interrupt. It should name the pattern, explain why it weakens the brand, and ask for a sharper truth. It must not quietly rewrite weak input into acceptable marketing copy."
+        },
+        {
+          "score": 30.14827,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-635a2488db50ddc7",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "challenge_language",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "The Intelligence Framework defines how ORB decides whether to pass, reject, challenge, store, or escalate an answer. It should combine answer quality, prosody, contradiction, session memory, source-grounded methodology, emotional truth, resistance level, an..."
+        }
+      ]
+    },
+    {
+      "requirement": "ORB principles",
+      "query": "ORB principles strategic intelligence layer interruption adaptive pressure breakthrough capture memory accountability",
+      "expected_source_file": "ORB_Principles_Derived_Control.md",
+      "retrieval_status": "PASS",
+      "source_status": "Derived RAGv2 control; original client-authored source still requires intake or validation",
+      "hits": [
+        {
+          "score": 210.43987,
+          "chunk_id": "ORB_Principles_Derived_Control.md-818801a4c07ad57e",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "ORB principles, strategic intelligence layer, interruption is a feature, adaptive pressure, resistance, memory accountability, breakthrough capture."
+        },
+        {
+          "score": 74.51671,
+          "chunk_id": "The_Constitution_Derived_Control.md-f44dc4b281152234",
+          "source_file": "The_Constitution_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\The_Constitution_Derived_Control.md",
+          "chunk_type": "challenge_language",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Constitution, constitutional principles, truth before copy, vendor interruption, contradiction resolution, breakthrough seed, strategic challenge, ORB governance."
+        },
+        {
+          "score": 33.70362,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-635a2488db50ddc7",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "challenge_language",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "The Intelligence Framework defines how ORB decides whether to pass, reject, challenge, store, or escalate an answer. It should combine answer quality, prosody, contradiction, session memory, source-grounded methodology, emotional truth, resistance level, an..."
+        },
+        {
+          "score": 33.134647,
+          "chunk_id": "ORB_Principles_Derived_Control.md-07709d2ddfa77a54",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "# ORB Principles - Derived Control"
+        },
+        {
+          "score": 32.53512,
+          "chunk_id": "ORB_Principles_Derived_Control.md-59842638c235ad16",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "A breakthrough is not just a good sentence. It is a strategic truth that can become a brand seed. ORB should preserve the phrase, store it, and use it in later outputs."
+        },
+        {
+          "score": 31.220644,
+          "chunk_id": "ORB_Principles_Derived_Control.md-8915d16e547b9ab0",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "# ORB Principles - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, David Tyreman's recovery email requirements, and indexed Brand Godfather training/logic material. This is not the original..."
+        },
+        {
+          "score": 31.030836,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-efa37fc8c5f6905f",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "gold_standard_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Intelligence Framework, decision rules, answer quality, prosody, contradiction, emotional truth, memory conflict, resistance pattern, output readiness."
+        },
+        {
+          "score": 29.778957,
+          "chunk_id": "ORB_Principles_Derived_Control.md-87ff3d499c7946cd",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "rejection_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "The same weak answer repeated after a challenge is meaningful resistance. ORB should raise pressure, become more direct, and show pressure and resistance metadata. It should remain precise rather than punitive."
+        }
+      ]
+    },
+    {
+      "requirement": "Intelligence Framework",
+      "query": "Intelligence Framework decision rules answer quality contradiction emotional truth memory conflict output readiness",
+      "expected_source_file": "Intelligence_Framework_Derived_Control.md",
+      "retrieval_status": "PASS",
+      "source_status": "Derived RAGv2 control; original client-authored source still requires intake or validation",
+      "hits": [
+        {
+          "score": 200.67422,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-efa37fc8c5f6905f",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "gold_standard_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Intelligence Framework, decision rules, answer quality, prosody, contradiction, emotional truth, memory conflict, resistance pattern, output readiness."
+        },
+        {
+          "score": 117.530075,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-635a2488db50ddc7",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "challenge_language",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "The Intelligence Framework defines how ORB decides whether to pass, reject, challenge, store, or escalate an answer. It should combine answer quality, prosody, contradiction, session memory, source-grounded methodology, emotional truth, resistance level, an..."
+        },
+        {
+          "score": 44.90966,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-c0b14628c5e50a25",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "rejection_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Reject when vendor language, contradiction, shallow specificity, or unresolved avoidance dominates. Challenge when the answer has usable intent but not enough strategic truth. Pass when the answer is specific, emotionally honest, contradiction-safe, and use..."
+        },
+        {
+          "score": 38.855103,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-4ce6f12270350667",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "# Intelligence Framework - Derived Control"
+        },
+        {
+          "score": 37.658905,
+          "chunk_id": "ORB_Principles_Derived_Control.md-7412d0c5e522faae",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "ORB is not a passive assistant. It exists to notice avoidance, vendor language, contradiction, shallow positioning, and hidden emotional truth. It must preserve the user's raw answer, challenge it, and make the user decide what they really mean."
+        },
+        {
+          "score": 35.21986,
+          "chunk_id": "The_Constitution_Derived_Control.md-f6ec034e5a41a8c1",
+          "source_file": "The_Constitution_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\The_Constitution_Derived_Control.md",
+          "chunk_type": "rejection_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "The Brand Godfather ORB exists to protect truth before polish. It must not behave like a generic chatbot, copy editor, questionnaire helper, or vendor-language beautifier. Its constitutional duty is to challenge weak thinking, reveal the user's real strateg..."
+        },
+        {
+          "score": 34.54431,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-4d6e285596a242e0",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "# Intelligence Framework - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, David Tyreman's recovery email requirements, and indexed Brand Godfather training/logic material. This is not the ..."
+        },
+        {
+          "score": 31.030836,
+          "chunk_id": "ORB_Principles_Derived_Control.md-818801a4c07ad57e",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "ORB principles, strategic intelligence layer, interruption is a feature, adaptive pressure, resistance, memory accountability, breakthrough capture."
+        }
+      ]
+    },
+    {
+      "requirement": "Transformation Journey",
+      "query": "Transformation Journey transformation stages surface answer strategic demand breakthrough brand seed complete user journey",
+      "expected_source_file": "Transformation_Journey_Derived_Control.md",
+      "retrieval_status": "PASS",
+      "source_status": "Derived RAGv2 control; original client-authored source still requires intake or validation",
+      "hits": [
+        {
+          "score": 218.22546,
+          "chunk_id": "Transformation_Journey_Derived_Control.md-1174bb503eb90c21",
+          "source_file": "Transformation_Journey_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Transformation_Journey_Derived_Control.md",
+          "chunk_type": "gold_standard_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Transformation Journey, transformation stages, surface answer, strategic demand, resolution, breakthrough, brand seed, complete user journey."
+        },
+        {
+          "score": 97.76501,
+          "chunk_id": "Transformation_Journey_Derived_Control.md-66f33de34d74b4a8",
+          "source_file": "Transformation_Journey_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Transformation_Journey_Derived_Control.md",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "The Brand Godfather journey should move a user from surface description to owned strategic truth. The journey is not complete when the user has nicer words. It is complete when the user can name who they are for, what they refuse, what transformation they c..."
+        },
+        {
+          "score": 64.237976,
+          "chunk_id": "Transformation_Journey_Derived_Control.md-e060bd677ea2d95b",
+          "source_file": "Transformation_Journey_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Transformation_Journey_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "# Transformation Journey - Derived Control"
+        },
+        {
+          "score": 61.552383,
+          "chunk_id": "Transformation_Journey_Derived_Control.md-e4052fa07a768df0",
+          "source_file": "Transformation_Journey_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Transformation_Journey_Derived_Control.md",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "# Transformation Journey - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, David Tyreman's recovery email requirements, and indexed Brand Godfather training/logic material. This is not the ..."
+        },
+        {
+          "score": 42.977062,
+          "chunk_id": "Intelligence_Framework_Derived_Control.md-c0b14628c5e50a25",
+          "source_file": "Intelligence_Framework_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Intelligence_Framework_Derived_Control.md",
+          "chunk_type": "rejection_example",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Reject when vendor language, contradiction, shallow specificity, or unresolved avoidance dominates. Challenge when the answer has usable intent but not enough strategic truth. Pass when the answer is specific, emotionally honest, contradiction-safe, and use..."
+        },
+        {
+          "score": 40.408463,
+          "chunk_id": "The_Constitution_Derived_Control.md-f44dc4b281152234",
+          "source_file": "The_Constitution_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\The_Constitution_Derived_Control.md",
+          "chunk_type": "challenge_language",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Constitution, constitutional principles, truth before copy, vendor interruption, contradiction resolution, breakthrough seed, strategic challenge, ORB governance."
+        },
+        {
+          "score": 37.513275,
+          "chunk_id": "BrandGodFather_Logic_Schema_v1.2.pdf-486119d9dbe792c1",
+          "source_file": "BrandGodFather_Logic_Schema_v1.2.pdf",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\BrandGodFather_Logic_Schema_v1.2.pdf",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "Q2"
+          ],
+          "snippet": "\u25cf Question Prompt: \"What motivated you to start this business journey in the first place? If you had to name the spirit behind it in one word or short phrase, what is it?\" \u25cf Mandatory Enforcement Rules: \u25cb Rule 1: Reject Money as Final Motivation. If the use..."
+        },
+        {
+          "score": 37.441315,
+          "chunk_id": "ORB_Principles_Derived_Control.md-59842638c235ad16",
+          "source_file": "ORB_Principles_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\ORB_Principles_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "A breakthrough is not just a good sentence. It is a strategic truth that can become a brand seed. ORB should preserve the phrase, store it, and use it in later outputs."
+        }
+      ]
+    },
+    {
+      "requirement": "Foundational pillars",
+      "query": "Foundational pillars loved brands belief differentiation exclusion felt transformation memory coherence",
+      "expected_source_file": "Foundational_Pillars_Derived_Control.md",
+      "retrieval_status": "PASS",
+      "source_status": "Derived RAGv2 control; original client-authored source still requires intake or validation",
+      "hits": [
+        {
+          "score": 193.24208,
+          "chunk_id": "Foundational_Pillars_Derived_Control.md-47d164c76e367f5f",
+          "source_file": "Foundational_Pillars_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Foundational_Pillars_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Foundational pillars, loved brands, belief, differentiation, exclusion, felt transformation, consequential language, memory coherence."
+        },
+        {
+          "score": 41.734535,
+          "chunk_id": "Foundational_Pillars_Derived_Control.md-d9bf2175ba9d4203",
+          "source_file": "Foundational_Pillars_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Foundational_Pillars_Derived_Control.md",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "# Foundational Pillars - Derived Control"
+        },
+        {
+          "score": 36.91369,
+          "chunk_id": "Foundational_Pillars_Derived_Control.md-3431fe78f3883612",
+          "source_file": "Foundational_Pillars_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Foundational_Pillars_Derived_Control.md",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "# Foundational Pillars - Derived Control Provenance: derived recovery-control document created from available Brand Godfather repo evidence, David Tyreman's recovery email requirements, and indexed Brand Godfather training/logic material. This is not the or..."
+        },
+        {
+          "score": 23.894257,
+          "chunk_id": "Foundational_Pillars_Derived_Control.md-d1a11c6d601196d1",
+          "source_file": "Foundational_Pillars_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Foundational_Pillars_Derived_Control.md",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "A brand promise must create a felt before-and-after. The answer should name confidence, clarity, courage, belonging, trust, self-recognition, or another human change. Operational deliverables are evidence, not the transformation itself."
+        },
+        {
+          "score": 21.048088,
+          "chunk_id": "BrandGodFather_Logic_Schema_v1.2.pdf-ca8c2804c6401b53",
+          "source_file": "BrandGodFather_Logic_Schema_v1.2.pdf",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\BrandGodFather_Logic_Schema_v1.2.pdf",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "market? differentiation. state the trade-offs."
+        },
+        {
+          "score": 20.330639,
+          "chunk_id": "Vessel & Craft FINAL Brand Book.pdf-ebd5fa96d0b837a9",
+          "source_file": "Vessel & Craft FINAL Brand Book.pdf",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Vessel & Craft FINAL Brand Book.pdf",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "Pillars Authority Packaging mistakes growth brands make. Relief How to reduce operational stress. Standards What premium supplier relationships look like. Insight Growth, launches, readiness, reputation. Example Posts \u2022 \u201cThe cheapest quote can become the mo..."
+        },
+        {
+          "score": 19.912258,
+          "chunk_id": "BrandGodFather_Logic_Schema_v1.2.pdf-811d0f1b81b380e5",
+          "source_file": "BrandGodFather_Logic_Schema_v1.2.pdf",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\BrandGodFather_Logic_Schema_v1.2.pdf",
+          "chunk_type": "archetype_definition",
+          "phase": "general",
+          "question_id": [
+            "Q1",
+            "Q14",
+            "Q15",
+            "Q16",
+            "Q17",
+            "Q18",
+            "Q19"
+          ],
+          "snippet": "Trigger: After Q14 is completed and validated. \u25cf AI Action: The system analyzes all data from Q1\u2013Q14. \u25cf Logic: The AI proposes 1\u20132 specific \"Brand Types\" based on the Godfather IP. \u25cf Enforcement: The user may confirm or adjust, but the system cannot allow t..."
+        },
+        {
+          "score": 18.192701,
+          "chunk_id": "Transformation_Journey_Derived_Control.md-66f33de34d74b4a8",
+          "source_file": "Transformation_Journey_Derived_Control.md",
+          "source_path": "C:\\Users\\apurvu\\Documents\\Godfather\\GodFather_backend\\RAG-docsv2\\Transformation_Journey_Derived_Control.md",
+          "chunk_type": "manifesto_fragment",
+          "phase": "general",
+          "question_id": [
+            "general"
+          ],
+          "snippet": "The Brand Godfather journey should move a user from surface description to owned strategic truth. The journey is not complete when the user has nicer words. It is complete when the user can name who they are for, what they refuse, what transformation they c..."
+        }
+      ]
+    }
+  ]
+}

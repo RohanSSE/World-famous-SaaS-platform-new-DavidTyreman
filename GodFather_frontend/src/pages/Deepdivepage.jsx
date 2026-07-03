@@ -1863,6 +1863,62 @@ const AI_THINKING_STEPS = [
   "Generating strategic response…",
 ];
 
+function resolveOrbQuestionId(question, questionIndex) {
+  const rawId = question?.raw?.q_id || question?.raw?.brandgodfather_q_id;
+  if (rawId) return String(rawId).toUpperCase().startsWith("Q") ? String(rawId).toUpperCase() : `Q${rawId}`;
+
+  const order = Number(question?.raw?.order ?? question?.order);
+  if (Number.isFinite(order) && order > 0) return `Q${order}`;
+
+  return `Q${Number(questionIndex ?? 0) + 1}`;
+}
+
+function formatOrbCoachReply(orbResult) {
+  const status = String(orbResult?.status || "UNKNOWN").toUpperCase();
+  const nextQuestion = orbResult?.next_q_id || "Awaiting stronger answer";
+  const depthScore = orbResult?.depth_score ?? "not scored";
+  const reply = String(orbResult?.reply || "Let's go deeper before we move on.").trim();
+  const blockedPhrases = Array.isArray(orbResult?.blocked_phrases)
+    ? orbResult.blocked_phrases.filter(Boolean).join(", ")
+    : "";
+  const contradiction = orbResult?.contradiction_result || null;
+
+  const lines = [
+    `status: ${status}`,
+    `challenge_type: ${orbResult?.challenge_type || "none"}`,
+    `pressure_used: ${orbResult?.pressure_used ?? "n/a"}`,
+    `resistance_count: ${orbResult?.resistance_count ?? 0}`,
+    `emotional_state: ${orbResult?.emotional_state || "neutral"}`,
+    `tone_mode: ${orbResult?.tone_mode || "direct_challenge"}`,
+    `next_q_id: ${nextQuestion}`,
+    `depth_score: ${depthScore}`,
+  ];
+  if (orbResult?.interruption_type === "vendor_language") {
+    lines.push("interruption_type: vendor_language");
+    if (blockedPhrases) lines.push(`blocked_phrases: ${blockedPhrases}`);
+  }
+  if (orbResult?.interruption_type === "contradiction") {
+    lines.push("interruption_type: contradiction");
+    if (contradiction?.conflicting_q_id) lines.push(`conflicts_with: ${contradiction.conflicting_q_id}`);
+    if (orbResult?.contradiction_message) lines.push(`contradiction: ${orbResult.contradiction_message}`);
+  }
+  if (orbResult?.interruption_type === "adaptive_coaching") {
+    lines.push("interruption_type: adaptive_coaching");
+  }
+  if (orbResult?.breakthrough_detected) {
+    lines.push("breakthrough_detected: true");
+    lines.push(`breakthrough_score: ${orbResult?.breakthrough_score ?? "n/a"}`);
+    if (orbResult?.breakthrough_type) lines.push(`breakthrough_type: ${orbResult.breakthrough_type}`);
+    if (orbResult?.breakthrough_seed) lines.push(`breakthrough_seed: ${orbResult.breakthrough_seed}`);
+    if (orbResult?.breakthrough_reason) lines.push(`breakthrough_reason: ${orbResult.breakthrough_reason}`);
+  }
+  return [
+    ...lines,
+    `reply: ${reply}`,
+    "",
+  ].join("\n");
+}
+
 export default function DeepDivePage() {
   const navigate = useNavigate();
   const saved = localStorage.getItem("session");
@@ -2243,12 +2299,45 @@ export default function DeepDivePage() {
     setOrbThinking("Thinking…");
     setOrbRetrieving("Retrieving brand knowledge…");
     try {
-      const ai = await authService.aiSuggestionDraft(
-        sid,
-        rid,
-        trimmed,
-        isAiDraft,
-      );
+      let ai = null;
+      let orb = null;
+      let imp = trimmed;
+      let fu = "";
+      let orbStatus = "";
+
+      try {
+        const orbQId = resolveOrbQuestionId(q, activeQuestionIdx);
+        orb = await authService.submitBrandGodFatherAnswer({
+          sourceSessionId: sid,
+          qId: orbQId,
+          answer: trimmed,
+          contextData: {
+            frontend_page: "Deepdivepage",
+            question_id: rid,
+            question_text: q.text,
+            question_bank: {
+              [orbQId]: q.text,
+            },
+          },
+        });
+        fu = formatOrbCoachReply(orb);
+        orbStatus = String(orb?.status || "").toUpperCase();
+        setOrbMemory(
+          `ORB ${orbStatus || "checked"} · next ${orb?.next_q_id || "hold"} · depth ${orb?.depth_score ?? "n/a"}`,
+        );
+      } catch (orbError) {
+        console.warn("BrandGodFather ORB unavailable, using draft fallback", orbError);
+        toast.info("ORB engine unavailable right now; using fallback coaching response.");
+        ai = await authService.aiSuggestionDraft(
+          sid,
+          rid,
+          trimmed,
+          isAiDraft,
+        );
+        imp = (ai?.improved_answer || trimmed).trim();
+        fu = (ai?.follow_up_question || "").trim();
+      }
+
       const sources = ai?.sources || [];
       const concepts = ai?.graph_concepts || [];
       setRagSources(sources);
@@ -2259,14 +2348,20 @@ export default function DeepDivePage() {
         setOrbMemory("ORB connected concepts");
       }
 
-      const imp = (ai?.improved_answer || trimmed).trim();
-      const fu = (ai?.follow_up_question || "").trim();
-
       setMessages((prev) => {
         const u = [...prev];
         const i = u.findIndex((m) => m.qId === q.id);
-        if (i !== -1) u[i] = { ...u[i], question: q.text, answer: imp };
-        else u.push({ qId: q.id, question: q.text, answer: imp });
+        const nextMessage = {
+          question: q.text,
+          answer: imp,
+          orbStatus,
+          orbReply: orb?.reply || "",
+          orbNextQId: orb?.next_q_id || null,
+          orbDepthScore: orb?.depth_score ?? null,
+          brandGodFatherSessionId: orb?.brandgodfather_session_id || null,
+        };
+        if (i !== -1) u[i] = { ...u[i], ...nextMessage };
+        else u.push({ qId: q.id, ...nextMessage });
         return u;
       });
 
@@ -2285,7 +2380,9 @@ export default function DeepDivePage() {
       });
 
       // FIX: finalize the question id after a successful send
-      setFinalizedQuestionIds((prev) => new Set([...prev, q.id]));
+      if (orbStatus !== "REJECT") {
+        setFinalizedQuestionIds((prev) => new Set([...prev, q.id]));
+      }
 
       setIsLoading(false);
       setEditingMessageIdx(null);
@@ -2298,7 +2395,15 @@ export default function DeepDivePage() {
         setTypingText("");
         setChatMessages((prev) => [
           ...prev,
-          { role: "assistant", text: "", qId: q.id, isTyping: true },
+          {
+            role: "assistant",
+            text: "",
+            qId: q.id,
+            isTyping: true,
+            orbStatus,
+            orbNextQId: orb?.next_q_id || null,
+            orbDepthScore: orb?.depth_score ?? null,
+          },
         ]);
 
         let ci = 0;
@@ -2314,7 +2419,16 @@ export default function DeepDivePage() {
             setChatMessages((prev) => {
               const u = [...prev];
               const ti = u.findIndex((m) => m.isTyping);
-              if (ti !== -1) u[ti] = { role: "assistant", text: fu, qId: q.id };
+              if (ti !== -1) {
+                u[ti] = {
+                  role: "assistant",
+                  text: fu,
+                  qId: q.id,
+                  orbStatus,
+                  orbNextQId: orb?.next_q_id || null,
+                  orbDepthScore: orb?.depth_score ?? null,
+                };
+              }
               return u;
             });
             setOrbIdle();
@@ -2369,6 +2483,9 @@ export default function DeepDivePage() {
     const q = questions[qi];
     const lat = [...messages].reverse().find((m) => m.qId === q.id);
     if (!lat?.answer?.trim()) return toast.info("Write an answer first.");
+    if (String(lat.orbStatus || "").toUpperCase() === "REJECT") {
+      return toast.info("ORB rejected this answer. Go deeper before saving it.");
+    }
 
     try {
       await authService.createAnswer(sid, {
@@ -2433,7 +2550,26 @@ export default function DeepDivePage() {
         draft,
         true,
       );
-      setInputValue((r?.improved_answer || draft).trim());
+      const improved = (r?.improved_answer || draft).trim();
+      const followUp = (r?.follow_up_question || "").trim();
+      if (r?.rewrite_blocked || improved === draft.trim()) {
+        setInputValue(draft);
+        setIsAiDraft(false);
+        if (followUp) {
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              text: followUp,
+              qId: q.id,
+              orbStatus: "REJECT",
+            },
+          ]);
+        }
+        toast.info("ORB challenged the answer before improving the copy.");
+        return;
+      }
+      setInputValue(improved);
       setIsAiDraft(true);
       toast.success("AI refined — review and click Send.");
     } catch (err) {
@@ -2783,11 +2919,6 @@ export default function DeepDivePage() {
                           ✕
                         </button>
                       </div>
-                      {suggestionMeta?.quality_label && (
-                        <div className={`ddp-suggestion-quality ddp-suggestion-quality--${suggestionMeta.quality || "too_weak"}`}>
-                          {suggestionMeta.quality_label}
-                        </div>
-                      )}
                       {suggestionMeta?.suggestion_quote?.enabled && suggestionMeta.suggestion_quote.quote && (
                         <blockquote className="ddp-suggestion-quote">
                           {suggestionMeta.suggestion_quote.quote}

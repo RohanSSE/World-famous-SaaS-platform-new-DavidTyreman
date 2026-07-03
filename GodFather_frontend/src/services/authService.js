@@ -40,6 +40,20 @@ function clampPhase(value) {
   return Math.max(1, Math.min(3, phase));
 }
 
+function getBrandGodFatherSessionStorageKey(sourceSessionId) {
+  return `brandGodFatherSessionId:${sourceSessionId || "global"}`;
+}
+
+function getCurrentUserIdFallback(sourceSessionId) {
+  try {
+    const raw = localStorage.getItem("user");
+    const user = raw ? JSON.parse(raw) : null;
+    return user?.id ?? user?.pk ?? user?.user_id ?? sourceSessionId ?? "frontend-user";
+  } catch {
+    return sourceSessionId ?? "frontend-user";
+  }
+}
+
 function resolveAgencyOnboardingRedirect(dashboard = {}) {
   const sessions = Array.isArray(dashboard.sessions) ? dashboard.sessions : [];
   const journey = Array.isArray(dashboard.journey_progress) ? dashboard.journey_progress : [];
@@ -931,6 +945,12 @@ generateFoundationSummary: async (sessionId) => {
     );
     return response.data; // { summary, total_questions_answered, cached }
   } catch (error) {
+    const storageKey = getBrandGodFatherSessionStorageKey(sourceSessionId);
+    localStorage.removeItem(storageKey);
+    if (localStorage.getItem("brandGodFatherSessionId") === String(brandGodFatherSessionId)) {
+      localStorage.removeItem("brandGodFatherSessionId");
+    }
+
     const msg =
       error?.response?.data?.detail ||
       error?.response?.data?.message ||
@@ -1066,6 +1086,156 @@ aiSuggestionDraft: async (sessionId, questionId, draft, refined = false) => {
       "AI suggestion request failed";
 
     const err = new Error(msg);
+    err._raw = error;
+    throw err;
+  }
+},
+
+ensureBrandGodFatherSession: async ({ sourceSessionId = null, contextData = {}, forceNew = false } = {}) => {
+  const storageKey = getBrandGodFatherSessionStorageKey(sourceSessionId);
+  const storedSessionId = localStorage.getItem(storageKey);
+  if (storedSessionId && !forceNew) {
+    return { session_id: storedSessionId, reused: true };
+  }
+
+  if (forceNew) {
+    localStorage.removeItem(storageKey);
+  }
+
+  try {
+    const response = await api.post("/brandgodfather/session/start/", {
+      user_id: String(getCurrentUserIdFallback(sourceSessionId)),
+      context_data: {
+        source_session_id: sourceSessionId,
+        ...contextData,
+      },
+    });
+
+    const sessionId = response.data?.session_id;
+    if (!sessionId) {
+      throw new Error("BrandGodFather session start did not return session_id");
+    }
+
+    localStorage.setItem(storageKey, String(sessionId));
+    localStorage.setItem("brandGodFatherSessionId", String(sessionId));
+    return response.data;
+  } catch (error) {
+    const msg =
+      error?.response?.data?.detail ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "BrandGodFather session start failed";
+    const err = new Error(msg);
+    err._raw = error;
+    throw err;
+  }
+},
+
+submitBrandGodFatherAnswer: async ({ sourceSessionId = null, qId, answer, contextData = {} } = {}) => {
+  if (!qId) {
+    throw new Error("Missing qId for BrandGodFather answer");
+  }
+  if (!answer || !answer.trim()) {
+    throw new Error("Missing answer for BrandGodFather answer");
+  }
+
+  const submitWithSession = async (forceNew = false) => {
+    const session = await authService.ensureBrandGodFatherSession({
+      sourceSessionId,
+      contextData,
+      forceNew,
+    });
+    const brandGodFatherSessionId = session.session_id;
+    const response = await api.post("/brandgodfather/answer/", {
+      session_id: brandGodFatherSessionId,
+      q_id: String(qId),
+      answer: answer.trim(),
+      context_data: contextData,
+      async: false,
+    });
+
+    return {
+      ...response.data,
+      brandgodfather_session_id: brandGodFatherSessionId,
+    };
+  };
+
+  try {
+    return await submitWithSession(false);
+  } catch (error) {
+    const errorText = [
+      error?.response?.data?.detail,
+      error?.response?.data,
+      error?.message,
+    ]
+      .filter(Boolean)
+      .map((value) => (typeof value === "string" ? value : JSON.stringify(value)))
+      .join(" ");
+    const looksLikeMissingSession = /session not found/i.test(errorText);
+
+    if (looksLikeMissingSession || error?.response?.status === 404 || error?.response?.status === 500) {
+      const storageKey = getBrandGodFatherSessionStorageKey(sourceSessionId);
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem("brandGodFatherSessionId");
+      try {
+        return await submitWithSession(true);
+      } catch (retryError) {
+        error = retryError;
+      }
+    }
+
+    const storageKey = getBrandGodFatherSessionStorageKey(sourceSessionId);
+    localStorage.removeItem(storageKey);
+    localStorage.removeItem("brandGodFatherSessionId");
+
+    const msg =
+      error?.response?.data?.detail ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "BrandGodFather answer failed";
+    const err = new Error(msg);
+    err._raw = error;
+    throw err;
+  }
+},
+
+// Read-only live evaluation of an in-progress answer (dry_run: no writes, no
+// resistance increment, no episodic memory). Used for real-time verdict while typing.
+previewBrandGodFatherAnswer: async ({ sourceSessionId = null, qId, answer, contextData = {}, signal = null } = {}) => {
+  if (!qId || !answer || !answer.trim()) {
+    return null;
+  }
+  const storageKey = getBrandGodFatherSessionStorageKey(sourceSessionId);
+  const brandGodFatherSessionId =
+    localStorage.getItem(storageKey) || localStorage.getItem("brandGodFatherSessionId");
+  // No existing ORB session yet: skip preview to avoid creating server-side state.
+  if (!brandGodFatherSessionId) {
+    return null;
+  }
+  try {
+    const response = await api.post(
+      "/brandgodfather/answer/",
+      {
+        session_id: brandGodFatherSessionId,
+        q_id: String(qId),
+        answer: answer.trim(),
+        context_data: contextData,
+        async: false,
+        dry_run: true,
+      },
+      signal ? { signal } : undefined
+    );
+    return {
+      ...response.data,
+      brandgodfather_session_id: brandGodFatherSessionId,
+    };
+  } catch (error) {
+    if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") {
+      return null;
+    }
+    const err = new Error(
+      error?.response?.data?.detail || error?.message || "Live evaluation failed"
+    );
     err._raw = error;
     throw err;
   }

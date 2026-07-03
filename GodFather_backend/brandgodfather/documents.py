@@ -29,6 +29,7 @@ class BrandGodFatherBrandChunkDocument(Document):
     question_id = Keyword()
     brand_type = Keyword()
     emotional_register = Keyword()
+    metadata = Object(dynamic=True)
 
     class Index:
         name = "brandgodfather_brand_chunks"
