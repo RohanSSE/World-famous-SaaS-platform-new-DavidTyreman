@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from pydantic import BaseModel
 
 from brandgodfather.services.methodology_governance import MethodologyGovernanceService
+from brandgodfather.services.phase1_frameworks import ORB_PHASE1_GUIDANCE, framework_json
 
 
 class AssembledPrompt(BaseModel):
@@ -97,9 +98,20 @@ class PromptAssembler:
             self._pressure_section(pressure_level=normalized_pressure),
             self._section_header(10, "Enforcement Rule"),
             self._enforcement_rule_section(q_id=q_id),
-            self._section_header(11, "Output Format Requirement"),
-            self._output_requirement_section(),
         ]
+
+        # Phase 1 (Q1-Q8) look_for/avoid framework + ORB behavioral protocols.
+        phase1_section = self._phase1_framework_section(q_id=q_id)
+        if phase1_section:
+            sections.extend([
+                self._section_header(11, "Phase 1 Answer Framework"),
+                phase1_section,
+            ])
+
+        sections.extend([
+            self._section_header(12, "Output Format Requirement"),
+            self._output_requirement_section(),
+        ])
 
         system_prompt = "\n\n".join(sections).strip()
         user_prompt = self._user_prompt_section(question_text=question_text, user_answer=user_answer)
@@ -248,6 +260,17 @@ class PromptAssembler:
             "Do not soften challenge if contradiction, vendor language, or deflection is detected."
         )
         return template.safe_substitute({"q_id": q_id})
+
+    @staticmethod
+    def _phase1_framework_section(q_id: str) -> Optional[str]:
+        fw_json = framework_json(q_id)
+        if not fw_json:
+            return None
+        return (
+            "{guidance}\n\n"
+            "EVALUATION FRAMEWORK (evaluate the user's latest answer against this):\n"
+            "{framework}"
+        ).format(guidance=ORB_PHASE1_GUIDANCE, framework=fw_json)
 
     def _output_requirement_section(self) -> str:
         template = Template(

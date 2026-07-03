@@ -4662,6 +4662,7 @@ def answer_ai_suggestions(request, pk):
         normalize_ai_quality_response,
         score_answer_quality,
     )
+    from brandgodfather.services.phase1_frameworks import get_framework
 
     session = get_object_or_404(Session, pk=pk)
     if not session.has_access(request.user):
@@ -4683,6 +4684,21 @@ def answer_ai_suggestions(request, pk):
     heuristic = score_answer_quality(question, hints)
     question_stage = int(getattr(question, "stage", 1) or 1)
     include_suggestion_quote = question_stage >= 2
+
+    # Phase 1 (Q1-Q8) per-question ORB framework, keyed by Question.order.
+    phase1_framework = None
+    phase1_framework_block = ""
+    if question_stage == 1:
+        phase1_framework = get_framework(f"Q{int(getattr(question, 'order', 0) or 0)}")
+    if phase1_framework:
+        _fw = phase1_framework["orb_analysis_framework"]
+        phase1_framework_block = (
+            "\n\nPhase 1 ORB analysis framework for THIS exact question:\n"
+            "LOOK FOR (reward answers that genuinely hit these):\n- "
+            + "\n- ".join(_fw["look_for"])
+            + "\nAVOID (treat these as vendor traps / weak thinking):\n- "
+            + "\n- ".join(_fw["avoid"])
+        )
     active_pipeline = get_active_pipeline_name()
     rag_phase = None
     rag_context = ""
@@ -4762,6 +4778,7 @@ User's custom question, if any:
 
 Retrieved brand/RAG context from the active pipeline:
 {rag_context[:2500] if rag_context else "No retrieved context available."}
+{phase1_framework_block}
 """
         try:
             completion = get_openai_client().chat.completions.create(
@@ -4861,6 +4878,7 @@ User answer: {hints}
 
 Retrieved brand/RAG context from the active pipeline:
 {rag_context[:2500] if rag_context else "No retrieved context available."}
+{phase1_framework_block}
 
 {build_quality_prompt_context(question, hints, heuristic)}"""
 

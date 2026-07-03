@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 from celery.result import AsyncResult
@@ -25,6 +26,7 @@ class BrandGodFatherAnswerAPIView(APIView):
         answer = str(request.data.get("answer", "")).strip()
         context_data = request.data.get("context_data", {}) or {}
         use_async = bool(request.data.get("async", False))
+        dry_run = bool(request.data.get("dry_run", False))
 
         if not session_id or not q_id or not answer:
             return Response(
@@ -32,7 +34,7 @@ class BrandGodFatherAnswerAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if use_async:
+        if use_async and not dry_run:
             task = process_answer_async.delay(session_id=session_id, q_id=q_id, user_answer=answer)
             discovery_metadata = build_discovery_metadata(session_id=session_id, q_id=q_id, raw_answer=answer)
             return Response(
@@ -41,7 +43,7 @@ class BrandGodFatherAnswerAPIView(APIView):
             )
 
         manager = SessionManager()
-        if isinstance(context_data, dict) and context_data:
+        if not dry_run and isinstance(context_data, dict) and context_data:
             existing = manager.get_session(session_id)
             existing_context = existing.context_data if existing else {}
             merged_context = {**(existing_context or {}), **context_data}
@@ -51,13 +53,14 @@ class BrandGodFatherAnswerAPIView(APIView):
         try:
             orchestrator = QuestionOrchestrator()
         except Exception as exc:
+            logging.getLogger(__name__).exception("QuestionOrchestrator init failed")
             return Response(
                 {"detail": f"BrandGodFather ORB engine unavailable: {exc}"},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
         try:
-            result = orchestrator.process_answer(session_id=session_id, q_id=q_id, user_answer=answer)
+            result = orchestrator.process_answer(session_id=session_id, q_id=q_id, user_answer=answer, dry_run=dry_run)
         except ValueError as exc:
             if "Session not found" not in str(exc):
                 return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
@@ -73,13 +76,15 @@ class BrandGodFatherAnswerAPIView(APIView):
                 },
             )
             try:
-                result = orchestrator.process_answer(session_id=session_id, q_id=q_id, user_answer=answer)
+                result = orchestrator.process_answer(session_id=session_id, q_id=q_id, user_answer=answer, dry_run=dry_run)
             except Exception as retry_exc:
+                logging.getLogger(__name__).exception("process_answer retry after session recovery failed")
                 return Response(
                     {"detail": f"BrandGodFather ORB session recovery failed: {retry_exc}"},
                     status=status.HTTP_503_SERVICE_UNAVAILABLE,
                 )
         except Exception as exc:
+            logging.getLogger(__name__).exception("process_answer failed")
             return Response(
                 {"detail": f"BrandGodFather ORB answer failed: {exc}"},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,

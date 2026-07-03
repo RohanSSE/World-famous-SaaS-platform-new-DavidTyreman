@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -29,6 +30,11 @@ class LLMResponse(BaseModel):
     coach_reasoning: str
 
 
+class CoachReply(BaseModel):
+    reply: str
+    follow_up_question: str = ""
+
+
 class OrchestratorResult(BaseModel):
     status: str
     reply: str
@@ -37,6 +43,7 @@ class OrchestratorResult(BaseModel):
     session_updated: bool
     interruption_type: Optional[str] = None
     challenge_type: Optional[str] = None
+    follow_up_question: Optional[str] = None
     pressure_used: Optional[int] = None
     resistance_count: int = 0
     blocked_phrases: List[str] = []
@@ -68,7 +75,9 @@ class QuestionOrchestrator:
         self.router = QuestionRouter()
         self.llm = self._build_llm_client()
 
-    def process_answer(self, session_id: str, q_id: str, user_answer: str) -> OrchestratorResult:
+    def process_answer(self, session_id: str, q_id: str, user_answer: str, dry_run: bool = False) -> OrchestratorResult:
+        # dry_run=True runs the full evaluation pipeline read-only: no resistance
+        # increment, no episodic/session writes, no shadow-profile persistence.
         # 1) Load session from ES Node 2
         session_doc_id, session = self._load_session(session_id)
         if not session_doc_id:
@@ -94,17 +103,29 @@ class QuestionOrchestrator:
                 f"I hear '{called_out}'. That's the vendor trap. People rarely remember vendors. "
                 "Give me the brand: what do you stand for, who is it for, and why should they care?"
             )
-            reply = self._calibrate_reply_tone(reply=reply, emotional_state=emotional_state)
-            self._increment_resistance_and_write_episodic(
-                session_id=session_id,
+            reply, follow_up_question = self._generate_coach_reply(
                 q_id=q_id,
+                question_text=question_text,
                 user_answer=user_answer,
-                prosody_result=prosody_result,
-                contradiction_result=None,
-                pressure_used=pressure_level,
-                status="REJECT",
-                answer_embedding=None,
+                situation=f"The answer leans on vendor language ('{called_out}') instead of a brand belief or truth.",
+                challenge_type="vendor_language",
+                emotional_state=emotional_state,
+                pressure_level=pressure_level,
+                resistance_count=resistance_count,
+                fallback=reply,
             )
+            reply = self._calibrate_reply_tone(reply=reply, emotional_state=emotional_state)
+            if not dry_run:
+                self._increment_resistance_and_write_episodic(
+                    session_id=session_id,
+                    q_id=q_id,
+                    user_answer=user_answer,
+                    prosody_result=prosody_result,
+                    contradiction_result=None,
+                    pressure_used=pressure_level,
+                    status="REJECT",
+                    answer_embedding=None,
+                )
             return OrchestratorResult(
                 status="REJECT",
                 reply=reply,
@@ -113,6 +134,7 @@ class QuestionOrchestrator:
                 session_updated=False,
                 interruption_type="vendor_language",
                 challenge_type="vendor_language",
+                follow_up_question=follow_up_question,
                 pressure_used=pressure_level,
                 resistance_count=resistance_count + 1,
                 blocked_phrases=vendor_phrases,
@@ -139,16 +161,17 @@ class QuestionOrchestrator:
                 reply=contradiction_message,
                 emotional_state=emotional_state,
             )
-            self._increment_resistance_and_write_episodic(
-                session_id=session_id,
-                q_id=q_id,
-                user_answer=user_answer,
-                prosody_result=prosody_result,
-                contradiction_result=contradiction_payload,
-                pressure_used=pressure_level,
-                status="REJECT",
-                answer_embedding=None,
-            )
+            if not dry_run:
+                self._increment_resistance_and_write_episodic(
+                    session_id=session_id,
+                    q_id=q_id,
+                    user_answer=user_answer,
+                    prosody_result=prosody_result,
+                    contradiction_result=contradiction_payload,
+                    pressure_used=pressure_level,
+                    status="REJECT",
+                    answer_embedding=None,
+                )
             return OrchestratorResult(
                 status="REJECT",
                 reply=contradiction_message,
@@ -167,23 +190,35 @@ class QuestionOrchestrator:
             )
 
         if not bool(prosody_result.get("gate_2_pass", True)):
-            adaptive_reply = self._adaptive_coaching_reply(
+            adaptive_fallback = self._adaptive_coaching_reply(
                 user_answer=user_answer,
                 pressure_level=pressure_level,
                 resistance_count=resistance_count,
                 challenge_type=challenge_type,
                 emotional_state=emotional_state,
             )
-            self._increment_resistance_and_write_episodic(
-                session_id=session_id,
+            adaptive_reply, follow_up_question = self._generate_coach_reply(
                 q_id=q_id,
+                question_text=question_text,
                 user_answer=user_answer,
-                prosody_result=prosody_result,
-                contradiction_result=contradiction_payload,
-                pressure_used=pressure_level,
-                status="REJECT",
-                answer_embedding=None,
+                situation="The answer is still too shallow or generic and hides the real belief, tension, or truth.",
+                challenge_type=challenge_type,
+                emotional_state=emotional_state,
+                pressure_level=pressure_level,
+                resistance_count=resistance_count,
+                fallback=adaptive_fallback,
             )
+            if not dry_run:
+                self._increment_resistance_and_write_episodic(
+                    session_id=session_id,
+                    q_id=q_id,
+                    user_answer=user_answer,
+                    prosody_result=prosody_result,
+                    contradiction_result=contradiction_payload,
+                    pressure_used=pressure_level,
+                    status="REJECT",
+                    answer_embedding=None,
+                )
             return OrchestratorResult(
                 status="REJECT",
                 reply=adaptive_reply,
@@ -192,6 +227,7 @@ class QuestionOrchestrator:
                 session_updated=False,
                 interruption_type="adaptive_coaching",
                 challenge_type=challenge_type,
+                follow_up_question=follow_up_question,
                 pressure_used=pressure_level,
                 resistance_count=resistance_count + 1,
                 prosody_flags=self._prosody_flags(prosody_result),
@@ -214,12 +250,15 @@ class QuestionOrchestrator:
         breakthrough_detected = bool(breakthrough_payload.get("breakthrough_detected"))
 
         # 5) Run ShadowProfileService.update_profile()
-        updated_shadow = self.shadow_service.update_profile(
-            session_id=session_id,
-            q_id=q_id,
-            prosody_result={**prosody_result, "raw_answer": user_answer},
-            answer_embedding=None,
-        )
+        if dry_run:
+            updated_shadow = session.get("shadow_profile", {}) or {}
+        else:
+            updated_shadow = self.shadow_service.update_profile(
+                session_id=session_id,
+                q_id=q_id,
+                prosody_result={**prosody_result, "raw_answer": user_answer},
+                answer_embedding=None,
+            )
 
         # 7) Run HybridRAGService.get_question_context()
         rag_context = self.rag_service.get_question_context(
@@ -258,16 +297,17 @@ class QuestionOrchestrator:
         # 11) REJECT path
         if str(parsed.status).upper() == "REJECT":
             reply = self._calibrate_reply_tone(reply=parsed.reply, emotional_state=emotional_state)
-            self._increment_resistance_and_write_episodic(
-                session_id=session_id,
-                q_id=q_id,
-                user_answer=user_answer,
-                prosody_result=prosody_result,
-                contradiction_result=contradiction_result.model_dump() if hasattr(contradiction_result, "model_dump") else contradiction_result,
-                pressure_used=pressure_level,
-                status="REJECT",
-                answer_embedding=None,
-            )
+            if not dry_run:
+                self._increment_resistance_and_write_episodic(
+                    session_id=session_id,
+                    q_id=q_id,
+                    user_answer=user_answer,
+                    prosody_result=prosody_result,
+                    contradiction_result=contradiction_result.model_dump() if hasattr(contradiction_result, "model_dump") else contradiction_result,
+                    pressure_used=pressure_level,
+                    status="REJECT",
+                    answer_embedding=None,
+                )
             return OrchestratorResult(
                 status="REJECT",
                 reply=reply,
@@ -305,7 +345,7 @@ class QuestionOrchestrator:
             status="PASS",
             answer_embedding=None,
             breakthrough_result=breakthrough_payload,
-        )
+        ) if not dry_run else None
 
         thread_index = dict(session.get("thread_index", {}) or {})
         brand_seed_value = str(extracted.get("brand_seed") or breakthrough_seed or "").strip()
@@ -359,24 +399,25 @@ class QuestionOrchestrator:
             id=session_doc_id,
             body={"doc": patch},
             refresh=True,
-        )
+        ) if not dry_run else None
 
-        self.router.handle_post_pass(session_id=session_id, q_id=q_id)
+        if not dry_run:
+            self.router.handle_post_pass(session_id=session_id, q_id=q_id)
 
-        # Refresh shadow profile after session update as required.
-        self.shadow_service.update_profile(
-            session_id=session_id,
-            q_id=q_id,
-            prosody_result={**prosody_result, "raw_answer": user_answer},
-            answer_embedding=None,
-        )
+            # Refresh shadow profile after session update as required.
+            self.shadow_service.update_profile(
+                session_id=session_id,
+                q_id=q_id,
+                prosody_result={**prosody_result, "raw_answer": user_answer},
+                answer_embedding=None,
+            )
 
         return OrchestratorResult(
             status="PASS",
             reply=reply,
             next_q_id=next_q_id,
             depth_score=self._depth_score(prosody_result=prosody_result, session=session, answer=user_answer),
-            session_updated=True,
+            session_updated=not dry_run,
             challenge_type=challenge_type,
             pressure_used=pressure_level,
             resistance_count=0,
@@ -455,6 +496,109 @@ class QuestionOrchestrator:
         if emotional_state == "avoidant":
             return f"Do not dodge this. {text}"
         return text
+
+    @staticmethod
+    def _split_reply_and_question(text: str) -> Tuple[str, str]:
+        """Split a coaching reply into a leading statement and a trailing follow-up
+        question. The last '?'-terminated sentence becomes the follow-up question;
+        everything before it is the statement. Returns (statement, "") when there is
+        no question."""
+        value = (text or "").strip()
+        if "?" not in value:
+            return value, ""
+        chunks = re.split(r"(?<=[.!?])\s+", value)
+        q_idx = -1
+        for idx, chunk in enumerate(chunks):
+            if chunk.strip().endswith("?"):
+                q_idx = idx
+        if q_idx < 0:
+            return value, ""
+        statement = " ".join(chunks[:q_idx]).strip()
+        follow = " ".join(chunks[q_idx:]).strip()
+        return statement, follow
+
+    def _generate_coach_reply(
+        self,
+        *,
+        q_id: str,
+        question_text: str,
+        user_answer: str,
+        situation: str,
+        challenge_type: str,
+        emotional_state: str,
+        pressure_level: int,
+        resistance_count: int,
+        fallback: str,
+    ) -> Tuple[str, str]:
+        """LLM-generated, varied coaching reply. Returns (statement, follow_up_question):
+        the statement guides and challenges; the follow-up question pulls the user deeper.
+        Falls back to splitting the deterministic template on any failure."""
+        try:
+            from brandgodfather.services.phase1_frameworks import get_framework
+
+            framework_text = "No fixed framework; use brand-thinking judgment."
+            fw = get_framework(q_id)
+            if fw:
+                criteria = fw["orb_analysis_framework"]
+                framework_text = (
+                    "LOOK FOR (what a strong answer contains):\n- "
+                    + "\n- ".join(criteria["look_for"])
+                    + "\nAVOID (vendor traps / weak thinking):\n- "
+                    + "\n- ".join(criteria["avoid"])
+                )
+
+            tone_guidance = {
+                "confused": "The user seems confused. Reduce tension, be encouraging, make the next step concrete.",
+                "discouraged": "The user seems discouraged. Stay warm but do not lower the standard.",
+                "afraid": "The user seems afraid. Reassure briefly, then ask for the honest truth.",
+                "excited": "The user is energized. Channel that energy toward a sharper, specific point of view.",
+                "engaged": "The user is engaged. Push for depth and a distinct belief.",
+                "avoidant": "The user is avoiding the point. Name it directly, without being harsh.",
+            }.get(emotional_state, "Keep a direct, warm, challenging tone.")
+
+            system_prompt = (
+                "You are ORB, the Brand Godfather: a world-class brand strategist and coach who "
+                "moves founders from vendor thinking to brand thinking. Return two fields. "
+                "'reply' is a short guiding, challenging statement (1-2 sentences) grounded in the "
+                "user's own words, containing NO question. 'follow_up_question' is a single sharp "
+                "question that pulls the user deeper and ends with a question mark. Never accept a "
+                "shallow, generic, or vendor answer. Vary your wording every time so you never "
+                "sound templated. No markdown, no quotes."
+            )
+            user_prompt = (
+                f"Question being explored:\n{question_text}\n\n"
+                f"User's latest answer:\n{user_answer}\n\n"
+                f"Why it is not strong enough yet: {situation}\n"
+                f"Detected weakness: {challenge_type}\n"
+                f"Pressure level (1-5): {pressure_level}. Resistance so far: {resistance_count}.\n"
+                f"Tone guidance: {tone_guidance}\n\n"
+                f"Evaluation framework for this question:\n{framework_text}"
+            )
+
+            model = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o")
+            result = self.llm.chat.completions.create(
+                model=model,
+                response_model=CoachReply,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.85,
+            )
+            statement = str(getattr(result, "reply", "") or "").strip()
+            follow = str(getattr(result, "follow_up_question", "") or "").strip()
+            # Guard against the model repeating a question inside the statement.
+            if follow:
+                trimmed, trailing_q = self._split_reply_and_question(statement)
+                if trailing_q:
+                    statement = trimmed
+            else:
+                statement, follow = self._split_reply_and_question(statement)
+            fb_statement, fb_follow = self._split_reply_and_question(fallback)
+            return (statement or fb_statement, follow or fb_follow)
+        except Exception:
+            logging.getLogger(__name__).warning("coach reply generation failed; using fallback", exc_info=True)
+            return self._split_reply_and_question(fallback)
 
     @staticmethod
     def _adaptive_coaching_reply(

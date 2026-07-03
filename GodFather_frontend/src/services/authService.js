@@ -1199,6 +1199,48 @@ submitBrandGodFatherAnswer: async ({ sourceSessionId = null, qId, answer, contex
   }
 },
 
+// Read-only live evaluation of an in-progress answer (dry_run: no writes, no
+// resistance increment, no episodic memory). Used for real-time verdict while typing.
+previewBrandGodFatherAnswer: async ({ sourceSessionId = null, qId, answer, contextData = {}, signal = null } = {}) => {
+  if (!qId || !answer || !answer.trim()) {
+    return null;
+  }
+  const storageKey = getBrandGodFatherSessionStorageKey(sourceSessionId);
+  const brandGodFatherSessionId =
+    localStorage.getItem(storageKey) || localStorage.getItem("brandGodFatherSessionId");
+  // No existing ORB session yet: skip preview to avoid creating server-side state.
+  if (!brandGodFatherSessionId) {
+    return null;
+  }
+  try {
+    const response = await api.post(
+      "/brandgodfather/answer/",
+      {
+        session_id: brandGodFatherSessionId,
+        q_id: String(qId),
+        answer: answer.trim(),
+        context_data: contextData,
+        async: false,
+        dry_run: true,
+      },
+      signal ? { signal } : undefined
+    );
+    return {
+      ...response.data,
+      brandgodfather_session_id: brandGodFatherSessionId,
+    };
+  } catch (error) {
+    if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") {
+      return null;
+    }
+    const err = new Error(
+      error?.response?.data?.detail || error?.message || "Live evaluation failed"
+    );
+    err._raw = error;
+    throw err;
+  }
+},
+
 // Fetch followups for a session + answer_id (answer_id = "draft" or real Answer.id)
 getFollowups: async (sessionId, answerId = "draft") => {
   if (!sessionId) throw new Error("Missing sessionId for getFollowups");

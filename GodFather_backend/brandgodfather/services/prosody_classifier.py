@@ -204,7 +204,7 @@ class ProsodyClassifier:
         try:
             results = self.emotion_pipeline(
                 text[:512],
-                return_all_scores=True,
+                top_k=None,
             )
             scores = {item["label"].lower(): item["score"] for item in results[0]}
             positive = scores.get("joy", 0.0) + scores.get("surprise", 0.0)

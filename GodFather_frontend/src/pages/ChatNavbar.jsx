@@ -194,6 +194,10 @@ const ChatNavbar = ({
   downloadLabel = "Download PDF",
   downloadDisabled = false,
   showSaveButton = true,
+  saveButtonLabel = "Save",
+  saveButtonSavingLabel = "Saving...",
+  saveButtonTitle,
+  saveButtonDisabledTitle = "Complete all 30 questions to save",
   showDownloadButton = true,
   showLogoutButton = true,
   showCommentButton = false,
@@ -340,15 +344,15 @@ const ChatNavbar = ({
               className="btn-white" 
               onClick={handleSave}
               disabled={saving || saveDisabled}
-              title={saveDisabled ? "Complete all 30 questions to save" : undefined}
+              title={saveDisabled ? saveButtonDisabledTitle : saveButtonTitle}
             >
               {saving ? (
                 <>
                   <span className="spinner"></span>
-                  <span>Saving...</span>
+                  <span>{saveButtonSavingLabel}</span>
                 </>
               ) : (
-                "Save"
+                saveButtonLabel
               )}
             </button>
           )}
