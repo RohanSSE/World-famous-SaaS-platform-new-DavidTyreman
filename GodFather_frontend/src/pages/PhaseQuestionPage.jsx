@@ -892,18 +892,21 @@ export default function PhaseQuestionPage() {
       setOrbChecking(false);
     }
 
-    if (orb.status === "REJECT") {
-      setSubmitError(
-        orb.interruption_type === "vendor_language"
-          ? "Vendor trap caught. The ORB will not save a vendor answer; bring back the brand truth before you move on."
-          : orb.interruption_type === "contradiction"
-            ? "Contradiction caught. Resolve the earlier answer against this one before moving on."
-            : orb.interruption_type === "adaptive_coaching"
-              ? "Adaptive challenge raised. The ORB needs a sharper answer before you move on."
-          : "ORB rejected this answer. Go deeper before saving it.",
-      );
-      return null;
-    }
+    // Scoring/gating disabled per request: the backend still classifies PASS/REJECT and
+    // the verdict stays visible in the ORB API-result panel, but a weak/REJECT answer no
+    // longer blocks saving or navigating to the next question.
+    // if (orb.status === "REJECT") {
+    //   setSubmitError(
+    //     orb.interruption_type === "vendor_language"
+    //       ? "Vendor trap caught. The ORB will not save a vendor answer; bring back the brand truth before you move on."
+    //       : orb.interruption_type === "contradiction"
+    //         ? "Contradiction caught. Resolve the earlier answer against this one before moving on."
+    //         : orb.interruption_type === "adaptive_coaching"
+    //           ? "Adaptive challenge raised. The ORB needs a sharper answer before you move on."
+    //       : "ORB rejected this answer. Go deeper before saving it.",
+    //   );
+    //   return null;
+    // }
 
     const nextAnswers = { ...answers, [currentQuestion.key]: value };
     persistAnswers(nextAnswers);
