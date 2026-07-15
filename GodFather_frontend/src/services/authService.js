@@ -1313,6 +1313,31 @@ appendFollowup: async (sessionId, answerId = "draft", userText, triggerAssistant
     }
   },
 
+  editConversation: async (sessionId, conversationId, payload = {}) => {
+    if (!sessionId) throw new Error("Missing sessionId for editConversation");
+    if (!conversationId) throw new Error("Missing conversationId for editConversation");
+    try {
+      const response = await api.patch(
+        `/sessions/${encodeURIComponent(sessionId)}/conversations/${encodeURIComponent(conversationId)}/edit/`,
+        {
+          content: String(payload.content || "").trim(),
+          question_text: payload.questionText || payload.question_text || "",
+          context_data: payload.contextData || payload.context_data || {},
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Failed to edit conversation";
+      const err = new Error(msg);
+      err._raw = error;
+      throw err;
+    }
+  },
+
   // Get AI answer suggestions based on user input
   getAiAnswerSuggestions: async (sessionId, questionId, userHint, options = {}) => {
     if (!sessionId) throw new Error("Missing sessionId for getAiAnswerSuggestions");

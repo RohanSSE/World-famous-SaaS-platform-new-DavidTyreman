@@ -35,10 +35,11 @@ class AnswerCreateSerializer(serializers.ModelSerializer):
     is_ai_accepted = serializers.BooleanField(required=False)
     ai_suggestion = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     original_ai_text = serializers.CharField(required=False, allow_blank=True, write_only=True)
+    frontend_phase = serializers.IntegerField(required=False, write_only=True)
 
     class Meta:
         model = Answer
-        fields = ['question', 'answer_text', 'is_ai_accepted', 'ai_suggestion', 'original_ai_text']
+        fields = ['question', 'answer_text', 'is_ai_accepted', 'ai_suggestion', 'original_ai_text', 'frontend_phase']
     
     # def validate_answer_text(self, value):
     #     if not value or len(value.strip()) < 3:

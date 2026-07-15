@@ -15,7 +15,6 @@ import {
   JOURNEY_PHASES,
   unlockPhaseAfterComplete,
   PHASE_1_MANIFESTO_STEPS,
-  TOTAL_JOURNEY_QUESTIONS,
   countStoredJourneyAnswers,
   getCurrentQuestionStorageKey,
   getPhaseAnswersStorageKey,
@@ -24,7 +23,6 @@ import chatIcon1 from "../assets/chat-icon1.png";
 import chatIcon2 from "../assets/chat-icon2.png";
 import {
   extractApplicableNudgeText,
-  normalizeAnswerQualityCopy,
   scoreAnswerQualityLocal,
 } from "../utils/answerQuality";
 import "./PhaseQuestionPage.css";
@@ -39,6 +37,10 @@ const BGF_HELP_ACTIONS = [
 
 // Temporarily hidden until the client approves the expanded Ask BGF helper.
 const SHOW_BGF_HELP_PANEL = false;
+const LEGACY_RAG_V1_DISABLED = true;
+const LEGACY_RAG_V2_DISABLED = true;
+// Older expanded ORB Intelligence debug card is hidden for now; use the API response link instead.
+const SHOW_LEGACY_ORB_INTELLIGENCE_PANEL = false;
 
 function resolveOrbQuestionId(question, questionIndex, phaseId) {
   const rawId = question?.raw?.q_id || question?.raw?.brandgodfather_q_id;
@@ -71,13 +73,25 @@ function splitFollowUp(text) {
 
 function normalizeOrbResult(orbResult) {
   const status = String(orbResult?.status || "UNKNOWN").toUpperCase();
+  const isNewOrbResult = Boolean(
+    orbResult?.associated_discovery_id ||
+      orbResult?.target_confidence_threshold != null ||
+      orbResult?.confidence_score != null ||
+      orbResult?.advance_to_next_question != null,
+  );
   const blockedPhrases = Array.isArray(orbResult?.blocked_phrases)
     ? orbResult.blocked_phrases.filter(Boolean)
     : [];
-  const rawReply = String(orbResult?.reply || "Let's go deeper before we move on.").trim();
-  let followUp = String(orbResult?.follow_up_question || "").trim();
+  const rawReply = String(
+    orbResult?.reply || orbResult?.response || orbResult?.follow_up_question || "Let's go deeper before we move on.",
+  ).trim();
+  let followUp = String(
+    status === "INCOMPLETE" ? orbResult?.follow_up_question || orbResult?.response || "" : orbResult?.follow_up_question || "",
+  ).trim();
   let statement = rawReply;
-  if (followUp) {
+  if (isNewOrbResult && status === "COMPLETE") {
+    followUp = "";
+  } else if (followUp) {
     const parts = splitFollowUp(rawReply);
     if (parts.followUp) statement = parts.statement || rawReply;
   } else {
@@ -92,10 +106,10 @@ function normalizeOrbResult(orbResult) {
     reply: statement,
     raw_reply: rawReply,
     follow_up_question: followUp,
-    next_q_id: orbResult?.next_q_id || "Awaiting stronger answer",
-    depth_score: orbResult?.depth_score ?? "not scored",
+    next_q_id: orbResult?.next_q_id || (orbResult?.advance_to_next_question ? "Next question" : "Awaiting stronger answer"),
+    depth_score: orbResult?.depth_score ?? orbResult?.confidence_score ?? "not scored",
     interruption_type: orbResult?.interruption_type || null,
-    challenge_type: orbResult?.challenge_type || null,
+    challenge_type: orbResult?.challenge_type || orbResult?.associated_discovery_id || null,
     pressure_used: orbResult?.pressure_used ?? null,
     resistance_count: orbResult?.resistance_count ?? 0,
     emotional_state: orbResult?.emotional_state || "neutral",
@@ -105,12 +119,21 @@ function normalizeOrbResult(orbResult) {
     contradiction_result: orbResult?.contradiction_result || null,
     contradiction_message: orbResult?.contradiction_message || null,
     breakthrough_detected: Boolean(orbResult?.breakthrough_detected),
-    breakthrough_score: orbResult?.breakthrough_score ?? 0,
+    breakthrough_score: orbResult?.breakthrough_score ?? orbResult?.confidence_score ?? 0,
     breakthrough_type: orbResult?.breakthrough_type || null,
     breakthrough_reason: orbResult?.breakthrough_reason || null,
     breakthrough_seed: orbResult?.breakthrough_seed || null,
     breakthrough_criteria: orbResult?.breakthrough_criteria || {},
     sessionId: orbResult?.brandgodfather_session_id || null,
+    associated_discovery_id: orbResult?.associated_discovery_id || null,
+    target_confidence_threshold: orbResult?.target_confidence_threshold ?? orbResult?.metadata?.target_confidence_threshold ?? null,
+    metadata: orbResult?.metadata || null,
+    crux_context: orbResult?.crux_context || null,
+    confidence_tracking: orbResult?.confidence_tracking || orbResult?.view_api_response?.data?.confidence_tracking || null,
+    view_api_response: orbResult?.view_api_response || null,
+    confidence_score: orbResult?.confidence_score ?? null,
+    extracted_signals: orbResult?.extracted_signals || {},
+    advance_to_next_question: Boolean(orbResult?.advance_to_next_question || status === "COMPLETE"),
   };
 }
 
@@ -226,7 +249,7 @@ export default function PhaseQuestionPage() {
   const [submitError, setSubmitError] = useState("");
   const [nudges, setNudges] = useState([]);
   const [nudgeQuality, setNudgeQuality] = useState(null);
-  const [nudgeQuote, setNudgeQuote] = useState(null);
+  const [, setNudgeQuote] = useState(null);
   const [nudgeIndex, setNudgeIndex] = useState(0);
   const [nudgesLoading, setNudgesLoading] = useState(false);
   const [orbVerdict, setOrbVerdict] = useState(null);
@@ -239,7 +262,7 @@ export default function PhaseQuestionPage() {
   const [bgfHelpLoading, setBgfHelpLoading] = useState(false);
   const [bgfHelpResponse, setBgfHelpResponse] = useState(null);
   const [bgfAskText, setBgfAskText] = useState("");
-  const [journeyAnsweredCount, setJourneyAnsweredCount] = useState(0);
+  const [, setJourneyAnsweredCount] = useState(0);
   const [billing, setBilling] = useState(null);
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState("");
@@ -500,26 +523,6 @@ export default function PhaseQuestionPage() {
     };
   }, [sessionId, questions, storageKey]);
 
-  const refreshJourneyAnswerCount = async () => {
-    if (!sessionId) {
-      const localCount = countStoredJourneyAnswers(null);
-      setJourneyAnsweredCount(localCount);
-      return localCount;
-    }
-    try {
-      const remoteAnswers = await authService.getAnswers(sessionId, {});
-      const count = (Array.isArray(remoteAnswers) ? remoteAnswers : []).filter((a) =>
-        String(a.answer_text ?? "").trim(),
-      ).length;
-      setJourneyAnsweredCount(count);
-      return count;
-    } catch {
-      const localCount = countStoredJourneyAnswers(sessionId);
-      setJourneyAnsweredCount(localCount);
-      return localCount;
-    }
-  };
-
   useEffect(() => {
     setJourneyAnsweredCount(countStoredJourneyAnswers(sessionId));
   }, [sessionId]);
@@ -559,6 +562,13 @@ export default function PhaseQuestionPage() {
   useEffect(() => {
     if (livePreviewDebounceRef.current) clearTimeout(livePreviewDebounceRef.current);
 
+    if (LEGACY_RAG_V1_DISABLED) {
+      setLivePreview(null);
+      setLivePreviewChecking(false);
+      if (livePreviewAbortRef.current) livePreviewAbortRef.current.abort();
+      return;
+    }
+
     const q = questions[currentIdx];
     const value = inputValue.trim();
     const MIN_PREVIEW_LEN = 12;
@@ -579,6 +589,7 @@ export default function PhaseQuestionPage() {
 
       setLivePreviewChecking(true);
       try {
+        /* Legacy RAG v1 live preview disabled while Phase 1 uses edit_conversation ORB.
         const orbQId = resolveOrbQuestionId(q, currentIdx, phaseId);
         const res = await authService.previewBrandGodFatherAnswer({
           sourceSessionId: sessionId,
@@ -597,6 +608,9 @@ export default function PhaseQuestionPage() {
         // Ignore stale/cancelled responses.
         if (seq !== livePreviewSeqRef.current) return;
         setLivePreview(res ? normalizeOrbResult(res) : null);
+        */
+        if (seq !== livePreviewSeqRef.current) return;
+        setLivePreview(null);
       } catch {
         if (seq === livePreviewSeqRef.current) setLivePreview(null);
       } finally {
@@ -640,10 +654,20 @@ export default function PhaseQuestionPage() {
     const q = question || questions[currentIdx];
     if (!q) return;
 
+    if (LEGACY_RAG_V2_DISABLED) {
+      setNudgeQuality(scoreAnswerQualityLocal(q, hint));
+      setNudges([]);
+      setNudgeQuote(null);
+      setNudgeIndex(0);
+      setNudgesLoading(false);
+      return;
+    }
+
     setNudgesLoading(true);
     setNudgeQuality(scoreAnswerQualityLocal(q, hint));
 
     try {
+      /* Legacy RAG v2 answer suggestions disabled while Phase 1 uses edit_conversation ORB.
       const res = await authService.getAiAnswerSuggestions(sessionId, q.id, hint, { intent: "refine" });
       let list = [];
       if (Array.isArray(res)) {
@@ -663,6 +687,8 @@ export default function PhaseQuestionPage() {
         .map((s) => extractApplicableNudgeText(String(s).trim()))
         .filter(Boolean);
       setNudges(cleaned);
+      */
+      setNudges([]);
       setNudgeIndex(0);
     } catch {
       setNudges([]);
@@ -745,11 +771,20 @@ export default function PhaseQuestionPage() {
     setBgfHelpLoading(true);
     setBgfHelpResponse(null);
     try {
+      if (LEGACY_RAG_V2_DISABLED) {
+        setBgfHelpResponse({
+          title: "Brand Godfather",
+          answer: "ORB now evaluates this answer when you submit it.",
+        });
+        return;
+      }
+      /* Legacy RAG v2 helper disabled while Phase 1 uses edit_conversation ORB.
       const res = await authService.getAiAnswerSuggestions(sessionId, q.id, inputValue.trim(), {
         intent,
         customQuestion: trimmedQuestion,
       });
       setBgfHelpResponse(res);
+      */
       if (intent === "ask") setBgfAskText("");
     } catch (err) {
       setBgfHelpResponse({
@@ -769,6 +804,28 @@ export default function PhaseQuestionPage() {
       /* ignore */
     }
     setJourneyAnsweredCount(countStoredJourneyAnswers(sessionId));
+  };
+
+  const persistViewApiResponsePayload = (payload) => {
+    if (!payload) return;
+    try {
+      const storagePayload = {
+        saved_at: new Date().toISOString(),
+        session_id: sessionId || null,
+        phase_id: Number(phaseId) || 1,
+        question_index: currentIdx + 1,
+        question_id: currentQuestion?.raw?.id ?? currentQuestion?.id ?? null,
+        payload,
+      };
+      const serialized = JSON.stringify(storagePayload);
+      const scopedKey = `orbViewApiResponse:${sessionId || "no-session"}:p${Number(phaseId) || 1}:q${currentIdx + 1}`;
+      localStorage.setItem("orbViewApiResponse:last", serialized);
+      localStorage.setItem(scopedKey, serialized);
+      sessionStorage.setItem("orbViewApiResponse:last", serialized);
+      sessionStorage.setItem(scopedKey, serialized);
+    } catch {
+      /* ignore storage failures */
+    }
   };
 
   const handleCreateSession = async () => {
@@ -805,6 +862,7 @@ export default function PhaseQuestionPage() {
         }
       }
 
+      /* Legacy RAG v1 BrandGodFather session start disabled while Phase 1 uses edit_conversation ORB.
       try {
         const sourceSessionId = String(sessionObj.id ?? sessionObj.pk);
         await authService.ensureBrandGodFatherSession({
@@ -816,8 +874,9 @@ export default function PhaseQuestionPage() {
           },
         });
       } catch {
-        /* non-fatal: answer submission will retry ORB session start */
+        // non-fatal: answer submission will retry ORB session start
       }
+      */
       navigate("/phase-intro/1");
     } catch (err) {
       setModalError(err?.message || "Failed to create session");
@@ -830,7 +889,6 @@ export default function PhaseQuestionPage() {
     questions.length > 0 &&
     questions.every((q) => String(answers[q.key] ?? "").trim());
 
-  const allJourneyAnswered = journeyAnsweredCount >= TOTAL_JOURNEY_QUESTIONS;
   const isFinalPhase = Number(phaseId) === 3;
 
   const triggerAnswerReward = (phaseComplete = false, savedCount = 0) => {
@@ -844,6 +902,50 @@ export default function PhaseQuestionPage() {
     answerRewardTimeoutRef.current = window.setTimeout(() => {
       setAnswerReward(null);
     }, 1700);
+  };
+
+  const findLatestUserConversation = (items) => {
+    const userMessages = (Array.isArray(items) ? items : [])
+      .filter((item) => item?.role === "user")
+      .sort((a, b) => {
+        const aTime = new Date(a.created_at || 0).getTime();
+        const bTime = new Date(b.created_at || 0).getTime();
+        if (aTime !== bTime) return aTime - bTime;
+        return Number(a.id || 0) - Number(b.id || 0);
+      });
+    return userMessages[userMessages.length - 1] || null;
+  };
+
+  const evaluateCurrentAnswerWithOrb = async (currentQuestion, value) => {
+    const sid = sessionId;
+    const apiQuestionId = currentQuestion.raw?.id ?? currentQuestion.id;
+    if (!sid || !apiQuestionId) {
+      throw new Error("Missing session or question for ORB evaluation");
+    }
+
+    // Append this reply as a new user turn so ORB can evaluate the full episode:
+    // User answer -> ORB counter-question -> User follow-up reply.
+    await authService.aiSuggestionDraft(sid, apiQuestionId, value, false);
+    const conversations = await authService.getConversations(sid, apiQuestionId);
+    const userConversation = findLatestUserConversation(conversations);
+
+    if (!userConversation?.id) {
+      throw new Error("Could not create an ORB conversation for this answer");
+    }
+
+    const orbQId = resolveOrbQuestionId(currentQuestion, currentIdx, phaseId);
+    return authService.editConversation(sid, userConversation.id, {
+      content: value,
+      questionText: currentQuestion.text,
+      contextData: {
+        frontend_page: "PhaseQuestionPage",
+        phase_id: phaseId,
+        q_id: orbQId,
+        question_id: apiQuestionId,
+        question_text: currentQuestion.text,
+        question_bank: { [orbQId]: currentQuestion.text },
+      },
+    });
   };
 
   const saveCurrentAnswer = async ({ waitForServer = true } = {}) => {
@@ -861,6 +963,7 @@ export default function PhaseQuestionPage() {
 
     let orb;
     try {
+      /* Legacy RAG v1 BrandGodFather submit disabled while Phase 1 uses edit_conversation ORB.
       const orbQId = resolveOrbQuestionId(currentQuestion, currentIdx, phaseId);
       const orbResponse = await authService.submitBrandGodFatherAnswer({
         sourceSessionId: sessionId,
@@ -876,6 +979,12 @@ export default function PhaseQuestionPage() {
           },
         },
       });
+      */
+      const orbResponse = await evaluateCurrentAnswerWithOrb(currentQuestion, value);
+      console.log("ORB metadata", orbResponse?.metadata || null);
+      console.log("ORB target_confidence_threshold", orbResponse?.target_confidence_threshold ?? orbResponse?.metadata?.target_confidence_threshold ?? null);
+      console.log("ORB crux_context", orbResponse?.crux_context || null);
+      console.log("ORB confidence_tracking", orbResponse?.view_api_response?.data?.confidence_tracking || orbResponse?.confidence_tracking || null);
       orb = normalizeOrbResult(orbResponse);
       setOrbVerdict(orb);
     } catch (err) {
@@ -892,21 +1001,15 @@ export default function PhaseQuestionPage() {
       setOrbChecking(false);
     }
 
-    // Scoring/gating disabled per request: the backend still classifies PASS/REJECT and
-    // the verdict stays visible in the ORB API-result panel, but a weak/REJECT answer no
-    // longer blocks saving or navigating to the next question.
-    // if (orb.status === "REJECT") {
-    //   setSubmitError(
-    //     orb.interruption_type === "vendor_language"
-    //       ? "Vendor trap caught. The ORB will not save a vendor answer; bring back the brand truth before you move on."
-    //       : orb.interruption_type === "contradiction"
-    //         ? "Contradiction caught. Resolve the earlier answer against this one before moving on."
-    //         : orb.interruption_type === "adaptive_coaching"
-    //           ? "Adaptive challenge raised. The ORB needs a sharper answer before you move on."
-    //       : "ORB rejected this answer. Go deeper before saving it.",
-    //   );
-    //   return null;
-    // }
+    if (orb.status === "INCOMPLETE") {
+      setSubmitError("");
+      return null;
+    }
+
+    if (orb.status !== "COMPLETE") {
+      setSubmitError("ORB could not confirm this answer yet. Please try again.");
+      return null;
+    }
 
     const nextAnswers = { ...answers, [currentQuestion.key]: value };
     persistAnswers(nextAnswers);
@@ -919,6 +1022,7 @@ export default function PhaseQuestionPage() {
       const savePromise = authService.createAnswer(sid, {
         question: Number(apiQuestionId),
         answer_text: value,
+        frontend_phase: Number(phaseId) || 1,
         is_ai_accepted: wasAiAccepted,
         ai_suggestion: wasAiAccepted ? value : undefined,
       });
@@ -1004,35 +1108,6 @@ export default function PhaseQuestionPage() {
     if (currentIdx < questions.length - 1) setCurrentIdx((i) => i + 1);
   };
 
-  const handleSave = async () => {
-    const q = questions[currentIdx];
-    if (!q) return;
-    const journeyQuestionNumber = getJourneyQuestionNumber(phaseId, currentIdx);
-    if (!isJourneyQuestionUnlocked(journeyQuestionNumber, billing || getStoredBillingUser())) {
-      await handleQuestionUpgrade();
-      return;
-    }
-    const value = inputValue.trim();
-    let nextAnswers = { ...answers };
-    if (value) {
-      const saved = await saveCurrentAnswer();
-      if (!saved) return;
-      nextAnswers = saved;
-    }
-
-    const answeredInPhase =
-      questions.length > 0 &&
-      questions.every((item) => String(nextAnswers[item.key] ?? "").trim());
-    const refreshedCount = await refreshJourneyAnswerCount();
-    const journeyDone = (refreshedCount ?? journeyAnsweredCount) >= TOTAL_JOURNEY_QUESTIONS;
-
-    if (isFinalPhase && answeredInPhase && journeyDone) {
-      navigate(`/phase-complete/${phaseId}`);
-      return;
-    }
-    toast.success("Saved");
-  };
-
   const handleSubmitClick = () => {
     if (isFinalPhase && allPhaseAnswered) {
       toast.info("Hit save button");
@@ -1070,7 +1145,8 @@ export default function PhaseQuestionPage() {
   const currentQuestion = questions[currentIdx];
   const billingSource = billing || getStoredBillingUser();
   const journeyQuestionNumber = getJourneyQuestionNumber(phaseId, currentIdx);
-  const isCurrentQuestionLocked = currentQuestion && !isJourneyQuestionUnlocked(journeyQuestionNumber, billingSource);
+  const isPhaseOneOrbJourney = Number(phaseId) === 1;
+  const isCurrentQuestionLocked = currentQuestion && !isPhaseOneOrbJourney && !isJourneyQuestionUnlocked(journeyQuestionNumber, billingSource);
   const questionLabel = currentQuestion
     ? `Q.${currentIdx + 1}. ${currentQuestion.text}`
     : "";
@@ -1120,6 +1196,16 @@ export default function PhaseQuestionPage() {
   const viewVerdict = orbVerdict || livePreview;
   const viewChecking = orbChecking || (isLiveVerdict && livePreviewChecking && !livePreview);
   const showVerdictPanel = orbChecking || orbVerdict || livePreviewChecking || !!livePreview;
+  const apiResponsePayload = viewVerdict
+    ? viewVerdict.view_api_response || {
+        event: "orb.view_api_response",
+        data: {
+          metadata: viewVerdict.metadata || null,
+          crux_context: viewVerdict.crux_context || null,
+          confidence_tracking: viewVerdict.confidence_tracking || null,
+        },
+      }
+    : null;
 
   return (
     <div className="pq-page">
@@ -1298,7 +1384,7 @@ export default function PhaseQuestionPage() {
                   <BrandOrb size="welcome" />
                 </OrbPresence>
                 <div className="pq-nudges-wrap" aria-live="polite">
-                  <span className="pq-nudges-badge">Nudges, Recommendations</span>
+                  <span className="pq-nudges-badge"></span>
                   {nudgesLoading && (
                     <p className="pq-nudges-status">Thinking of ideas…</p>
                   )}
@@ -1341,7 +1427,7 @@ export default function PhaseQuestionPage() {
                     !activeNudge &&
                     inputValue.trim().length >= 3 && (
                       <p className="pq-nudges-status pq-nudges-status--muted">
-                        Keep typing — we&apos;ll suggest stronger replies.
+                        ORB will evaluate this answer when you submit it.
                       </p>
                     )}
                   {replyVisible && viewVerdict?.reply && (
@@ -1350,7 +1436,7 @@ export default function PhaseQuestionPage() {
                       <p>{viewVerdict.reply}</p>
                     </div>
                   )}
-                  {showVerdictPanel && showApiData && (
+                  {SHOW_LEGACY_ORB_INTELLIGENCE_PANEL && showVerdictPanel && showApiData && (
                     <div
                       className={`pq-orb-verdict pq-orb-verdict--${String(
                         viewVerdict?.status || "checking",
@@ -1395,6 +1481,12 @@ export default function PhaseQuestionPage() {
                       <div className="pq-orb-verdict-grid">
                         <span>status</span>
                         <strong>{viewChecking ? "CHECKING" : viewVerdict.status}</strong>
+                        <span>discovery_id</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.associated_discovery_id || "none"}</strong>
+                        <span>target_confidence_threshold</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.target_confidence_threshold ?? "n/a"}</strong>
+                        <span>canonical_question</span>
+                        <strong>{viewChecking ? "..." : viewVerdict.metadata?.canonical_question || "none"}</strong>
                         <span>challenge_type</span>
                         <strong>{viewChecking ? "..." : viewVerdict.challenge_type || "none"}</strong>
                         <span>pressure_used</span>
@@ -1475,7 +1567,7 @@ export default function PhaseQuestionPage() {
                       title="Help me to go deeper"
                       aria-label="Help me to go deeper"
                       onClick={handleRefineClick}
-                      disabled={nudgesLoading || inputValue.trim().length < 3}
+                      disabled={LEGACY_RAG_V2_DISABLED || nudgesLoading || inputValue.trim().length < 3}
                     >
                       <img src={chatIcon1} alt="" />
                     </button>
@@ -1491,6 +1583,26 @@ export default function PhaseQuestionPage() {
                     <img src={chatIcon2} alt="" />
                   </button>
                 </div>
+
+                {showVerdictPanel && (
+                  <button
+                    type="button"
+                    className="pq-api-data-link pq-api-data-link--under-input"
+                    onClick={() => {
+                      if (!showApiData) persistViewApiResponsePayload(apiResponsePayload);
+                      setShowApiData((v) => !v);
+                    }}
+                  >
+                    {showApiData ? "Hide API response" : "View API response"}
+                    {viewChecking ? " (checking...)" : ""}
+                  </button>
+                )}
+
+                {showVerdictPanel && showApiData && apiResponsePayload && (
+                  <pre className="pq-api-response-json">
+                    {JSON.stringify(apiResponsePayload, null, 2)}
+                  </pre>
+                )}
 
                 {SHOW_BGF_HELP_PANEL && (
                   <div className="pq-bgf-help" aria-live="polite">
@@ -1586,17 +1698,6 @@ export default function PhaseQuestionPage() {
               >
                 →
               </button>
-
-              {showVerdictPanel && (
-                <button
-                  type="button"
-                  className="pq-api-data-link"
-                  onClick={() => setShowApiData((v) => !v)}
-                >
-                  {showApiData ? "Hide API data" : "View API data"}
-                  {viewChecking ? " (checking…)" : ""}
-                </button>
-              )}
 
               {submitError && <p className="pq-submit-error">{submitError}</p>}
             </>

@@ -1007,6 +1007,28 @@
   color: #b8f0ff;
 }
 
+.pq-api-data-link--under-input {
+  display: block;
+  width: fit-content;
+  margin: -2px 0 8px 18px;
+}
+
+.pq-api-response-json {
+  width: min(100%, 720px);
+  max-height: 220px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(142, 229, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(4, 13, 24, 0.76);
+  color: rgba(232, 247, 255, 0.94);
+  font-size: 11px;
+  line-height: 1.5;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .pq-orb-verdict--live .pq-orb-verdict-head span {
   color: #8ee5ff;
   letter-spacing: 0.08em;

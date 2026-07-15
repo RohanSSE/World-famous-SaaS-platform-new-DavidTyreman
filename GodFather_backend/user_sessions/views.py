@@ -1193,9 +1193,15 @@ def session_answer_create(request, pk):
     serializer.is_valid(raise_exception=True)
     
     question = serializer.validated_data['question']
+    frontend_phase = serializer.validated_data.get('frontend_phase')
+    allow_framework_phase1_question = (
+        frontend_phase == 1
+        and question.stage == 2
+        and get_framework(f"Q{question.order}") is not None
+    )
 
     # ADD STAGE VALIDATION HERE
-    if not session.can_access_stage(question.stage, request.user):
+    if not allow_framework_phase1_question and not session.can_access_stage(question.stage, request.user):
         if question.stage > 1:
             return Response({
                 "detail": "Please upgrade your plan to continue after Phase 1.",
@@ -1457,6 +1463,20 @@ def question_list(request):
             }
             return Response(payload, status=402 if requested_stage > 1 else 400)
 
+        if requested_stage == 1:
+            questions = Question.objects.filter(
+                stage=2,
+                is_active=True
+            ).order_by('order', 'id')[:len(PHASE1_FRAMEWORKS)]
+            visible_questions = [q for q in questions if q.is_visible_to(request.user)]
+            return Response({
+                "stage": 1,
+                "stage_name": "Foundation & Identity",
+                "mode": "bulk",
+                "source": "phase1_frameworks",
+                "questions": _serialize_orb_phase1_questions(visible_questions),
+            })
+
         questions = Question.objects.filter(
             stage=requested_stage,
             is_active=True
@@ -1482,18 +1502,19 @@ def question_list(request):
     # =========================
     if current_stage == 1:
         questions = Question.objects.filter(
-            stage=1,
+            stage=2,
             is_active=True
-        ).order_by('order')
+        ).order_by('order', 'id')[:len(PHASE1_FRAMEWORKS)]
 
         user = request.user
         visible_questions = [q for q in questions if q.is_visible_to(user)]
 
         return Response({
             "stage": 1,
-            "stage_name": "Basic",
+            "stage_name": "Foundation & Identity",
             "mode": "bulk",  # frontend can use this to show form
-            "questions": _serialize_user_facing_questions(visible_questions, force_refine=force_refine)
+            "source": "phase1_frameworks",
+            "questions": _serialize_orb_phase1_questions(visible_questions)
         })
 
     # =========================
@@ -2259,10 +2280,233 @@ from user_sessions.services.rag_pipeline_resolver import (
 )
 from user_sessions.services.rag_observability import should_include_debug
 from user_sessions.services.rag_agents import list_agents
+from brandgodfather.services.phase1_frameworks import PHASE1_FRAMEWORKS, get_framework, match_orb_framework
 
 logger = logging.getLogger(__name__)
 es_service = ElasticsearchService()
 embedding_service = EmbeddingService()
+
+ORB_SIGNAL_MEMORY_TYPES = {
+    "core_belief_or_idea": "strategic_priority",
+    "founder_wound_or_victory": "founder_personality",
+    "customer_fear_or_aspiration": "audience_psychology",
+}
+
+
+def _normalize_orb_result(result, expected_discovery_id):
+    if not isinstance(result, dict):
+        raise ValueError("ORB response must be a JSON object")
+
+    status_value = str(result.get("status", "")).strip().lower()
+    if status_value not in {"complete", "incomplete"}:
+        raise ValueError("ORB response status must be complete or incomplete")
+
+    response_text = str(result.get("response") or "").strip()
+    if not response_text:
+        raise ValueError("ORB response must include response text")
+
+    try:
+        confidence_score = int(float(result.get("confidence_score", 0)))
+    except (TypeError, ValueError):
+        raise ValueError("ORB confidence_score must be numeric")
+    confidence_score = max(0, min(100, confidence_score))
+
+    extracted_signals = result.get("extracted_signals") or {}
+    if not isinstance(extracted_signals, dict):
+        extracted_signals = {}
+
+    normalized_signals = {}
+    for signal_key in ORB_SIGNAL_MEMORY_TYPES:
+        signal_value = extracted_signals.get(signal_key)
+        if signal_value is None:
+            normalized_signals[signal_key] = None
+        else:
+            signal_text = str(signal_value).strip()
+            normalized_signals[signal_key] = signal_text or None
+
+    associated_discovery_id = str(result.get("associated_discovery_id") or expected_discovery_id).strip()
+    if associated_discovery_id != expected_discovery_id:
+        associated_discovery_id = expected_discovery_id
+
+    internal_evaluation = str(result.get("internal_evaluation") or "").strip()
+    if not internal_evaluation:
+        raise ValueError("ORB response must include internal_evaluation")
+
+    return {
+        "internal_evaluation": internal_evaluation,
+        "status": status_value,
+        "associated_discovery_id": associated_discovery_id,
+        "confidence_score": confidence_score,
+        "response": response_text,
+        "extracted_signals": normalized_signals,
+    }
+
+
+def _save_orb_signals_to_memory(session, question, question_text, orb_result, user):
+    if orb_result["status"] != "complete":
+        return []
+
+    saved_keys = []
+    confidence = orb_result["confidence_score"] / 100
+    try:
+        from user_sessions.services.brand_memory import upsert_memory
+
+        for signal_key, memory_type in ORB_SIGNAL_MEMORY_TYPES.items():
+            signal_value = orb_result["extracted_signals"].get(signal_key)
+            if not signal_value:
+                continue
+
+            memory_key = f"orb:{orb_result['associated_discovery_id']}:{signal_key}"
+            upsert_memory(
+                session.id,
+                memory_type,
+                memory_key,
+                f"ORB {signal_key.replace('_', ' ')}: {signal_value}",
+                weight=1.8,
+                importance_score=max(0.75, confidence),
+                confidence=confidence,
+                value={
+                    "question_id": question.id,
+                    "question_text": question_text,
+                    "associated_discovery_id": orb_result["associated_discovery_id"],
+                    "confidence_score": orb_result["confidence_score"],
+                    "source": "edit_conversation_orb",
+                    "extracted_signals": orb_result["extracted_signals"],
+                },
+                agent_id="orb",
+                user=user,
+                embedding_service=embedding_service,
+            )
+            saved_keys.append(memory_key)
+    except Exception as e:
+        logger.warning("ORB signal memory save failed: %s", e)
+    return saved_keys
+
+
+def _record_orb_confidence_history(session, question, question_text, draft, orb_result, target_confidence_threshold, user):
+    memory_key = f"orb:{orb_result['associated_discovery_id']}:confidence_history"
+    try:
+        from django.utils import timezone
+        from user_sessions.models import BrandMemory
+
+        existing = BrandMemory.objects.filter(session=session, key=memory_key).first()
+        existing_value = getattr(existing, "value", None) or {}
+        history = existing_value.get("confidence_history") if isinstance(existing_value, dict) else []
+        if not isinstance(history, list):
+            history = []
+
+        turn_index = len(history) + 1
+        confidence_score = int(orb_result["confidence_score"])
+        entry = {
+            "turn_index": turn_index,
+            "conversation_question_id": question.id,
+            "question_text": question_text,
+            "associated_discovery_id": orb_result["associated_discovery_id"],
+            "status": orb_result["status"],
+            "confidence_score": confidence_score,
+            "target_confidence_threshold": target_confidence_threshold,
+            "answer_preview": str(draft or "").strip()[:500],
+            "response_preview": str(orb_result.get("response") or "").strip()[:500],
+            "created_at": timezone.now().isoformat(),
+        }
+        history.append(entry)
+
+        value = {
+            "question_id": question.id,
+            "question_text": question_text,
+            "associated_discovery_id": orb_result["associated_discovery_id"],
+            "latest_confidence_score": confidence_score,
+            "target_confidence_threshold": target_confidence_threshold,
+            "latest_status": orb_result["status"],
+            "source": "edit_conversation_orb_confidence_history",
+            "confidence_history": history,
+        }
+        BrandMemory.objects.update_or_create(
+            session=session,
+            key=memory_key,
+            defaults={
+                "memory_type": "brand_fact",
+                "content": f"ORB confidence history for {orb_result['associated_discovery_id']}: latest {confidence_score}% after {turn_index} turn(s).",
+                "value": value,
+                "confidence": confidence_score / 100,
+                "importance_score": max(0.5, min(1.0, confidence_score / 100)),
+                "weight": 1.2,
+                "agent_id": "orb",
+                "created_by": user,
+                "is_pinned": False,
+            },
+        )
+        return history
+    except Exception as e:
+        logger.warning("ORB confidence history save failed: %s", e)
+        return []
+
+
+def _build_orb_crux_context_debug(
+    result,
+    draft,
+    formatted_history,
+    brand_profile_summary,
+    memory_context,
+    retrieval_context,
+    saved_memory_keys,
+    confidence_history,
+):
+    def compact_text(value, max_chars=1200):
+        text = str(value or "").strip()
+        if len(text) <= max_chars:
+            return text
+        return text[-max_chars:].strip()
+
+    extracted_signals = result.get("extracted_signals") or {}
+    crux = (
+        extracted_signals.get("core_belief_or_idea")
+        or extracted_signals.get("founder_wound_or_victory")
+        or extracted_signals.get("customer_fear_or_aspiration")
+    )
+    history_text = str(formatted_history or "").strip()
+    retrieval_text = str(retrieval_context or "").strip()
+    return {
+        "crux": crux,
+        "extracted_signals": extracted_signals,
+        "storage": {
+            "conversation_loop_stored": True,
+            "crux_memory_stored": result["status"] == "complete" and bool(saved_memory_keys),
+            "saved_memory_keys": saved_memory_keys,
+            "confidence_history_stored": bool(confidence_history),
+            "rule": "Conversation turns are stored for every follow-up loop; ORB crux signals are saved to BrandMemory only after status is complete.",
+        },
+        "confidence_tracking": {
+            "latest_confidence_score": result["confidence_score"],
+            "confidence_history": confidence_history,
+        },
+        "context": {
+            "latest_answer": draft,
+            "conversation_history_preview": compact_text(history_text, 1200),
+            "conversation_history_truncated": len(history_text) > 1200,
+            "brand_profile_summary": compact_text(brand_profile_summary, 800),
+            "memory_context_used": bool(memory_context),
+            "memory_context_preview": compact_text(memory_context, 800),
+            "retrieval_context_used": bool(retrieval_text),
+            "retrieval_context_preview": compact_text(retrieval_text, 800),
+            "retrieval_context_truncated": len(retrieval_text) > 800,
+        },
+    }
+
+
+def _serialize_orb_phase1_questions(questions):
+    data = list(QuestionSerializer(questions, many=True).data)
+    for index, item in enumerate(data, start=1):
+        framework_key = f"Q{index}"
+        framework = PHASE1_FRAMEWORKS.get(framework_key) or {}
+        item["source_stage"] = item.get("stage")
+        item["stage"] = 1
+        item["order"] = index
+        item["orb_framework_q_id"] = framework_key
+        item["text"] = framework.get("question") or item.get("text") or f"Question {index}"
+        item["user_facing_text"] = item["text"]
+        item["orb_analysis_framework"] = framework.get("orb_analysis_framework") or {}
+    return data
 
 
 @swagger_auto_schema(
@@ -4092,11 +4336,12 @@ The JSON must match the exact structure requested."""
 
 @swagger_auto_schema(
     method='patch',
-    operation_description="Edit a user conversation message (ChatGPT-like: edits message, deletes subsequent messages, and generates only a follow-up question)",
+    operation_description="Edit a user conversation message, evaluate it through ORB, and route complete/incomplete status",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
             'content': openapi.Schema(type=openapi.TYPE_STRING, description="Updated message content"),
+            'question_text': openapi.Schema(type=openapi.TYPE_STRING, description="Optional displayed question text for file-sourced questions"),
         },
         required=['content']
     ),
@@ -4108,6 +4353,12 @@ The JSON must match the exact structure requested."""
                 properties={
                     "edited_message": openapi.Schema(type=openapi.TYPE_OBJECT),
                     "follow_up_question": openapi.Schema(type=openapi.TYPE_STRING),
+                    "status": openapi.Schema(type=openapi.TYPE_STRING),
+                    "associated_discovery_id": openapi.Schema(type=openapi.TYPE_STRING),
+                    "confidence_score": openapi.Schema(type=openapi.TYPE_INTEGER),
+                    "response": openapi.Schema(type=openapi.TYPE_STRING),
+                    "extracted_signals": openapi.Schema(type=openapi.TYPE_OBJECT),
+                    "advance_to_next_question": openapi.Schema(type=openapi.TYPE_BOOLEAN),
                     "deleted_count": openapi.Schema(type=openapi.TYPE_INTEGER),
                     "documents_searched": openapi.Schema(type=openapi.TYPE_INTEGER),
                     "context_used": openapi.Schema(type=openapi.TYPE_BOOLEAN),
@@ -4123,10 +4374,10 @@ The JSON must match the exact structure requested."""
 @permission_classes([IsAuthenticated, HasRolePermission])
 def edit_conversation(request, pk, conversation_id):
     """
-    ChatGPT-like behavior:
+    ORB edit behavior:
     1. Edit the user message
     2. Delete all subsequent messages in the thread
-    3. Generate ONLY a follow-up question (assistant message) - no improved answer
+    3. Evaluate the edited answer against the ORB Cognitive Architecture
     """
     session = get_object_or_404(Session, pk=pk)
 
@@ -4145,6 +4396,20 @@ def edit_conversation(request, pk, conversation_id):
     content = request.data.get('content', '').strip()
     if not content:
         return Response({"detail": "Content is required"}, status=400)
+
+    question = conversation.question
+    db_question_text = question.text.strip()
+    question_text_candidates = [
+        request.data.get('question_text'),
+        request.data.get('current_question_text'),
+        getattr(question, 'user_facing_text', ''),
+        getattr(question, 'ai_refined_text', ''),
+        db_question_text,
+    ]
+    question_text = next((str(candidate).strip() for candidate in question_text_candidates if str(candidate or '').strip()), db_question_text)
+    orb_framework = match_orb_framework(question_text) or match_orb_framework(db_question_text)
+    if not orb_framework:
+        return Response({"detail": "No ORB framework mapping found for this question."}, status=422)
     
     # Step 1: Update the edited message
     conversation.content = content
@@ -4159,10 +4424,8 @@ def edit_conversation(request, pk, conversation_id):
     deleted_count = subsequent_conversations.count()
     subsequent_conversations.delete()
     
-    # Step 3: Generate ONLY a follow-up question using updated conversation history
-    question = conversation.question
+    # Step 3: Evaluate updated conversation history through ORB
     draft = conversation.content.strip()
-    question_text = question.text.strip()
     
     # Get conversation history up to (and including) the edited message
     history_qs = Conversation.objects.filter(
@@ -4171,10 +4434,12 @@ def edit_conversation(request, pk, conversation_id):
         created_at__lte=conversation.created_at
     ).order_by('created_at')
     
-    history_messages = [
-        {"role": "assistant" if c.role == "assistant" else "user", "content": c.content}
-        for c in history_qs
-    ]
+    formatted_history = ""
+    for msg in history_qs:
+        role = "ORB (Coach)" if msg.role == "assistant" else "User"
+        formatted_history += f"{role}: {msg.content}\n\n"
+    if not formatted_history:
+        formatted_history = "No previous history for this question."
     
     # RAG context (user-scoped documents + ai_knowledge)
     rag_sources = []
@@ -4198,14 +4463,6 @@ def edit_conversation(request, pk, conversation_id):
     except Exception as e:
         logger.error("Context retrieval failed: %s", e)
 
-    # Get foundation answer if exists
-    foundation = ""
-    try:
-        foundation_obj = Answer.objects.get(session=session, question=question)
-        foundation = foundation_obj.answer_text.strip()
-    except Answer.DoesNotExist:
-        pass
-    
     # Get brand profile from other questions
     other_questions_answers = Answer.objects.filter(
         session=session
@@ -4214,119 +4471,158 @@ def edit_conversation(request, pk, conversation_id):
     brand_profile_parts = []
     for ans in other_questions_answers:
         brand_profile_parts.append(f"Q: {ans.question.text}\nA: {ans.answer_text}")
-    
-    brand_profile_summary = "\n\n".join(brand_profile_parts) if brand_profile_parts else "No previous answers from other questions yet"
-    
-    # Build prompt - ONLY generate follow-up question (no improved_answer)
-    task_block = """
-    TASK — Follow-Up Question ONLY:
 
-    Generate ONLY a follow-up question based on the user's edited answer.
-    DO NOT generate an improved_answer - the user has already edited their answer.
+    memory_context = ""
+    try:
+        from user_sessions.services.brand_memory import format_memory_context_block
+        memory_context = format_memory_context_block(
+            session.id,
+            f"{orb_framework['associated_discovery_id']} {question_text} {draft}",
+            agent_id="orb",
+            limit=4,
+        )
+    except Exception as e:
+        logger.debug("ORB global memory context skipped: %s", e)
 
-    Inside "follow_up_question", you MUST structure your message as THREE paragraphs:
+    global_profile_parts = []
+    if brand_profile_parts:
+        global_profile_parts.append("Previously completed answers:\n" + "\n\n".join(brand_profile_parts))
+    if memory_context:
+        global_profile_parts.append(memory_context)
+    brand_profile_summary = "\n\n".join(global_profile_parts) if global_profile_parts else "No previous global profile data yet"
 
-    PARAGRAPH 1 — ⭐ APPRECIATION
-    • 1–2 short sentences
-    • Recognize what they expressed in their edited answer
-    • Strong, direct tone — one emoji max here if helpful
+    look_for_json = json.dumps(orb_framework["look_for"], ensure_ascii=False)
+    avoid_json = json.dumps(orb_framework["avoid"], ensure_ascii=False)
 
-    <blank line required>
+    orb_system_prompt = f'''You are ORB, the intelligence engine powering The Brand Godfather. You are not a chatbot or a simple questionnaire; you are a world-class strategist, coach, and guide sitting beside the user. Your ultimate product is the user's transformation from "vendor thinking" to "brand thinking".
 
-    PARAGRAPH 2 — 🧭 SUGGESTIONS
-    • 2–4 short sentences
-    • Give specific, actionable coaching based on their edited answer:
-    - Behavior-based proof or example
-    - Weak → Strong word upgrades (if needed)
-    - How to make the emotional impact VIVID
-    • Explain WHY the upgrade matters — unforgettable > nice
+### CONTEXT
 
-    <blank line required>
+Main Question Being Explored: "{question_text}"
 
-    PARAGRAPH 3 — ❓ ONE GUIDING QUESTION
-    • ONE question, 10–15 words max
-    • Push deeper into the transformation or real-life behavior
-    • Simple human language
+Associated Discovery Target: "{orb_framework['associated_discovery_id']}"
 
-    TONE:
-    • Bold, direct, supportive — strategist energy
-    • Minimal emojis, only to reinforce belief 🙌
-    • Push away from safe, generic answers every turn
+Target Confidence Threshold: "{orb_framework['target_confidence_threshold']}%"
 
-    📌 REQUIRED OUTPUT — JSON ONLY:
-    {
-    "follow_up_question": "3-paragraph message"
-    }
-    """
-    
-    prompt = f"""
-    🎩 ROLE:
-    You are THE BRAND GODFATHER — world-class brand strategist.
-    Your purpose: reveal the truth of the brand — not decorate it.
+Conversation History for this Question:
+{formatted_history}
 
-    🧠 CORE PRINCIPLES:
-    • Brands must be FELT — emotion > explanation
-    • Behavior proves words — no behavior = wrong word
-    • Specific > vague, vivid > generic, bold > safe
-    • You believe in them more than they believe in themselves 😎
+User's Latest Answer: "{draft}"
 
-    🚫 FORBIDDEN (never accept these without coaching):
-    "quality", "professional", "innovative", "best service", "creative", "inspiring", "helpful", "reliable"
-    → if any appear, suggest stronger, behavior-backed wording
+### SYSTEM GLOBAL COMPASS (DO NOT CONTRADICT)
 
-    CONTEXT:
-    Current question: {question_text}
-    User's EDITED answer: {draft}
-    Foundation (if any): {foundation or "None"}
-    Brand Profile: {brand_profile_summary}
-    History: {json.dumps(history_messages, ensure_ascii=False, indent=2) if history_messages else "None"}
-    KB context: {context or "None"}
+To ensure long-term strategic alignment, cross-reference the user's current responses with discoveries verified from completed milestones earlier in this journey.
 
-    🔥 NON-NEGOTIABLE:
-    • Push into truth every turn
-    • Celebrate courage — but don't let them hide
-    • Add Minimal emojis which will be visible at least — used like seasoning, not like confetti
-    • Never speak in corporate tone
-    • You are building a world-famous brand with them — act like it
+- Previously Discovered Global Data: "{brand_profile_summary}"
 
-    {task_block}
-    """
+### EVALUATION FRAMEWORK
+
+You must evaluate the cumulative evidence across the full conversation history and the user's latest answer against the specific parameters assigned to this question. Do not evaluate the latest answer in isolation. If an earlier answer already supplied evidence that satisfies a `look_for` item, carry that evidence forward and combine it with the newest answer.
+
+LOOK FOR: {look_for_json}
+
+AVOID: {avoid_json}
+
+### YOUR MISSION
+
+1. Complete your internal Chain of Thought reasoning within the "internal_evaluation" property BEFORE drafting any text for the user.
+
+2. Evaluate the full thread explicitly against the specific `look_for` and `avoid` arrays assigned to this question. Treat follow-up replies as episodic memory for the same discovery target, not as separate standalone answers.
+
+3. Calculate a definitive "confidence_score" (0-100) based on cumulative response consistency, emotional depth, and narrative support across the whole thread.
+
+4. If the combined thread now satisfies the target threshold, mark status as "complete" even if the latest answer is short, provided the earlier thread contains the missing evidence.
+
+### BEHAVIORAL PROTOCOLS
+
+If the computed confidence_score is below the target threshold, you must flag the status as "incomplete" and generate an adaptive counter-question using these rules:
+
+- THE VENDOR TRAP: If the answer triggers anything in the `avoid` list, gently redirect them from the "vehicle" (what they sell) to the "destination" (what they believe).
+
+- RECOGNITION & PREDICTION: Acknowledge emotional signals, shared stories, or vulnerability before pushing forward.
+
+- BRAIN SQUEEZE DETECTION: If the user displays frustration or gives short "I don't know" answers, abandon complex frameworks immediately. Drop into a warm, supportive conversational tone.
+
+- CONTRADICTION & REGRESSION DETECTION: Cross-reference responses with the SYSTEM GLOBAL COMPASS. If they slide back into old vendor arguments that violate previously unlocked breakthroughs, force an "incomplete" status and respectfully highlight the misalignment.
+
+**4. Implement Structured JSON Output and Routing**
+
+Force the OpenAI call to return this specific JSON structure using structured outputs / JSON mode: {{ "internal_evaluation": "string", "status": "string (strictly 'complete' or 'incomplete')", "associated_discovery_id": "string", "confidence_score": "integer", "response": "string", "extracted_signals": {{ "core_belief_or_idea": "string or null", "founder_wound_or_victory": "string or null", "customer_fear_or_aspiration": "string or null" }} }}
+
+After parsing, save the result["response"] to the Conversation model as the assistant's reply.
+
+- If status == "incomplete", return the response to the frontend so the user can answer the sub-question.
+- If status == "complete", extract the signals and log/save them to the Session (or  Answer table) for global memory, and prepare the UI to move to the next question. Do NOT generate standard chatbot completions anymore.'''
     
     # Generate new AI response
     try:
-        david_system_prompt = """You are THE BRAND GODFATHER — speaking with David's voice and wisdom.
-
-CORE RULES:
-1. Base ALL responses on the provided document excerpts (David's teachings)
-2. Speak in bold, direct, no-jargon tone
-3. Use stories and examples from the excerpts when available
-4. Never give generic marketing advice — every response must reflect David's philosophy
-5. If document context is provided, you MUST use it
-
-DAVID'S PHILOSOPHY:
-• A brand is a promise KEPT, not made
-• Brands must be FELT — emotion beats explanation
-• Behavior proves words — no behavior = wrong word
-• Specific > vague, vivid > generic, bold > safe
-
-Respond only with perfect JSON."""
-        
         completion = get_openai_client().chat.completions.create(
             model=get_openai_chat_model(),
             messages=[
-                {"role": "system", "content": david_system_prompt},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": orb_system_prompt},
             ],
             response_format={"type": "json_object"},
             temperature=0.7,
             max_tokens=1200,
         )
         
-        result = json.loads(completion.choices[0].message.content.strip())
-        follow_up = result.get("follow_up_question", "Can you tell me more?").strip()
+        result = _normalize_orb_result(
+            json.loads(completion.choices[0].message.content.strip()),
+            orb_framework["associated_discovery_id"],
+        )
+        assistant_response = result["response"]
+        saved_memory_keys = _save_orb_signals_to_memory(session, question, question_text, result, request.user)
+        confidence_history = _record_orb_confidence_history(
+            session,
+            question,
+            question_text,
+            draft,
+            result,
+            orb_framework["target_confidence_threshold"],
+            request.user,
+        )
+        orb_metadata = {
+            "question_id": question.id,
+            "question_text": question_text,
+            "canonical_question": orb_framework["question"],
+            "associated_discovery_id": orb_framework["associated_discovery_id"],
+            "target_confidence_threshold": orb_framework["target_confidence_threshold"],
+            "look_for": orb_framework["look_for"],
+            "avoid": orb_framework["avoid"],
+        }
+        logger.info(
+            "ORB metadata selected for edit_conversation: discovery_id=%s target_confidence_threshold=%s question_id=%s",
+            orb_metadata["associated_discovery_id"],
+            orb_metadata["target_confidence_threshold"],
+            orb_metadata["question_id"],
+        )
+        crux_context = _build_orb_crux_context_debug(
+            result,
+            draft,
+            formatted_history,
+            brand_profile_summary,
+            memory_context,
+            context,
+            saved_memory_keys,
+            confidence_history,
+        )
+        view_api_response = {
+            "event": "orb.view_api_response",
+            "id": f"session:{session.id}:question:{question.id}:conversation:{conversation.id}",
+            "retry": 3000,
+            "data": {
+                "metadata": orb_metadata,
+                "crux_context": crux_context,
+                "confidence_tracking": {
+                    "latest_confidence_score": result["confidence_score"],
+                    "target_confidence_threshold": orb_framework["target_confidence_threshold"],
+                    "confidence_history": confidence_history,
+                },
+            },
+        }
+        confidence_tracking = view_api_response["data"]["confidence_tracking"]
         
-        # Save ONLY the assistant follow-up question (no improved_answer)
-        Conversation.objects.create(session=session, question=question, role="assistant", content=follow_up.strip())
+        Conversation.objects.create(session=session, question=question, role="assistant", content=assistant_response.strip())
         
         return Response({
             "edited_message": {
@@ -4335,7 +4631,19 @@ Respond only with perfect JSON."""
                 "role": conversation.role,
                 "created_at": conversation.created_at,
             },
-            "follow_up_question": follow_up,
+            "status": result["status"],
+            "associated_discovery_id": result["associated_discovery_id"],
+            "target_confidence_threshold": orb_framework["target_confidence_threshold"],
+            "metadata": orb_metadata,
+            "confidence_score": result["confidence_score"],
+            "response": assistant_response,
+            "follow_up_question": assistant_response,
+            "extracted_signals": result["extracted_signals"],
+            "crux_context": crux_context,
+            "confidence_tracking": confidence_tracking,
+            "view_api_response": view_api_response,
+            "advance_to_next_question": result["status"] == "complete",
+            "saved_memory_keys": saved_memory_keys,
             "deleted_count": deleted_count,
             "documents_searched": documents_searched,
             "context_used": bool(context),
@@ -4345,6 +4653,9 @@ Respond only with perfect JSON."""
         
     except json.JSONDecodeError:
         logger.error("AI returned invalid JSON")
+        return Response({"detail": "AI response was malformed"}, status=500)
+    except ValueError as e:
+        logger.error("AI returned invalid ORB JSON: %s", e)
         return Response({"detail": "AI response was malformed"}, status=500)
     except OpenAIError as e:
         logger.exception("OpenAI error")

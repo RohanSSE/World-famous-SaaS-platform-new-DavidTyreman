@@ -13,6 +13,7 @@ Only Phase 1 (Q1-Q8) is defined here. Other phases fall back to existing behavio
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, Dict, Optional
 
 # Keyed by ORB question id ("Q1".."Q8"), which mirrors Question.order for stage 1.
@@ -154,6 +155,157 @@ PHASE1_FRAMEWORKS: Dict[str, Dict[str, Any]] = {
         },
     },
 }
+
+ORB_FRAMEWORK: Dict[str, Dict[str, Any]] = {
+    "What inspired you to start this business?": {
+        "associated_discovery_id": "D_1.1_FOUNDER_IDENTITY",
+        "target_confidence_threshold": 90,
+        "look_for": [
+            "founder stories (struggle, breakthrough, or failure)",
+            "emotional resonance (frustration, conviction, pride, or protectiveness)",
+            "the specific problem they were trying to solve",
+            "founder wounds or victories",
+        ],
+        "avoid": [
+            "vendor thinking",
+            "transactional motives (making money or price emphasis)",
+            "generic statements of passion",
+            "feature-focused descriptions",
+        ],
+    },
+    "Beyond what you sell, what is the deeper purpose of your business?": {
+        "associated_discovery_id": "D_1.2_WHY_BUSINESS_EXISTS",
+        "target_confidence_threshold": 85,
+        "look_for": [
+            "a core belief, philosophy, or idea they want customers to advocate",
+            "focus on transformation",
+            "future possibility",
+            "genuine conviction",
+        ],
+        "avoid": [
+            "descriptions of products masquerading as a purpose",
+            "polished corporate mission statements",
+            "vendor thinking",
+            "forced answers",
+        ],
+    },
+    "Do you see your business as a vendor, a specialist, or a distinct brand, and why?": {
+        "associated_discovery_id": "D_1.4_STRATEGIC_READINESS",
+        "target_confidence_threshold": 75,
+        "look_for": [
+            "honest self-assessment",
+            "brand thinking markers",
+            "understanding of consistent uniqueness",
+            "aspirations to escape comparison",
+        ],
+        "avoid": [
+            "superficial branding definitions",
+            "vendor thinking masquerading as a brand",
+            "defensiveness",
+            "defining purely by being 'slightly better'",
+        ],
+    },
+    "What challenges or frustrations do you face within your industry?": {
+        "associated_discovery_id": "D_1.3_CURRENT_STRATEGIC_REALITY",
+        "target_confidence_threshold": 80,
+        "look_for": [
+            "frustration as an emotional signal of unrealized value",
+            "specific details about what is fundamentally broken",
+            "founder frustrations that could evolve into a manifesto",
+            "genuine emotional resonance",
+        ],
+        "avoid": [
+            "vendor-level complaints about competitors undercutting prices",
+            "superficial complaints about standard mechanics",
+            "blaming customers",
+            "generic answers",
+        ],
+    },
+    "In what ways do you feel your business is misunderstood?": {
+        "associated_discovery_id": "D_1.1_FOUNDER_IDENTITY",
+        "target_confidence_threshold": 90,
+        "look_for": [
+            "hidden value or unique traits",
+            "strengths they apologize for",
+            "qualities that feel 'ordinary' but are 'extraordinary'",
+            "contradictions between founder view and customer view",
+        ],
+        "avoid": [
+            "blaming the customer",
+            "vendor-level complaints",
+            "dismissive language",
+            "defensiveness",
+        ],
+    },
+    "What aspects of your industry or space do you feel are broken or need change?": {
+        "associated_discovery_id": "D_1.3_CURRENT_STRATEGIC_REALITY",
+        "target_confidence_threshold": 80,
+        "look_for": [
+            "identification of a meaningful human or industry problem",
+            "founder convictions about how things should be done",
+            "seeds of a brand idea",
+            "vision for a better future",
+        ],
+        "avoid": [
+            "superficial complaints about competitors",
+            "complaints focused on making business easier rather than customer experience",
+            "generic buzzwords",
+            "transactional vendor thinking",
+        ],
+    },
+    "What unique belief or perspective does your business hold that others may not share?": {
+        "associated_discovery_id": "D_1.2_WHY_BUSINESS_EXISTS",
+        "target_confidence_threshold": 85,
+        "look_for": [
+            "distinct philosophy or unconventional idea",
+            "courage and conviction",
+            "ideas customers want to advocate for",
+            "consistency in uniqueness",
+        ],
+        "avoid": [
+            "safe, generic statements",
+            "vendor thinking masquerading as a belief",
+            "confusing standard practices with a belief",
+            "lack of conviction",
+        ],
+    },
+    "What core idea or principle does your business stand for?": {
+        "associated_discovery_id": "D_1.2_WHY_BUSINESS_EXISTS",
+        "target_confidence_threshold": 85,
+        "look_for": [
+            "central idea larger than the products",
+            "idea that inspires possibility",
+            "evidence of a cause or movement",
+            "enduring principle",
+        ],
+        "avoid": [
+            "focusing on the vehicle rather than the destination",
+            "transactional vendor thinking",
+            "generic corporate platitudes",
+            "purely functional solutions",
+        ],
+    },
+}
+
+
+def _normalize_orb_question_text(question_text: str) -> str:
+    text = str(question_text or "").strip().lower()
+    text = re.sub(r"^\s*(?:q(?:uestion)?\.?\s*)?\d+\s*[\).:-]?\s*", "", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def match_orb_framework(question_text: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Return the ORB framework rule matching a DB or file-sourced question."""
+    normalized_question = _normalize_orb_question_text(question_text or "")
+    if not normalized_question:
+        return None
+
+    for canonical_question, framework in ORB_FRAMEWORK.items():
+        normalized_canonical = _normalize_orb_question_text(canonical_question)
+        if normalized_canonical in normalized_question or normalized_question in normalized_canonical:
+            return {"question": canonical_question, **framework}
+    return None
 
 # ORB mission + behavioral protocols applied to Phase 1 evaluation. Kept aligned
 # with the PASS/REJECT output contract the pipeline already depends on
