@@ -7,9 +7,14 @@ const getDefaultApiBaseUrl = () => {
 
   const { protocol, hostname } = window.location;
   const isLocalHost = ['localhost', '127.0.0.1', '0.0.0.0'].includes(hostname);
+  const devTunnelMatch = hostname.match(/^(.*-)(\d+)(\..*\.devtunnels\.ms)$/);
 
   if (isLocalHost) {
     return 'http://127.0.0.1:8001/api';
+  }
+
+  if (devTunnelMatch) {
+    return `${protocol}//${devTunnelMatch[1]}8001${devTunnelMatch[3]}/api`;
   }
 
   return `${protocol}//${hostname}:8001/api`;

@@ -42,19 +42,28 @@ const LEGACY_RAG_V2_DISABLED = true;
 // Older expanded ORB Intelligence debug card is hidden for now; use the API response link instead.
 const SHOW_LEGACY_ORB_INTELLIGENCE_PANEL = false;
 
-function resolveOrbQuestionId(question, questionIndex, phaseId) {
-  const rawId = question?.raw?.q_id || question?.raw?.brandgodfather_q_id;
+const ORB_EVALUATION_STEPS = [
+  "Extracting emotions",
+  "Constructing persona",
+  "Mapping founder truth",
+  "Checking brand relevance",
+  "Scoring confidence",
+  "Synthesizing response",
+];
+
+function resolveOrbQuestionId(question, questionIndex) {
+  const rawId = question?.raw?.orb_framework_q_id || question?.raw?.q_id || question?.raw?.brandgodfather_q_id;
   if (rawId) {
     const normalized = String(rawId).trim();
+    const qMatch = normalized.match(/Q\d+/i);
+    if (qMatch) return qMatch[0].toUpperCase();
     return normalized.toUpperCase().startsWith("Q") ? normalized.toUpperCase() : `Q${normalized}`;
   }
 
   const order = Number(question?.raw?.order ?? question?.order);
   if (Number.isFinite(order) && order > 0) return `Q${order}`;
 
-  const phaseNumber = Number(phaseId) || 1;
-  const fallbackOffset = phaseNumber === 1 ? 0 : (phaseNumber - 1) * 10;
-  return `Q${fallbackOffset + Number(questionIndex ?? 0) + 1}`;
+  return `Q${Number(questionIndex ?? 0) + 1}`;
 }
 
 function splitFollowUp(text) {
@@ -73,6 +82,16 @@ function splitFollowUp(text) {
 
 function normalizeOrbResult(orbResult) {
   const status = String(orbResult?.status || "UNKNOWN").toUpperCase();
+  const rawGuardrail = orbResult?.guardrail || orbResult?.view_api_response?.data?.guardrail || null;
+  const guardrail = rawGuardrail && typeof rawGuardrail === "object"
+    ? {
+        triggered: Boolean(rawGuardrail.triggered),
+        violation_type: rawGuardrail.violation_type || null,
+        category: rawGuardrail.category || null,
+        confidence_score: rawGuardrail.confidence_score ?? null,
+        response: rawGuardrail.response || null,
+      }
+    : null;
   const isNewOrbResult = Boolean(
     orbResult?.associated_discovery_id ||
       orbResult?.target_confidence_threshold != null ||
@@ -118,6 +137,7 @@ function normalizeOrbResult(orbResult) {
     prosody_flags: Array.isArray(orbResult?.prosody_flags) ? orbResult.prosody_flags : [],
     contradiction_result: orbResult?.contradiction_result || null,
     contradiction_message: orbResult?.contradiction_message || null,
+    guardrail,
     breakthrough_detected: Boolean(orbResult?.breakthrough_detected),
     breakthrough_score: orbResult?.breakthrough_score ?? orbResult?.confidence_score ?? 0,
     breakthrough_type: orbResult?.breakthrough_type || null,
@@ -257,6 +277,8 @@ export default function PhaseQuestionPage() {
   const [livePreview, setLivePreview] = useState(null);
   const [livePreviewChecking, setLivePreviewChecking] = useState(false);
   const [showApiData, setShowApiData] = useState(false);
+  const [evaluationProgress, setEvaluationProgress] = useState(0);
+  const [evaluationStepIndex, setEvaluationStepIndex] = useState(0);
   const [nudgesFading, setNudgesFading] = useState(false);
   const [replyVisible, setReplyVisible] = useState(false);
   const [bgfHelpLoading, setBgfHelpLoading] = useState(false);
@@ -300,6 +322,28 @@ export default function PhaseQuestionPage() {
   useEffect(() => {
     return () => window.clearTimeout(answerRewardTimeoutRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!orbChecking) {
+      setEvaluationProgress(0);
+      setEvaluationStepIndex(0);
+      return undefined;
+    }
+
+    setEvaluationProgress(4);
+    setEvaluationStepIndex(0);
+    const progressTimer = window.setInterval(() => {
+      setEvaluationProgress((value) => Math.min(96, value + 4));
+    }, 260);
+    const stepTimer = window.setInterval(() => {
+      setEvaluationStepIndex((index) => (index + 1) % ORB_EVALUATION_STEPS.length);
+    }, 1050);
+
+    return () => {
+      window.clearInterval(progressTimer);
+      window.clearInterval(stepTimer);
+    };
+  }, [orbChecking]);
 
   useEffect(() => {
     if (!sidebarOpen) return undefined;
@@ -933,13 +977,16 @@ export default function PhaseQuestionPage() {
       throw new Error("Could not create an ORB conversation for this answer");
     }
 
-    const orbQId = resolveOrbQuestionId(currentQuestion, currentIdx, phaseId);
+    const orbQId = resolveOrbQuestionId(currentQuestion, currentIdx);
     return authService.editConversation(sid, userConversation.id, {
       content: value,
       questionText: currentQuestion.text,
+      question_text: currentQuestion.text,
+      frontend_phase: Number(phaseId) || 1,
       contextData: {
         frontend_page: "PhaseQuestionPage",
         phase_id: phaseId,
+        frontend_phase: Number(phaseId) || 1,
         q_id: orbQId,
         question_id: apiQuestionId,
         question_text: currentQuestion.text,
@@ -985,6 +1032,7 @@ export default function PhaseQuestionPage() {
       console.log("ORB target_confidence_threshold", orbResponse?.target_confidence_threshold ?? orbResponse?.metadata?.target_confidence_threshold ?? null);
       console.log("ORB crux_context", orbResponse?.crux_context || null);
       console.log("ORB confidence_tracking", orbResponse?.view_api_response?.data?.confidence_tracking || orbResponse?.confidence_tracking || null);
+      console.log("ORB guardrail", orbResponse?.guardrail || orbResponse?.view_api_response?.data?.guardrail || null);
       orb = normalizeOrbResult(orbResponse);
       setOrbVerdict(orb);
     } catch (err) {
@@ -1201,11 +1249,13 @@ export default function PhaseQuestionPage() {
         event: "orb.view_api_response",
         data: {
           metadata: viewVerdict.metadata || null,
+          guardrail: viewVerdict.guardrail || null,
           crux_context: viewVerdict.crux_context || null,
           confidence_tracking: viewVerdict.confidence_tracking || null,
         },
       }
     : null;
+  const activeEvaluationStep = ORB_EVALUATION_STEPS[evaluationStepIndex % ORB_EVALUATION_STEPS.length];
 
   return (
     <div className="pq-page">
@@ -1372,27 +1422,44 @@ export default function PhaseQuestionPage() {
               </div>
 
               <div className="pq-orb-row">
-                {replyVisible && viewVerdict?.follow_up_question && (
-                  <div className="pq-followup-wrap" aria-live="polite">
-                    <div className="pq-followup-bubble pq-followup-bubble--enter">
-                      <span className="pq-followup-badge">Brand Godfather asks</span>
-                      <p>{viewVerdict.follow_up_question}</p>
-                    </div>
-                  </div>
-                )}
                 <OrbPresence className="pq-orb-presence">
                   <BrandOrb size="welcome" />
                 </OrbPresence>
                 <div className="pq-nudges-wrap" aria-live="polite">
-                  <span className="pq-nudges-badge"></span>
+                  {replyVisible && viewVerdict?.follow_up_question && (
+                    <div className="pq-followup-wrap pq-followup-wrap--orb-side">
+                      <div className="pq-followup-bubble pq-followup-bubble--enter">
+                        <span className="pq-followup-badge">Brand Godfather asks</span>
+                        <p>{viewVerdict.follow_up_question}</p>
+                      </div>
+                    </div>
+                  )}
+                  {orbChecking && (
+                    <div className="pq-agentic-metrics pq-agentic-metrics--orb-side">
+                      {/* Hidden per request: old static submit-evaluation status text. */}
+                      {/* <p className="pq-nudges-status pq-nudges-status--muted">
+                        ORB will evaluate this answer when you submit it.
+                      </p> */}
+                      <span className="pq-agentic-kicker">The Brand Godfather is evaluating your response</span>
+                      <div className="pq-agentic-progress" aria-hidden="true">
+                        <span style={{ width: `${evaluationProgress}%` }} />
+                      </div>
+                      <p key={activeEvaluationStep} className="pq-agentic-metric pq-agentic-metric--fade">
+                        {evaluationProgress}% · {activeEvaluationStep}
+                      </p>
+                    </div>
+                  )}
+                  {/* Hidden per request: empty green nudges badge beside the ORB. */}
+                  {/* <span className="pq-nudges-badge"></span> */}
                   {nudgesLoading && (
                     <p className="pq-nudges-status">Thinking of ideas…</p>
                   )}
                   {!nudgesLoading && nudgeQuality && !replyVisible && (
                     <div className={`pq-nudges-panel${nudgesFading ? " pq-nudges-panel--dissolve" : ""}`}>
-                      {nudgeQuality.reason && (
+                      {/* Hidden per request: older local answer-quality copy, e.g. "This already has something useful..." */}
+                      {/* {nudgeQuality.reason && (
                         <p className="pq-nudges-reason">{nudgeQuality.reason}</p>
-                      )}
+                      )} */}
                       {/* Hidden per request: rewritten-answer quote bubble (echoed user answer) */}
                       {/* {nudgeQuote?.quote && (
                         <blockquote className="pq-nudge-quote">
@@ -1423,17 +1490,27 @@ export default function PhaseQuestionPage() {
                       )}
                     </div>
                   )}
-                  {!nudgesLoading &&
-                    !activeNudge &&
-                    inputValue.trim().length >= 3 && (
-                      <p className="pq-nudges-status pq-nudges-status--muted">
-                        ORB will evaluate this answer when you submit it.
-                      </p>
-                    )}
-                  {replyVisible && viewVerdict?.reply && (
+                  {/* Hidden per request: Brand Godfather says reply bubble. */}
+                  {/* {replyVisible && viewVerdict?.reply && (
                     <div className="pq-orb-reply pq-orb-reply--enter" aria-live="polite">
                       <span className="pq-orb-reply-badge">Brand Godfather says</span>
                       <p>{viewVerdict.reply}</p>
+                    </div>
+                  )} */}
+                  {!viewChecking && viewVerdict?.guardrail?.triggered && (
+                    <div
+                      className={`pq-guardrail-block pq-guardrail-block--${String(
+                        viewVerdict.guardrail.violation_type || "relevance",
+                      ).replace(/[^a-z0-9_-]/gi, "_")}`}
+                      role="alert"
+                    >
+                      <span>
+                        {viewVerdict.guardrail.violation_type === "critical_safety"
+                          ? "Guardrail rejection"
+                          : "Strategy relevance check"}
+                      </span>
+                      <strong>{viewVerdict.guardrail.category || "guardrail_triggered"}</strong>
+                      <p>{viewVerdict.guardrail.response || viewVerdict.reply}</p>
                     </div>
                   )}
                   {SHOW_LEGACY_ORB_INTELLIGENCE_PANEL && showVerdictPanel && showApiData && (

@@ -600,14 +600,18 @@ class Session(models.Model):
 
     def can_access_stage(self, stage_num, user=None):
         """Check if user can access a specific stage"""
-        if self.get_current_stage() < stage_num:
-            return False
         if stage_num <= 1:
             return True
         actor = user or self.created_by
         if actor and (actor.is_superuser or actor.has_role('admin')):
             return True
-        return bool(self.created_by and self.created_by.has_active_subscription())
+        if self.created_by and self.created_by.has_active_subscription():
+            return True
+        if actor and actor != self.created_by and actor.has_active_subscription():
+            return True
+        if self.get_current_stage() < stage_num:
+            return False
+        return False
 
 
 class Question(models.Model):

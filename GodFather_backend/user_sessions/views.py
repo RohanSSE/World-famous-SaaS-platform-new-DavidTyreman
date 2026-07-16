@@ -1199,9 +1199,17 @@ def session_answer_create(request, pk):
         and question.stage == 2
         and get_framework(f"Q{question.order}") is not None
     )
+    allow_framework_phase2_question = False
+    if frontend_phase == 2 and question.stage == 3:
+        phase2_question_ids = list(
+            Question.objects.filter(stage=3, is_active=True).order_by('order', 'id').values_list('id', flat=True)
+        )
+        if question.id in phase2_question_ids:
+            phase2_framework_index = phase2_question_ids.index(question.id) + 1
+            allow_framework_phase2_question = get_phase2_framework(f"Q{phase2_framework_index}") is not None
 
     # ADD STAGE VALIDATION HERE
-    if not allow_framework_phase1_question and not session.can_access_stage(question.stage, request.user):
+    if not (allow_framework_phase1_question or allow_framework_phase2_question) and not session.can_access_stage(question.stage, request.user):
         if question.stage > 1:
             return Response({
                 "detail": "Please upgrade your plan to continue after Phase 1.",
@@ -1475,6 +1483,20 @@ def question_list(request):
                 "mode": "bulk",
                 "source": "phase1_frameworks",
                 "questions": _serialize_orb_phase1_questions(visible_questions),
+            })
+
+        if requested_stage == 2:
+            questions = Question.objects.filter(
+                stage=3,
+                is_active=True
+            ).order_by('order', 'id')[:len(PHASE2_FRAMEWORKS)]
+            visible_questions = [q for q in questions if q.is_visible_to(request.user)]
+            return Response({
+                "stage": 2,
+                "stage_name": dict(Question.STAGE_CHOICES).get(2),
+                "mode": "bulk",
+                "source": "phase2_frameworks",
+                "questions": _serialize_orb_phase2_questions(visible_questions),
             })
 
         questions = Question.objects.filter(
@@ -2281,6 +2303,7 @@ from user_sessions.services.rag_pipeline_resolver import (
 from user_sessions.services.rag_observability import should_include_debug
 from user_sessions.services.rag_agents import list_agents
 from brandgodfather.services.phase1_frameworks import PHASE1_FRAMEWORKS, get_framework, match_orb_framework
+from brandgodfather.services.phase2_frameworks import PHASE2_FRAMEWORKS, get_phase2_framework, match_phase2_orb_framework
 
 logger = logging.getLogger(__name__)
 es_service = ElasticsearchService()
@@ -2293,13 +2316,80 @@ ORB_SIGNAL_MEMORY_TYPES = {
 }
 
 
+def _empty_orb_signals():
+    return {signal_key: None for signal_key in ORB_SIGNAL_MEMORY_TYPES}
+
+
+def _evaluate_orb_input_guardrail(user_input, question_text):
+    text = str(user_input or "").strip()
+    lowered = text.lower()
+    compact = re.sub(r"\s+", "", lowered)
+    alnum_count = len(re.findall(r"[a-z0-9]", lowered))
+
+    protected_terms = (
+        "race", "religion", "gender", "women", "men", "gay", "lesbian", "trans", "muslim",
+        "christian", "jewish", "black", "white", "immigrant", "disabled", "disability",
+    )
+    discriminatory_terms = (
+        "hate", "inferior", "superior", "exclude", "ban", "eliminate", "refuse to hire",
+        "do not hire", "won't hire", "not hire", "against",
+    )
+    abuse_terms = (
+        "kill you", "hurt you", "go die", "shut up", "stupid ai", "idiot ai", "threaten",
+        "harass", "abuse them",
+    )
+    exploitation_terms = (
+        "scam", "fraud", "steal", "phishing", "exploit workers", "child labor", "human trafficking",
+        "illegal weapons", "sell illegal", "launder money", "hack accounts",
+    )
+
+    hate_detected = any(group in lowered for group in protected_terms) and any(term in lowered for term in discriminatory_terms)
+    abuse_detected = any(term in lowered for term in abuse_terms)
+    exploitation_detected = any(term in lowered for term in exploitation_terms)
+    nonsense_detected = (
+        len(text) >= 8
+        and (
+            alnum_count / max(len(text), 1) < 0.25
+            or (len(compact) >= 12 and len(set(compact)) <= 3)
+            or bool(re.fullmatch(r"([a-z0-9]{1,3})\1{4,}", compact))
+        )
+    )
+
+    if hate_detected or abuse_detected or exploitation_detected:
+        category = "hate_discrimination" if hate_detected else "abuse" if abuse_detected else "exploitation"
+        return {
+            "triggered": True,
+            "violation_type": "critical_safety",
+            "category": category,
+            "confidence_score": 0,
+            "response": "As a brand strategist, I do not develop or support brands built on discrimination, exploitation, or abuse. We will not proceed with this direction.",
+        }
+
+    if nonsense_detected:
+        return {
+            "triggered": True,
+            "violation_type": "relevance",
+            "category": "nonsense_spam",
+            "confidence_score": 0,
+            "response": f"I'm here to help you build a world-class brand. Let's stay focused on the strategy. {question_text}",
+        }
+
+    return {
+        "triggered": False,
+        "violation_type": None,
+        "category": None,
+        "confidence_score": None,
+        "response": None,
+    }
+
+
 def _normalize_orb_result(result, expected_discovery_id):
     if not isinstance(result, dict):
         raise ValueError("ORB response must be a JSON object")
 
     status_value = str(result.get("status", "")).strip().lower()
-    if status_value not in {"complete", "incomplete"}:
-        raise ValueError("ORB response status must be complete or incomplete")
+    if status_value not in {"complete", "incomplete", "rejected"}:
+        raise ValueError("ORB response status must be complete, incomplete, or rejected")
 
     response_text = str(result.get("response") or "").strip()
     if not response_text:
@@ -2332,6 +2422,20 @@ def _normalize_orb_result(result, expected_discovery_id):
     if not internal_evaluation:
         raise ValueError("ORB response must include internal_evaluation")
 
+    guardrail = result.get("guardrail") or {}
+    if not isinstance(guardrail, dict):
+        guardrail = {}
+    normalized_guardrail = {
+        "triggered": bool(guardrail.get("triggered")),
+        "violation_type": guardrail.get("violation_type") or None,
+        "category": guardrail.get("category") or None,
+        "confidence_score": guardrail.get("confidence_score") if guardrail.get("confidence_score") is not None else None,
+        "response": str(guardrail.get("response") or "").strip() or None,
+    }
+    if normalized_guardrail["triggered"]:
+        status_value = "rejected"
+        confidence_score = 0
+
     return {
         "internal_evaluation": internal_evaluation,
         "status": status_value,
@@ -2339,6 +2443,7 @@ def _normalize_orb_result(result, expected_discovery_id):
         "confidence_score": confidence_score,
         "response": response_text,
         "extracted_signals": normalized_signals,
+        "guardrail": normalized_guardrail,
     }
 
 
@@ -2384,6 +2489,9 @@ def _save_orb_signals_to_memory(session, question, question_text, orb_result, us
 
 
 def _record_orb_confidence_history(session, question, question_text, draft, orb_result, target_confidence_threshold, user):
+    if orb_result["status"] == "rejected":
+        return []
+
     memory_key = f"orb:{orb_result['associated_discovery_id']}:confidence_history"
     try:
         from django.utils import timezone
@@ -2442,6 +2550,27 @@ def _record_orb_confidence_history(session, question, question_text, draft, orb_
         return []
 
 
+def _drop_rejected_orb_turn(conversation, incoming_content):
+    """
+    Remove a rejected turn that was pre-created by the frontend draft flow.
+    If this PATCH is editing older valid history, leave that old row untouched.
+    """
+    incoming_text = str(incoming_content or "").strip()
+    current_text = str(conversation.content or "").strip()
+    if current_text != incoming_text:
+        return {"dropped_user_message": False, "deleted_count": 0}
+
+    subsequent_conversations = Conversation.objects.filter(
+        session=conversation.session,
+        question=conversation.question,
+        created_at__gt=conversation.created_at,
+    )
+    deleted_count = subsequent_conversations.count()
+    subsequent_conversations.delete()
+    conversation.delete()
+    return {"dropped_user_message": True, "deleted_count": deleted_count}
+
+
 def _build_orb_crux_context_debug(
     result,
     draft,
@@ -2466,15 +2595,20 @@ def _build_orb_crux_context_debug(
     )
     history_text = str(formatted_history or "").strip()
     retrieval_text = str(retrieval_context or "").strip()
+    guardrail = result.get("guardrail") or {}
+    if guardrail.get("triggered") and guardrail.get("violation_type") == "critical_safety":
+        draft = "[redacted: critical safety violation]"
+        history_text = "[redacted: critical safety violation]"
     return {
+        "guardrail": guardrail,
         "crux": crux,
         "extracted_signals": extracted_signals,
         "storage": {
-            "conversation_loop_stored": True,
+            "conversation_loop_stored": result["status"] != "rejected",
             "crux_memory_stored": result["status"] == "complete" and bool(saved_memory_keys),
             "saved_memory_keys": saved_memory_keys,
             "confidence_history_stored": bool(confidence_history),
-            "rule": "Conversation turns are stored for every follow-up loop; ORB crux signals are saved to BrandMemory only after status is complete.",
+            "rule": "Rejected guardrail turns are dropped from Conversation history; incomplete/complete turns are stored, and ORB crux signals are saved to BrandMemory only after status is complete.",
         },
         "confidence_tracking": {
             "latest_confidence_score": result["confidence_score"],
@@ -2505,6 +2639,26 @@ def _serialize_orb_phase1_questions(questions):
         item["orb_framework_q_id"] = framework_key
         item["text"] = framework.get("question") or item.get("text") or f"Question {index}"
         item["user_facing_text"] = item["text"]
+        item["orb_analysis_framework"] = framework.get("orb_analysis_framework") or {}
+    return data
+
+
+def _serialize_orb_phase2_questions(questions):
+    data = list(QuestionSerializer(questions, many=True).data)
+    for index, item in enumerate(data, start=1):
+        framework_key = f"Q{index}"
+        framework = PHASE2_FRAMEWORKS.get(framework_key) or {}
+        item["source_stage"] = item.get("stage")
+        item["stage"] = 2
+        item["order"] = index
+        item["orb_framework_q_id"] = framework_key
+        item["brandgodfather_q_id"] = f"P2_{framework_key}"
+        item["text"] = framework.get("question") or item.get("text") or f"Question {index}"
+        item["question"] = item["text"]
+        item["prompt"] = item["text"]
+        item["user_facing_text"] = item["text"]
+        item["associated_discovery_id"] = framework.get("associated_discovery_id")
+        item["target_confidence_threshold"] = framework.get("target_confidence_threshold")
         item["orb_analysis_framework"] = framework.get("orb_analysis_framework") or {}
     return data
 
@@ -4407,39 +4561,131 @@ def edit_conversation(request, pk, conversation_id):
         db_question_text,
     ]
     question_text = next((str(candidate).strip() for candidate in question_text_candidates if str(candidate or '').strip()), db_question_text)
-    orb_framework = match_orb_framework(question_text) or match_orb_framework(db_question_text)
+    context_data = request.data.get("contextData") or request.data.get("context_data") or {}
+    frontend_phase_raw = request.data.get("frontend_phase") or request.data.get("phase")
+    if isinstance(context_data, dict):
+        frontend_phase_raw = frontend_phase_raw or context_data.get("phase_id") or context_data.get("frontend_phase")
+    try:
+        frontend_phase = int(frontend_phase_raw) if frontend_phase_raw is not None else None
+    except (TypeError, ValueError):
+        frontend_phase = None
+
+    if frontend_phase == 2:
+        orb_framework = match_phase2_orb_framework(question_text) or match_phase2_orb_framework(db_question_text)
+    else:
+        orb_framework = (
+            match_orb_framework(question_text)
+            or match_phase2_orb_framework(question_text)
+            or match_orb_framework(db_question_text)
+            or match_phase2_orb_framework(db_question_text)
+        )
     if not orb_framework:
         return Response({"detail": "No ORB framework mapping found for this question."}, status=422)
-    
-    # Step 1: Update the edited message
-    conversation.content = content
-    conversation.save()
-    
-    # Step 2: Delete all subsequent messages (ChatGPT behavior)
-    subsequent_conversations = Conversation.objects.filter(
-        session=session,
-        question=conversation.question,
-        created_at__gt=conversation.created_at
-    )
-    deleted_count = subsequent_conversations.count()
-    subsequent_conversations.delete()
-    
-    # Step 3: Evaluate updated conversation history through ORB
-    draft = conversation.content.strip()
+
+    conversation_snapshot = {
+        "id": conversation.id,
+        "content": content,
+        "role": conversation.role,
+        "created_at": conversation.created_at,
+    }
+
+    # Evaluate the proposed turn in memory first. Rejected turns are dropped before
+    # they become durable chat history.
+    draft = content
     
     # Get conversation history up to (and including) the edited message
     history_qs = Conversation.objects.filter(
         session=session,
         question=question,
-        created_at__lte=conversation.created_at
+        created_at__lt=conversation.created_at
     ).order_by('created_at')
     
     formatted_history = ""
     for msg in history_qs:
         role = "ORB (Coach)" if msg.role == "assistant" else "User"
         formatted_history += f"{role}: {msg.content}\n\n"
-    if not formatted_history:
-        formatted_history = "No previous history for this question."
+    formatted_history += f"User: {draft}\n\n"
+
+    guardrail_preflight = _evaluate_orb_input_guardrail(draft, question_text)
+    if guardrail_preflight["triggered"]:
+        result = {
+            "internal_evaluation": f"Guardrail violation detected before strategic processing: {guardrail_preflight['category']}",
+            "status": "rejected",
+            "associated_discovery_id": orb_framework["associated_discovery_id"],
+            "confidence_score": 0,
+            "response": guardrail_preflight["response"],
+            "extracted_signals": _empty_orb_signals(),
+            "guardrail": guardrail_preflight,
+        }
+        assistant_response = result["response"]
+        saved_memory_keys = []
+        confidence_history = []
+        orb_metadata = {
+            "question_id": question.id,
+            "question_text": question_text,
+            "canonical_question": orb_framework["question"],
+            "associated_discovery_id": orb_framework["associated_discovery_id"],
+            "target_confidence_threshold": orb_framework["target_confidence_threshold"],
+            "look_for": orb_framework["look_for"],
+            "avoid": orb_framework["avoid"],
+        }
+        crux_context = _build_orb_crux_context_debug(
+            result,
+            draft,
+            formatted_history,
+            "Guardrail preflight stopped strategic processing before RAG/OpenAI.",
+            "",
+            "",
+            saved_memory_keys,
+            confidence_history,
+        )
+        confidence_tracking = {
+            "latest_confidence_score": result["confidence_score"],
+            "target_confidence_threshold": orb_framework["target_confidence_threshold"],
+            "confidence_history": confidence_history,
+        }
+        view_api_response = {
+            "event": "orb.view_api_response",
+            "id": f"session:{session.id}:question:{question.id}:conversation:{conversation.id}",
+            "retry": 3000,
+            "data": {
+                "metadata": orb_metadata,
+                "guardrail": result["guardrail"],
+                "crux_context": crux_context,
+                "confidence_tracking": confidence_tracking,
+            },
+        }
+
+        drop_result = _drop_rejected_orb_turn(conversation, content)
+        return Response({
+            "edited_message": {
+                "id": conversation_snapshot["id"],
+                "content": conversation_snapshot["content"],
+                "role": conversation_snapshot["role"],
+                "created_at": conversation_snapshot["created_at"],
+                "dropped": drop_result["dropped_user_message"],
+            },
+            "status": result["status"],
+            "associated_discovery_id": result["associated_discovery_id"],
+            "target_confidence_threshold": orb_framework["target_confidence_threshold"],
+            "metadata": orb_metadata,
+            "confidence_score": result["confidence_score"],
+            "response": assistant_response,
+            "follow_up_question": assistant_response,
+            "extracted_signals": result["extracted_signals"],
+            "guardrail": result["guardrail"],
+            "crux_context": crux_context,
+            "confidence_tracking": confidence_tracking,
+            "view_api_response": view_api_response,
+            "advance_to_next_question": False,
+            "saved_memory_keys": saved_memory_keys,
+            "deleted_count": drop_result["deleted_count"],
+            "conversation_dropped": drop_result["dropped_user_message"],
+            "documents_searched": 0,
+            "context_used": False,
+            "sources": [],
+            "graph_concepts": [],
+        }, status=200)
     
     # RAG context (user-scoped documents + ai_knowledge)
     rag_sources = []
@@ -4523,6 +4769,19 @@ LOOK FOR: {look_for_json}
 
 AVOID: {avoid_json}
 
+### ZERO-TOLERANCE GUARDRAILS
+Before evaluating the strategic value of the user's input, you MUST run a strict safety and relevance check. 
+You are strictly forbidden from processing, validating, or strategizing around any input that contains:
+1. HATE & DISCRIMINATION: Racism, sexism, homophobia, gender bias, or any discriminatory rhetoric against protected groups.
+2. ABUSE: Abusive language, threats, or harassment directed at the AI or others.
+3. EXPLOITATION: Strategies built entirely on illegal operations, scams, human trafficking, fraud, or inherently predatory practices. Normal commercial operations, business growth, and profit are fully allowed.
+4. NONSENSE & SPAM: Gibberish, keyboard smashing, or completely off-topic statements unrelated to strategy.
+- CRITICAL SAFETY VIOLATION (Hate, Abuse, Exploitation): If the input violates guardrails 1, 2, or 3, you MUST set status to "rejected", drop the confidence_score to 0, and output a firm, unapologetic rejection in the response.
+
+- RELEVANCE VIOLATION (Nonsense, Off-topic): If the input violates guardrail 4, set status to "rejected" and professionally redirect them back to the topic.
+
+- CRITICAL DISTINCTION: "Vendor Thinking" (e.g., just wanting to make money) is NOT a safety violation. It is a strategic error. Handle these using "THE VENDOR TRAP" protocol and set status to "incomplete", NOT "rejected".
+
 ### YOUR MISSION
 
 1. Complete your internal Chain of Thought reasoning within the "internal_evaluation" property BEFORE drafting any text for the user.
@@ -4537,6 +4796,12 @@ AVOID: {avoid_json}
 
 If the computed confidence_score is below the target threshold, you must flag the status as "incomplete" and generate an adaptive counter-question using these rules:
 
+- CRITICAL SAFETY VIOLATION (Hate, Abuse, Exploitation): If the input violates guardrails 1, 2, or 3, you MUST set status to "rejected", drop the confidence_score to 0, and output a firm, unapologetic rejection in the response.
+
+- RELEVANCE VIOLATION (Nonsense, Off-topic): If the input violates guardrail 4, set status to "rejected" and professionally redirect them back to the topic.
+
+- CRITICAL DISTINCTION: "Vendor Thinking" (e.g., just wanting to make money) is NOT a safety violation. It is a strategic error. Handle these using "THE VENDOR TRAP" protocol and set status to "incomplete", NOT "rejected".
+
 - THE VENDOR TRAP: If the answer triggers anything in the `avoid` list, gently redirect them from the "vehicle" (what they sell) to the "destination" (what they believe).
 
 - RECOGNITION & PREDICTION: Acknowledge emotional signals, shared stories, or vulnerability before pushing forward.
@@ -4547,12 +4812,13 @@ If the computed confidence_score is below the target threshold, you must flag th
 
 **4. Implement Structured JSON Output and Routing**
 
-Force the OpenAI call to return this specific JSON structure using structured outputs / JSON mode: {{ "internal_evaluation": "string", "status": "string (strictly 'complete' or 'incomplete')", "associated_discovery_id": "string", "confidence_score": "integer", "response": "string", "extracted_signals": {{ "core_belief_or_idea": "string or null", "founder_wound_or_victory": "string or null", "customer_fear_or_aspiration": "string or null" }} }}
+Force the OpenAI call to return this specific JSON structure using structured outputs / JSON mode: {{ "internal_evaluation": "string", "status": "string (strictly 'complete', 'incomplete', or 'rejected')", "associated_discovery_id": "string", "confidence_score": "integer", "response": "string", "guardrail": {{ "triggered": "boolean", "violation_type": "critical_safety, relevance, or null", "category": "hate_discrimination, abuse, exploitation, nonsense_spam, off_topic, or null", "confidence_score": "integer or null", "response": "string or null" }}, "extracted_signals": {{ "core_belief_or_idea": "string or null", "founder_wound_or_victory": "string or null", "customer_fear_or_aspiration": "string or null" }} }}
 
-After parsing, save the result["response"] to the Conversation model as the assistant's reply.
+After parsing, route database persistence by status.
 
-- If status == "incomplete", return the response to the frontend so the user can answer the sub-question.
-- If status == "complete", extract the signals and log/save them to the Session (or  Answer table) for global memory, and prepare the UI to move to the next question. Do NOT generate standard chatbot completions anymore.'''
+- If status == "rejected", return result["response"] to the frontend, but do NOT save the user's message or the AI response to the Conversation model. Treat the turn as if it never happened.
+- If status == "incomplete", save both the user's message and the AI response to Conversation history, and return the response to the frontend so the user can answer the sub-question.
+- If status == "complete", save both messages, extract the signals and log/save them to the Session (or Answer table) for global memory, and prepare the UI to move to the next question. Do NOT generate standard chatbot completions anymore.'''
     
     # Generate new AI response
     try:
@@ -4571,16 +4837,6 @@ After parsing, save the result["response"] to the Conversation model as the assi
             orb_framework["associated_discovery_id"],
         )
         assistant_response = result["response"]
-        saved_memory_keys = _save_orb_signals_to_memory(session, question, question_text, result, request.user)
-        confidence_history = _record_orb_confidence_history(
-            session,
-            question,
-            question_text,
-            draft,
-            result,
-            orb_framework["target_confidence_threshold"],
-            request.user,
-        )
         orb_metadata = {
             "question_id": question.id,
             "question_text": question_text,
@@ -4595,6 +4851,88 @@ After parsing, save the result["response"] to the Conversation model as the assi
             orb_metadata["associated_discovery_id"],
             orb_metadata["target_confidence_threshold"],
             orb_metadata["question_id"],
+        )
+
+        if result["status"] == "rejected":
+            saved_memory_keys = []
+            confidence_history = []
+            crux_context = _build_orb_crux_context_debug(
+                result,
+                draft,
+                formatted_history,
+                brand_profile_summary,
+                memory_context,
+                context,
+                saved_memory_keys,
+                confidence_history,
+            )
+            view_api_response = {
+                "event": "orb.view_api_response",
+                "id": f"session:{session.id}:question:{question.id}:conversation:{conversation_snapshot['id']}",
+                "retry": 3000,
+                "data": {
+                    "metadata": orb_metadata,
+                    "guardrail": result["guardrail"],
+                    "crux_context": crux_context,
+                    "confidence_tracking": {
+                        "latest_confidence_score": result["confidence_score"],
+                        "target_confidence_threshold": orb_framework["target_confidence_threshold"],
+                        "confidence_history": confidence_history,
+                    },
+                },
+            }
+            confidence_tracking = view_api_response["data"]["confidence_tracking"]
+            drop_result = _drop_rejected_orb_turn(conversation, content)
+
+            return Response({
+                "edited_message": {
+                    "id": conversation_snapshot["id"],
+                    "content": conversation_snapshot["content"],
+                    "role": conversation_snapshot["role"],
+                    "created_at": conversation_snapshot["created_at"],
+                    "dropped": drop_result["dropped_user_message"],
+                },
+                "status": result["status"],
+                "associated_discovery_id": result["associated_discovery_id"],
+                "target_confidence_threshold": orb_framework["target_confidence_threshold"],
+                "metadata": orb_metadata,
+                "confidence_score": result["confidence_score"],
+                "response": assistant_response,
+                "follow_up_question": assistant_response,
+                "extracted_signals": result["extracted_signals"],
+                "guardrail": result["guardrail"],
+                "crux_context": crux_context,
+                "confidence_tracking": confidence_tracking,
+                "view_api_response": view_api_response,
+                "advance_to_next_question": False,
+                "saved_memory_keys": saved_memory_keys,
+                "deleted_count": drop_result["deleted_count"],
+                "conversation_dropped": drop_result["dropped_user_message"],
+                "documents_searched": documents_searched,
+                "context_used": bool(context),
+                "sources": rag_sources,
+                "graph_concepts": rag_graph_concepts,
+            }, status=200)
+
+        subsequent_conversations = Conversation.objects.filter(
+            session=session,
+            question=conversation.question,
+            created_at__gt=conversation.created_at
+        )
+        deleted_count = subsequent_conversations.count()
+        subsequent_conversations.delete()
+        conversation.content = content
+        conversation.save()
+
+        saved_memory_keys = _save_orb_signals_to_memory(session, question, question_text, result, request.user)
+        confidence_history = _record_orb_confidence_history(
+            session,
+            question,
+            question_text,
+            draft,
+            result,
+            orb_framework["target_confidence_threshold"],
+            request.user,
         )
         crux_context = _build_orb_crux_context_debug(
             result,
@@ -4612,6 +4950,7 @@ After parsing, save the result["response"] to the Conversation model as the assi
             "retry": 3000,
             "data": {
                 "metadata": orb_metadata,
+                "guardrail": result["guardrail"],
                 "crux_context": crux_context,
                 "confidence_tracking": {
                     "latest_confidence_score": result["confidence_score"],
@@ -4630,6 +4969,7 @@ After parsing, save the result["response"] to the Conversation model as the assi
                 "content": conversation.content,
                 "role": conversation.role,
                 "created_at": conversation.created_at,
+                "dropped": False,
             },
             "status": result["status"],
             "associated_discovery_id": result["associated_discovery_id"],
@@ -4639,12 +4979,14 @@ After parsing, save the result["response"] to the Conversation model as the assi
             "response": assistant_response,
             "follow_up_question": assistant_response,
             "extracted_signals": result["extracted_signals"],
+            "guardrail": result["guardrail"],
             "crux_context": crux_context,
             "confidence_tracking": confidence_tracking,
             "view_api_response": view_api_response,
             "advance_to_next_question": result["status"] == "complete",
             "saved_memory_keys": saved_memory_keys,
             "deleted_count": deleted_count,
+            "conversation_dropped": False,
             "documents_searched": documents_searched,
             "context_used": bool(context),
             "sources": rag_sources,
@@ -4974,6 +5316,7 @@ def answer_ai_suggestions(request, pk):
         score_answer_quality,
     )
     from brandgodfather.services.phase1_frameworks import get_framework
+    from brandgodfather.services.phase2_frameworks import get_phase2_framework
 
     session = get_object_or_404(Session, pk=pk)
     if not session.has_access(request.user):
@@ -4996,15 +5339,17 @@ def answer_ai_suggestions(request, pk):
     question_stage = int(getattr(question, "stage", 1) or 1)
     include_suggestion_quote = question_stage >= 2
 
-    # Phase 1 (Q1-Q8) per-question ORB framework, keyed by Question.order.
-    phase1_framework = None
-    phase1_framework_block = ""
+    # Per-phase ORB framework, keyed by Question.order.
+    phase_framework = None
+    phase_framework_block = ""
     if question_stage == 1:
-        phase1_framework = get_framework(f"Q{int(getattr(question, 'order', 0) or 0)}")
-    if phase1_framework:
-        _fw = phase1_framework["orb_analysis_framework"]
-        phase1_framework_block = (
-            "\n\nPhase 1 ORB analysis framework for THIS exact question:\n"
+        phase_framework = get_framework(f"Q{int(getattr(question, 'order', 0) or 0)}")
+    elif question_stage == 2:
+        phase_framework = get_phase2_framework(f"Q{int(getattr(question, 'order', 0) or 0)}")
+    if phase_framework:
+        _fw = phase_framework["orb_analysis_framework"]
+        phase_framework_block = (
+            f"\n\nPhase {question_stage} ORB analysis framework for THIS exact question:\n"
             "LOOK FOR (reward answers that genuinely hit these):\n- "
             + "\n- ".join(_fw["look_for"])
             + "\nAVOID (treat these as vendor traps / weak thinking):\n- "
@@ -5089,7 +5434,7 @@ User's custom question, if any:
 
 Retrieved brand/RAG context from the active pipeline:
 {rag_context[:2500] if rag_context else "No retrieved context available."}
-{phase1_framework_block}
+{phase_framework_block}
 """
         try:
             completion = get_openai_client().chat.completions.create(
@@ -5189,7 +5534,7 @@ User answer: {hints}
 
 Retrieved brand/RAG context from the active pipeline:
 {rag_context[:2500] if rag_context else "No retrieved context available."}
-{phase1_framework_block}
+{phase_framework_block}
 
 {build_quality_prompt_context(question, hints, heuristic)}"""
 
