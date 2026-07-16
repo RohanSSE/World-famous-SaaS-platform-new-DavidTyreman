@@ -2488,7 +2488,45 @@ def _save_orb_signals_to_memory(session, question, question_text, orb_result, us
     return saved_keys
 
 
-def _record_orb_confidence_history(session, question, question_text, draft, orb_result, target_confidence_threshold, user):
+def _get_orb_previous_score(session, associated_discovery_id, question_id=None):
+    memory_key = f"orb:{associated_discovery_id}:confidence_history"
+    try:
+        from user_sessions.models import BrandMemory
+
+        existing = BrandMemory.objects.filter(session=session, key=memory_key).first()
+        existing_value = getattr(existing, "value", None) or {}
+        history = existing_value.get("confidence_history") if isinstance(existing_value, dict) else []
+        if not isinstance(history, list):
+            history = []
+
+        previous_entry = None
+        if question_id is not None:
+            for entry in reversed(history):
+                if isinstance(entry, dict) and entry.get("conversation_question_id") == question_id:
+                    previous_entry = entry
+                    break
+        elif previous_entry is None:
+            previous_entry = history[-1] if history else None
+        previous_score = 0
+        if isinstance(previous_entry, dict):
+            previous_score = int(float(previous_entry.get("confidence_score") or 0))
+        return {
+            "previous_score": max(0, min(100, previous_score)),
+            "previous_status": previous_entry.get("status") if isinstance(previous_entry, dict) else None,
+            "previous_confidence_entry": previous_entry,
+            "confidence_history": history,
+        }
+    except Exception as e:
+        logger.warning("ORB previous score lookup failed: %s", e)
+        return {
+            "previous_score": 0,
+            "previous_status": None,
+            "previous_confidence_entry": None,
+            "confidence_history": [],
+        }
+
+
+def _record_orb_confidence_history(session, question, question_text, draft, orb_result, target_confidence_threshold, user, previous_score=0):
     if orb_result["status"] == "rejected":
         return []
 
@@ -2505,12 +2543,16 @@ def _record_orb_confidence_history(session, question, question_text, draft, orb_
 
         turn_index = len(history) + 1
         confidence_score = int(orb_result["confidence_score"])
+        previous_score = max(0, min(100, int(previous_score or 0)))
+        delta_score = confidence_score - previous_score
         entry = {
             "turn_index": turn_index,
             "conversation_question_id": question.id,
             "question_text": question_text,
             "associated_discovery_id": orb_result["associated_discovery_id"],
             "status": orb_result["status"],
+            "previous_score": previous_score,
+            "delta_score": delta_score,
             "confidence_score": confidence_score,
             "target_confidence_threshold": target_confidence_threshold,
             "answer_preview": str(draft or "").strip()[:500],
@@ -2523,6 +2565,8 @@ def _record_orb_confidence_history(session, question, question_text, draft, orb_
             "question_id": question.id,
             "question_text": question_text,
             "associated_discovery_id": orb_result["associated_discovery_id"],
+            "previous_score": previous_score,
+            "delta_score": delta_score,
             "latest_confidence_score": confidence_score,
             "target_confidence_threshold": target_confidence_threshold,
             "latest_status": orb_result["status"],
@@ -2611,6 +2655,8 @@ def _build_orb_crux_context_debug(
             "rule": "Rejected guardrail turns are dropped from Conversation history; incomplete/complete turns are stored, and ORB crux signals are saved to BrandMemory only after status is complete.",
         },
         "confidence_tracking": {
+            "previous_score": confidence_history[-1].get("previous_score") if confidence_history else None,
+            "delta_score": confidence_history[-1].get("delta_score") if confidence_history else None,
             "latest_confidence_score": result["confidence_score"],
             "confidence_history": confidence_history,
         },
@@ -3427,11 +3473,13 @@ def answer_ai_suggestion_draft(request, pk):
     # (Current question has its own conversation, but we need context from others)
     other_questions_answers = Answer.objects.filter(
         session=session
-    ).exclude(question=question).select_related('question').order_by('question__stage', 'question__order')
+    ).exclude(question=question).select_related('question').order_by('-question__stage', '-question__order')[:12]
 
     brand_profile_parts = []
     for ans in other_questions_answers:
-        brand_profile_parts.append(f"Q: {ans.question.text}\nA: {ans.answer_text}")
+        compact_question = " ".join(str(ans.question.text or "").split())[:220]
+        compact_answer = " ".join(str(ans.answer_text or "").split())[:320]
+        brand_profile_parts.append(f"Q: {compact_question}\nA: {compact_answer}")
 
     brand_profile_summary = "\n\n".join(brand_profile_parts) if brand_profile_parts else "No previous answers from other questions yet"
 
@@ -4593,18 +4641,23 @@ def edit_conversation(request, pk, conversation_id):
     # they become durable chat history.
     draft = content
     
-    # Get conversation history up to (and including) the edited message
-    history_qs = Conversation.objects.filter(
+    # Sliding context window: only the last 3 back-and-forth turns are sent.
+    history_qs = list(Conversation.objects.filter(
         session=session,
         question=question,
         created_at__lt=conversation.created_at
-    ).order_by('created_at')
+    ).order_by('-created_at')[:6])
+    history_qs.reverse()
     
     formatted_history = ""
     for msg in history_qs:
         role = "ORB (Coach)" if msg.role == "assistant" else "User"
         formatted_history += f"{role}: {msg.content}\n\n"
-    formatted_history += f"User: {draft}\n\n"
+    if not formatted_history:
+        formatted_history = "No previous conversation for this question."
+
+    previous_score_state = _get_orb_previous_score(session, orb_framework["associated_discovery_id"], question_id=question.id)
+    previous_score = previous_score_state["previous_score"]
 
     guardrail_preflight = _evaluate_orb_input_guardrail(draft, question_text)
     if guardrail_preflight["triggered"]:
@@ -4640,6 +4693,8 @@ def edit_conversation(request, pk, conversation_id):
             confidence_history,
         )
         confidence_tracking = {
+            "previous_score": previous_score,
+            "delta_score": 0,
             "latest_confidence_score": result["confidence_score"],
             "target_confidence_threshold": orb_framework["target_confidence_threshold"],
             "confidence_history": confidence_history,
@@ -4709,14 +4764,24 @@ def edit_conversation(request, pk, conversation_id):
     except Exception as e:
         logger.error("Context retrieval failed: %s", e)
 
-    # Get brand profile from other questions
+    # Get compressed global memory from past completed phases only.
     other_questions_answers = Answer.objects.filter(
-        session=session
+        session=session,
+        question__stage__lt=question.stage,
     ).exclude(question=question).select_related('question').order_by('question__stage', 'question__order')
+
+    def _compact_global_memory_text(value, limit):
+        text = re.sub(r"\s+", " ", str(value or "")).strip()
+        if len(text) <= limit:
+            return text
+        return f"{text[:limit].rstrip()}..."
     
     brand_profile_parts = []
-    for ans in other_questions_answers:
-        brand_profile_parts.append(f"Q: {ans.question.text}\nA: {ans.answer_text}")
+    for ans in other_questions_answers[:12]:
+        compact_question = _compact_global_memory_text(ans.question.text, 220)
+        compact_answer = _compact_global_memory_text(ans.answer_text, 320)
+        if compact_question or compact_answer:
+            brand_profile_parts.append(f"Q: {compact_question}\nA: {compact_answer}")
 
     memory_context = ""
     try:
@@ -4743,27 +4808,23 @@ def edit_conversation(request, pk, conversation_id):
     orb_system_prompt = f'''You are ORB, the intelligence engine powering The Brand Godfather. You are not a chatbot or a simple questionnaire; you are a world-class strategist, coach, and guide sitting beside the user. Your ultimate product is the user's transformation from "vendor thinking" to "brand thinking".
 
 ### CONTEXT
-
 Main Question Being Explored: "{question_text}"
-
 Associated Discovery Target: "{orb_framework['associated_discovery_id']}"
-
 Target Confidence Threshold: "{orb_framework['target_confidence_threshold']}%"
+Current Locked Score: {previous_score}%
 
-Conversation History for this Question:
+ACTIVE SHORT-TERM MEMORY (Last 3 turns only):
 {formatted_history}
 
-User's Latest Answer: "{draft}"
+USER'S LATEST ANSWER:
+"{draft}"
 
-### SYSTEM GLOBAL COMPASS (DO NOT CONTRADICT)
-
-To ensure long-term strategic alignment, cross-reference the user's current responses with discoveries verified from completed milestones earlier in this journey.
-
-- Previously Discovered Global Data: "{brand_profile_summary}"
+### SYSTEM GLOBAL COMPASS (PAST COMPLETED PHASES ONLY)
+- Previously Discovered Global Data (Do not overwrite this): "{brand_profile_summary}"
 
 ### EVALUATION FRAMEWORK
 
-You must evaluate the cumulative evidence across the full conversation history and the user's latest answer against the specific parameters assigned to this question. Do not evaluate the latest answer in isolation. If an earlier answer already supplied evidence that satisfies a `look_for` item, carry that evidence forward and combine it with the newest answer.
+You must evaluate the locked conversation state and the user's latest answer against the specific parameters assigned to this question. Previous evidence can explain why the Current Locked Score exists, but it cannot be rescored upward. Only new valid evidence in USER'S LATEST ANSWER can increase the confidence_score.
 
 LOOK FOR: {look_for_json}
 
@@ -4782,17 +4843,21 @@ You are strictly forbidden from processing, validating, or strategizing around a
 
 - CRITICAL DISTINCTION: "Vendor Thinking" (e.g., just wanting to make money) is NOT a safety violation. It is a strategic error. Handle these using "THE VENDOR TRAP" protocol and set status to "incomplete", NOT "rejected".
 
-### YOUR MISSION
-
-1. Complete your internal Chain of Thought reasoning within the "internal_evaluation" property BEFORE drafting any text for the user.
-
-2. Evaluate the full thread explicitly against the specific `look_for` and `avoid` arrays assigned to this question. Treat follow-up replies as episodic memory for the same discovery target, not as separate standalone answers.
-
-3. Calculate a definitive "confidence_score" (0-100) based on cumulative response consistency, emotional depth, and narrative support across the whole thread.
-
-4. If the combined thread now satisfies the target threshold, mark status as "complete" even if the latest answer is short, provided the earlier thread contains the missing evidence.
+### YOUR MISSION & CUMULATIVE SCORING ALGORITHM
+You are strictly forbidden from recalculating the past. You must use "Stateful Delta Scoring."
+1. COMPLETE INTERNAL REASONING (SHOW YOUR MATH): Inside "internal_evaluation", explicitly write these steps:
+   - New Evidence: Summarize the new valid evidence provided in the "User's Latest Answer" ONLY.
+   - Cross-Phase Check: Does this new evidence contradict the System Global Compass? (Yes/No).
+   - Delta Score: Assign a specific numerical value ONLY to the new evidence (e.g., +0 if irrelevant/dodging, +10 if strong). If the new answer is irrelevant, nonsense, or contradicts past phases, the Delta MUST be +0.
+   - Math: [Current Locked Score] + [Delta Score] = [New Total].
+2. CUMULATIVE SCORING: Your final "confidence_score" must be the exact result of the Math step. You cannot increase the score just for user participation.
+3. THRESHOLD CHECK: If the New Total satisfies the framework criteria and crosses the Target Confidence Threshold, you MUST mark the status as "complete" and extract the signals.
 
 ### BEHAVIORAL PROTOCOLS
+- PRIORITY 1: CROSS-PHASE CONTRADICTION & REGRESSION. Look at your "Cross-Phase Consistency Check" in your scratchpad. If the new answer contradicts the facts, industry, or beliefs established in the "System Global Compass" (e.g., they suddenly change their business model, target audience, or core belief), you MUST use this protocol. Ignore all other rules. Call out the contradiction directly and respectfully (e.g., "Wait, earlier we established you are building [X], but now you are talking about [Y]. How do these fit together?").
+- PRIORITY 2: BRAIN SQUEEZE DETECTION. If the user displays frustration or gives short "I don't know" answers, drop into a warm, supportive tone to help them brainstorm.
+- PRIORITY 3: THE VENDOR TRAP. If the answer triggers the `avoid` list (and does NOT trigger Priority 1 or 2), gently redirect them from the "vehicle" (what they sell) to the "destination" (what they believe).
+- PRIORITY 4: RECOGNITION & PREDICTION. Acknowledge emotional signals, shared stories, or vulnerability before pushing forward.
 
 If the computed confidence_score is below the target threshold, you must flag the status as "incomplete" and generate an adaptive counter-question using these rules:
 
@@ -4875,6 +4940,8 @@ After parsing, route database persistence by status.
                     "guardrail": result["guardrail"],
                     "crux_context": crux_context,
                     "confidence_tracking": {
+                        "previous_score": previous_score,
+                        "delta_score": 0,
                         "latest_confidence_score": result["confidence_score"],
                         "target_confidence_threshold": orb_framework["target_confidence_threshold"],
                         "confidence_history": confidence_history,
@@ -4933,7 +5000,9 @@ After parsing, route database persistence by status.
             result,
             orb_framework["target_confidence_threshold"],
             request.user,
+            previous_score=previous_score,
         )
+        delta_score = int(result["confidence_score"]) - int(previous_score or 0)
         crux_context = _build_orb_crux_context_debug(
             result,
             draft,
@@ -4953,6 +5022,8 @@ After parsing, route database persistence by status.
                 "guardrail": result["guardrail"],
                 "crux_context": crux_context,
                 "confidence_tracking": {
+                    "previous_score": previous_score,
+                    "delta_score": delta_score,
                     "latest_confidence_score": result["confidence_score"],
                     "target_confidence_threshold": orb_framework["target_confidence_threshold"],
                     "confidence_history": confidence_history,
