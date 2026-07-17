@@ -1,10 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams, Navigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Menu, X } from "lucide-react";
 import ChatNavbar from "./ChatNavbar";
 import BrandOrb from "../components/orb/BrandOrb";
 import OrbPresence from "../components/orb/OrbPresence";
+import { useTypewriter } from "../hooks/useTypewriter";
 import authService from "../services/authService";
 import {
   getJourneyPhase,
@@ -50,6 +51,278 @@ const ORB_EVALUATION_STEPS = [
   "Scoring confidence",
   "Synthesizing response",
 ];
+
+const BRAND_TRANSCRIPT_MAX_CHUNKS = 3;
+const BRAND_TRANSCRIPT_TARGET_CHARS = 230;
+const BRAND_TRANSCRIPT_MIN_CHUNKABLE_CHARS = 150;
+
+function createTurnId(prefix) {
+  const randomPart = Math.random().toString(36).slice(2, 8);
+  return `${prefix}:${Date.now()}:${randomPart}`;
+}
+
+function createQuestionTranscriptMessage(question, questionIndex, totalQuestions = 0) {
+  const questionKey = question?.key || `q_${question?.id ?? questionIndex}`;
+  const isBossQuestion = totalQuestions > 0 && questionIndex === totalQuestions - 1;
+  return {
+    id: `brand-question:${questionKey}:${questionIndex}`,
+    role: "brand",
+    kind: "question",
+    questionKey,
+    questionIndex,
+    label: isBossQuestion ? "Boss Question" : "Brand Godfather",
+    text: `Q.${questionIndex + 1}. ${question?.text || ""}`,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function createUserTranscriptMessage(question, questionIndex, text, id = createTurnId("user-answer")) {
+  return {
+    id,
+    role: "user",
+    kind: "answer",
+    questionKey: question?.key || `q_${question?.id ?? questionIndex}`,
+    questionIndex,
+    label: "You",
+    text,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function splitTextByWords(text, maxLength = BRAND_TRANSCRIPT_TARGET_CHARS) {
+  const words = String(text || "").trim().split(/\s+/).filter(Boolean);
+  const chunks = [];
+  let current = "";
+
+  words.forEach((word) => {
+    const next = current ? `${current} ${word}` : word;
+    if (current && next.length > maxLength) {
+      chunks.push(current);
+      current = word;
+      return;
+    }
+    current = next;
+  });
+
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+function splitBrandTextIntoChunks(text, maxChunks = BRAND_TRANSCRIPT_MAX_CHUNKS) {
+  const value = String(text || "").replace(/\s+/g, " ").trim();
+  if (!value) return [];
+  if (value.length < BRAND_TRANSCRIPT_MIN_CHUNKABLE_CHARS) return [value];
+
+  const sentencePieces = value.match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) || [value];
+  const pieces = sentencePieces
+    .map((piece) => piece.trim())
+    .filter(Boolean)
+    .flatMap((piece) => (
+      piece.length > BRAND_TRANSCRIPT_TARGET_CHARS * 1.25
+        ? splitTextByWords(piece, BRAND_TRANSCRIPT_TARGET_CHARS)
+        : [piece]
+    ));
+
+  if (pieces.length <= 1) {
+    return splitTextByWords(value, Math.ceil(value.length / Math.min(maxChunks, 2))).slice(0, maxChunks);
+  }
+
+  const targetCount = Math.min(
+    maxChunks,
+    Math.max(2, Math.ceil(value.length / BRAND_TRANSCRIPT_TARGET_CHARS)),
+  );
+  const targetLength = Math.ceil(value.length / targetCount);
+  const chunks = [];
+  let current = "";
+
+  pieces.forEach((piece, index) => {
+    const next = current ? `${current} ${piece}` : piece;
+    const remainingPieces = pieces.length - index;
+    const remainingSlots = targetCount - chunks.length - 1;
+    if (current && chunks.length < targetCount - 1 && next.length > targetLength && remainingPieces > remainingSlots) {
+      chunks.push(current);
+      current = piece;
+      return;
+    }
+    current = next;
+  });
+
+  if (current) chunks.push(current);
+
+  if (chunks.length <= maxChunks) return chunks;
+  const visibleChunks = chunks.slice(0, maxChunks - 1);
+  visibleChunks.push(chunks.slice(maxChunks - 1).join(" "));
+  return visibleChunks;
+}
+
+function createChunkedBrandTranscriptMessages(sourceMessage, maxChunks = BRAND_TRANSCRIPT_MAX_CHUNKS) {
+  const chunks = splitBrandTextIntoChunks(sourceMessage?.text, maxChunks);
+  if (chunks.length <= 1) return chunks.length ? [{ ...sourceMessage, text: chunks[0] }] : [];
+
+  return chunks.map((chunk, index) => ({
+    ...sourceMessage,
+    id: `${sourceMessage.id}:chunk:${index + 1}`,
+    text: chunk,
+    chunkedFrom: sourceMessage.id,
+    chunkIndex: index,
+    chunkCount: chunks.length,
+    label: index === 0 ? sourceMessage.label : "Brand Godfather asks",
+  }));
+}
+
+function expandStoredBrandTranscriptMessage(message) {
+  if (
+    message?.role !== "brand" ||
+    message?.chunkedFrom ||
+    !["reply", "follow_up"].includes(message?.kind)
+  ) {
+    return [message];
+  }
+  return createChunkedBrandTranscriptMessages(message);
+}
+
+function createBrandTranscriptMessages(question, questionIndex, verdict) {
+  if (!verdict) return [];
+  const questionKey = question?.key || `q_${question?.id ?? questionIndex}`;
+  const createdAt = new Date().toISOString();
+  const reply = String(verdict.reply || "").trim();
+  const followUp = String(verdict.follow_up_question || "").trim();
+  const followUpIncludesReply = reply && followUp.toLowerCase().startsWith(reply.toLowerCase());
+  const messages = [];
+
+  if (reply && !followUpIncludesReply) {
+    const replyMessage = {
+      id: createTurnId(`brand-reply:${questionKey}`),
+      role: "brand",
+      kind: "reply",
+      questionKey,
+      questionIndex,
+      label: "Brand Godfather asks",
+      text: reply,
+      status: verdict.status,
+      createdAt,
+    };
+    const replyMaxChunks = followUp && followUp !== reply ? 2 : BRAND_TRANSCRIPT_MAX_CHUNKS;
+    messages.push(...createChunkedBrandTranscriptMessages(replyMessage, replyMaxChunks));
+  }
+
+  if (followUp && followUp !== reply) {
+    const followUpMessage = {
+      id: createTurnId(`brand-followup:${questionKey}`),
+      role: "brand",
+      kind: "follow_up",
+      questionKey,
+      questionIndex,
+      label: "Brand Godfather asks",
+      text: followUp,
+      status: verdict.status,
+      createdAt,
+    };
+    const remainingChunks = Math.max(1, BRAND_TRANSCRIPT_MAX_CHUNKS - messages.length);
+    messages.push(...createChunkedBrandTranscriptMessages(followUpMessage, remainingChunks));
+  }
+
+  return messages;
+}
+
+function buildTranscriptFromAnswers(questions, answers, currentIdx) {
+  const messages = [];
+  questions.forEach((question, questionIndex) => {
+    const answer = String(answers?.[question.key] ?? "").trim();
+    if (answer || questionIndex === currentIdx) {
+      messages.push(createQuestionTranscriptMessage(question, questionIndex, questions.length));
+    }
+    if (answer) {
+      messages.push(createUserTranscriptMessage(question, questionIndex, answer, `user-answer:${question.key}:saved`));
+    }
+  });
+  return messages;
+}
+
+function mergeTranscriptMessages(currentMessages, incomingMessages) {
+  const nextMessages = Array.isArray(currentMessages) ? [...currentMessages] : [];
+  const existingIds = new Set(nextMessages.map((message) => message.id));
+  incomingMessages.forEach((message) => {
+    if (!message?.id || existingIds.has(message.id) || !String(message.text || "").trim()) return;
+    nextMessages.push(message);
+    existingIds.add(message.id);
+  });
+  return compactTranscriptMessages(nextMessages);
+}
+
+function compactTranscriptMessages(messages) {
+  const compacted = (Array.isArray(messages) ? messages : []).filter((message, index, list) => {
+    const nextMessage = list[index + 1];
+    if (
+      message?.role === "brand" &&
+      message?.kind === "reply" &&
+      nextMessage?.role === "brand" &&
+      nextMessage?.kind === "follow_up" &&
+      message.questionKey === nextMessage.questionKey &&
+      String(nextMessage.text || "").toLowerCase().startsWith(String(message.text || "").toLowerCase())
+    ) {
+      return false;
+    }
+    return true;
+  });
+  return compacted.flatMap(expandStoredBrandTranscriptMessage);
+}
+
+function parseStoredTranscript(raw) {
+  try {
+    const parsed = JSON.parse(raw || "[]");
+    const messages = Array.isArray(parsed)
+      ? parsed.filter((message) => message && typeof message === "object" && String(message.text || "").trim())
+      : [];
+    return compactTranscriptMessages(messages);
+  } catch {
+    return [];
+  }
+}
+
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return undefined;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(query.matches);
+    const handleChange = () => setPrefersReducedMotion(query.matches);
+    query.addEventListener?.("change", handleChange);
+    return () => query.removeEventListener?.("change", handleChange);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
+function PhaseTranscriptMessage({ message, onTypingFrame }) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const shouldType = message.role === "brand" && !prefersReducedMotion;
+  const { display, isTyping, skipToEnd } = useTypewriter(message.text, {
+    speed: message.kind === "question" ? 14 : 12,
+    enabled: shouldType,
+  });
+  const visibleText = shouldType ? display : message.text;
+
+  useEffect(() => {
+    if (message.role === "brand") onTypingFrame?.();
+  }, [display, message.role, onTypingFrame]);
+
+  return (
+    <div className={`pq-chat-message-row pq-chat-message-row--${message.role}`}>
+      <article
+        className={`pq-chat-message pq-chat-message--${message.role} pq-chat-message--${message.kind}`}
+        onClick={shouldType && isTyping ? skipToEnd : undefined}
+      >
+        <span className="pq-chat-message-label">{message.label || (message.role === "brand" ? "Brand Godfather" : "You")}</span>
+        <p>
+          {visibleText}
+          {isTyping && <span className="pq-typewriter-cursor" aria-hidden="true" />}
+        </p>
+      </article>
+    </div>
+  );
+}
 
 function resolveOrbQuestionId(question, questionIndex) {
   const rawId = question?.raw?.orb_framework_q_id || question?.raw?.q_id || question?.raw?.brandgodfather_q_id;
@@ -280,7 +553,6 @@ export default function PhaseQuestionPage() {
   const [evaluationProgress, setEvaluationProgress] = useState(0);
   const [evaluationStepIndex, setEvaluationStepIndex] = useState(0);
   const [nudgesFading, setNudgesFading] = useState(false);
-  const [replyVisible, setReplyVisible] = useState(false);
   const [bgfHelpLoading, setBgfHelpLoading] = useState(false);
   const [bgfHelpResponse, setBgfHelpResponse] = useState(null);
   const [bgfAskText, setBgfAskText] = useState("");
@@ -291,6 +563,8 @@ export default function PhaseQuestionPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [answerReward, setAnswerReward] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [transcriptMessages, setTranscriptMessages] = useState([]);
+  const [transcriptReady, setTranscriptReady] = useState(false);
   const nudgesDebounceRef = useRef(null);
   const nudgePickedRef = useRef(false);
   const livePreviewDebounceRef = useRef(null);
@@ -299,6 +573,8 @@ export default function PhaseQuestionPage() {
   const replyRevealTimersRef = useRef([]);
   const currentInputAiDraftRef = useRef(false);
   const answerRewardTimeoutRef = useRef(null);
+  const transcriptHydratedKeyRef = useRef("");
+  const transcriptEndRef = useRef(null);
   const questionIndexRestoredRef = useRef(false);
   const shouldForceQuestionRefineRef = useRef(
     typeof performance !== "undefined" &&
@@ -309,6 +585,7 @@ export default function PhaseQuestionPage() {
 
   const storageKey = getPhaseAnswersStorageKey(sessionId, phaseId);
   const currentQuestionStorageKey = getCurrentQuestionStorageKey(sessionId, phaseId);
+  const transcriptStorageKey = `phaseQuestionTranscript:${sessionId || "anon"}:phase:${phaseId || "unknown"}`;
 
   useEffect(() => {
     questionIndexRestoredRef.current = false;
@@ -568,6 +845,63 @@ export default function PhaseQuestionPage() {
   }, [sessionId, questions, storageKey]);
 
   useEffect(() => {
+    if (!questions.length) {
+      setTranscriptMessages([]);
+      setTranscriptReady(false);
+      transcriptHydratedKeyRef.current = "";
+      return;
+    }
+    if (transcriptHydratedKeyRef.current === transcriptStorageKey) return;
+
+    const stored = parseStoredTranscript(localStorage.getItem(transcriptStorageKey));
+    setTranscriptMessages(
+      stored.length ? stored : buildTranscriptFromAnswers(questions, answers, currentIdx),
+    );
+    transcriptHydratedKeyRef.current = transcriptStorageKey;
+    setTranscriptReady(true);
+  }, [answers, currentIdx, questions, transcriptStorageKey]);
+
+  useEffect(() => {
+    if (!transcriptReady || !questions.length) return;
+    setTranscriptMessages((messages) => {
+      const missingAnswerMessages = [];
+      questions.forEach((question, questionIndex) => {
+        const answer = String(answers?.[question.key] ?? "").trim();
+        if (!answer) return;
+        missingAnswerMessages.push(createQuestionTranscriptMessage(question, questionIndex, questions.length));
+        missingAnswerMessages.push(createUserTranscriptMessage(question, questionIndex, answer, `user-answer:${question.key}:saved`));
+      });
+      return mergeTranscriptMessages(messages, missingAnswerMessages);
+    });
+  }, [answers, questions, transcriptReady]);
+
+  useEffect(() => {
+    if (!transcriptReady || !questions[currentIdx]) return;
+    setTranscriptMessages((messages) => mergeTranscriptMessages(messages, [
+      createQuestionTranscriptMessage(questions[currentIdx], currentIdx, questions.length),
+    ]));
+  }, [currentIdx, questions, transcriptReady]);
+
+  useEffect(() => {
+    if (!transcriptReady || transcriptHydratedKeyRef.current !== transcriptStorageKey) return;
+    try {
+      localStorage.setItem(transcriptStorageKey, JSON.stringify(transcriptMessages));
+    } catch {
+      /* ignore */
+    }
+  }, [transcriptMessages, transcriptReady, transcriptStorageKey]);
+
+  const scrollTranscriptToBottom = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      transcriptEndRef.current?.scrollIntoView({ block: "end" });
+    });
+  }, []);
+
+  useEffect(() => {
+    scrollTranscriptToBottom();
+  }, [transcriptMessages, orbChecking, inputValue, scrollTranscriptToBottom]);
+
+  useEffect(() => {
     setJourneyAnsweredCount(countStoredJourneyAnswers(sessionId));
   }, [sessionId]);
 
@@ -600,7 +934,8 @@ export default function PhaseQuestionPage() {
 
   useLayoutEffect(() => {
     resizeInput();
-  }, [inputValue, currentIdx]);
+    scrollTranscriptToBottom();
+  }, [inputValue, currentIdx, scrollTranscriptToBottom]);
 
   // Real-time ORB verdict while the user types (read-only dry-run, debounced).
   useEffect(() => {
@@ -678,15 +1013,12 @@ export default function PhaseQuestionPage() {
 
     if (!reply) {
       setNudgesFading(false);
-      setReplyVisible(false);
       return;
     }
 
-    setReplyVisible(false);
     setNudgesFading(false);
     const t1 = setTimeout(() => setNudgesFading(true), 2000);
-    const t2 = setTimeout(() => setReplyVisible(true), 2450);
-    replyRevealTimersRef.current = [t1, t2];
+    replyRevealTimersRef.current = [t1];
 
     return () => {
       replyRevealTimersRef.current.forEach(clearTimeout);
@@ -850,6 +1182,11 @@ export default function PhaseQuestionPage() {
     setJourneyAnsweredCount(countStoredJourneyAnswers(sessionId));
   };
 
+  const appendTranscriptMessages = (messages) => {
+    const normalizedMessages = Array.isArray(messages) ? messages : [messages];
+    setTranscriptMessages((currentMessages) => mergeTranscriptMessages(currentMessages, normalizedMessages));
+  };
+
   const persistViewApiResponsePayload = (payload) => {
     if (!payload) return;
     try {
@@ -1004,6 +1341,7 @@ export default function PhaseQuestionPage() {
       return null;
     }
     setSubmitError("");
+    appendTranscriptMessages(createUserTranscriptMessage(currentQuestion, currentIdx, value));
 
     setOrbChecking(true);
     setOrbVerdict(null);
@@ -1043,11 +1381,14 @@ export default function PhaseQuestionPage() {
         depth_score: "not scored",
       };
       setOrbVerdict(fallback);
+      appendTranscriptMessages(createBrandTranscriptMessages(currentQuestion, currentIdx, fallback));
       setSubmitError(fallback.reply);
       throw err;
     } finally {
       setOrbChecking(false);
     }
+
+    appendTranscriptMessages(createBrandTranscriptMessages(currentQuestion, currentIdx, orb));
 
     if (orb.status === "INCOMPLETE") {
       setSubmitError("");
@@ -1195,10 +1536,6 @@ export default function PhaseQuestionPage() {
   const journeyQuestionNumber = getJourneyQuestionNumber(phaseId, currentIdx);
   const isPhaseOneOrbJourney = Number(phaseId) === 1;
   const isCurrentQuestionLocked = currentQuestion && !isPhaseOneOrbJourney && !isJourneyQuestionUnlocked(journeyQuestionNumber, billingSource);
-  const questionLabel = currentQuestion
-    ? `Q.${currentIdx + 1}. ${currentQuestion.text}`
-    : "";
-
   const sidebarLabels =
     Number(phaseId) === 1 ? PHASE_1_MANIFESTO_STEPS : questions.map((q) => q.shortLabel);
   const totalQuestions = questions.length || sidebarLabels.length;
@@ -1256,6 +1593,11 @@ export default function PhaseQuestionPage() {
       }
     : null;
   const activeEvaluationStep = ORB_EVALUATION_STEPS[evaluationStepIndex % ORB_EVALUATION_STEPS.length];
+  const visibleTranscriptMessages = transcriptMessages.filter((message) => {
+    if (!message) return false;
+    if (message.questionIndex === currentIdx) return true;
+    return currentQuestion?.key && message.questionKey === currentQuestion.key;
+  });
 
   return (
     <div className="pq-page">
@@ -1292,21 +1634,19 @@ export default function PhaseQuestionPage() {
         showDownloadButton={false}
         showLogoutButton
         phaseStatus={phaseStatus}
-        leadingAction={
-          <button
-            type="button"
-            className="pq-navbar-menu-btn"
-            onClick={() => setSidebarOpen((open) => !open)}
-            aria-label={sidebarOpen ? "Close question menu" : "Open question menu"}
-            aria-expanded={sidebarOpen}
-          >
-            {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
-        }
       />
 
       <div className="pq-body">
-        <aside className={`pq-sidebar${sidebarOpen ? " open" : ""}`} aria-hidden={showTitleModal}>
+        <button
+          type="button"
+          className="pq-page-menu-btn"
+          onClick={() => setSidebarOpen((open) => !open)}
+          aria-label={sidebarOpen ? "Close question menu" : "Open question menu"}
+          aria-expanded={sidebarOpen}
+        >
+          {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+        <aside className={`pq-sidebar${sidebarOpen ? " open" : ""}`} aria-hidden={showTitleModal || !sidebarOpen}>
           <h2 className="pq-sidebar-title">Brand Manifesto</h2>
           <div className="pq-sidebar-divider" />
           <nav className="pq-sidebar-nav">
@@ -1339,6 +1679,8 @@ export default function PhaseQuestionPage() {
           type="button"
           className={`pq-sidebar-backdrop${sidebarOpen ? " open" : ""}`}
           aria-label="Close question menu"
+          aria-hidden={!sidebarOpen}
+          tabIndex={sidebarOpen ? 0 : -1}
           onClick={() => setSidebarOpen(false)}
         />
 
@@ -1421,186 +1763,79 @@ export default function PhaseQuestionPage() {
                 </p>
               </div>
 
-              <div className="pq-orb-row">
-                <OrbPresence className="pq-orb-presence">
-                  <BrandOrb size="welcome" />
-                </OrbPresence>
-                <div className="pq-nudges-wrap" aria-live="polite">
-                  {replyVisible && viewVerdict?.follow_up_question && (
-                    <div className="pq-followup-wrap pq-followup-wrap--orb-side">
-                      <div className="pq-followup-bubble pq-followup-bubble--enter">
-                        <span className="pq-followup-badge">Brand Godfather asks</span>
-                        <p>{viewVerdict.follow_up_question}</p>
-                      </div>
-                    </div>
-                  )}
-                  {orbChecking && (
-                    <div className="pq-agentic-metrics pq-agentic-metrics--orb-side">
-                      {/* Hidden per request: old static submit-evaluation status text. */}
-                      {/* <p className="pq-nudges-status pq-nudges-status--muted">
-                        ORB will evaluate this answer when you submit it.
-                      </p> */}
-                      <span className="pq-agentic-kicker">The Brand Godfather is evaluating your response</span>
-                      <div className="pq-agentic-progress" aria-hidden="true">
-                        <span style={{ width: `${evaluationProgress}%` }} />
-                      </div>
-                      <p key={activeEvaluationStep} className="pq-agentic-metric pq-agentic-metric--fade">
-                        {evaluationProgress}% · {activeEvaluationStep}
-                      </p>
-                    </div>
-                  )}
-                  {/* Hidden per request: empty green nudges badge beside the ORB. */}
-                  {/* <span className="pq-nudges-badge"></span> */}
-                  {nudgesLoading && (
-                    <p className="pq-nudges-status">Thinking of ideas…</p>
-                  )}
-                  {!nudgesLoading && nudgeQuality && !replyVisible && (
-                    <div className={`pq-nudges-panel${nudgesFading ? " pq-nudges-panel--dissolve" : ""}`}>
-                      {/* Hidden per request: older local answer-quality copy, e.g. "This already has something useful..." */}
-                      {/* {nudgeQuality.reason && (
-                        <p className="pq-nudges-reason">{nudgeQuality.reason}</p>
-                      )} */}
-                      {/* Hidden per request: rewritten-answer quote bubble (echoed user answer) */}
-                      {/* {nudgeQuote?.quote && (
-                        <blockquote className="pq-nudge-quote">
-                          {nudgeQuote.quote}
-                        </blockquote>
-                      )} */}
-                      {activeNudge && (
-                        <>
-                          {/* Hidden per request: intermediate "Let's make it sharper" lead text */}
-                          {/* <p className="pq-nudges-lead">
-                            {nudgeQuality.quality === "strong"
-                              ? "Make it even sharper:"
-                              : "Let’s make it stronger like this:"}
-                          </p> */}
-                          <button
-                            type="button"
-                            className="pq-nudge-chip"
-                            onClick={() => applyNudge(activeNudge)}
-                          >
-                            {activeNudge}
-                          </button>
-                          {nudges.length > 1 && (
-                            <p className="pq-nudges-status pq-nudges-status--muted">
-                              Tap Help me to go deeper for next suggestion ({nudgeIndex + 1}/{nudges.length})
-                            </p>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                  {/* Hidden per request: Brand Godfather says reply bubble. */}
-                  {/* {replyVisible && viewVerdict?.reply && (
-                    <div className="pq-orb-reply pq-orb-reply--enter" aria-live="polite">
-                      <span className="pq-orb-reply-badge">Brand Godfather says</span>
-                      <p>{viewVerdict.reply}</p>
-                    </div>
-                  )} */}
-                  {!viewChecking && viewVerdict?.guardrail?.triggered && (
-                    <div
-                      className={`pq-guardrail-block pq-guardrail-block--${String(
-                        viewVerdict.guardrail.violation_type || "relevance",
-                      ).replace(/[^a-z0-9_-]/gi, "_")}`}
-                      role="alert"
-                    >
-                      <span>
-                        {viewVerdict.guardrail.violation_type === "critical_safety"
-                          ? "Guardrail rejection"
-                          : "Strategy relevance check"}
-                      </span>
-                      <strong>{viewVerdict.guardrail.category || "guardrail_triggered"}</strong>
-                      <p>{viewVerdict.guardrail.response || viewVerdict.reply}</p>
-                    </div>
-                  )}
-                  {SHOW_LEGACY_ORB_INTELLIGENCE_PANEL && showVerdictPanel && showApiData && (
-                    <div
-                      className={`pq-orb-verdict pq-orb-verdict--${String(
-                        viewVerdict?.status || "checking",
-                      ).toLowerCase()}${isLiveVerdict ? " pq-orb-verdict--live" : ""}`}
-                    >
-                      <div className="pq-orb-verdict-head">
-                        <span>ORB Intelligence{isLiveVerdict ? " · LIVE" : ""}</span>
-                        <strong>{viewChecking ? "CHECKING" : viewVerdict.status}</strong>
-                      </div>
-                      {!viewChecking && viewVerdict?.interruption_type === "vendor_language" && (
-                        <div className="pq-vendor-block" role="alert">
-                          <span>Vendor trap caught</span>
-                          {viewVerdict.blocked_phrases?.length > 0 && (
-                            <strong>{viewVerdict.blocked_phrases.join(", ")}</strong>
-                          )}
-                          <p>Others can be vendors. This brand cannot. Replace service talk with what you stand for, who you are here for, and why they should care.</p>
-                        </div>
-                      )}
-                      {!viewChecking && viewVerdict?.interruption_type === "contradiction" && (
-                        <div className="pq-contradiction-block" role="alert">
-                          <span>Contradiction caught</span>
-                          {viewVerdict.contradiction_result?.conflicting_q_id && (
-                            <strong>Conflicts with {viewVerdict.contradiction_result.conflicting_q_id}</strong>
-                          )}
-                          <p>{viewVerdict.contradiction_message || "This answer conflicts with an earlier answer. Resolve the truth before moving on."}</p>
-                        </div>
-                      )}
-                      {!viewChecking && viewVerdict?.interruption_type === "adaptive_coaching" && (
-                        <div className="pq-adaptive-block" role="alert">
-                          <span>Adaptive challenge raised</span>
-                          <strong>Pressure {viewVerdict.pressure_used || "n/a"} · Resistance {viewVerdict.resistance_count || 0}</strong>
-                          <p>The ORB is increasing intensity because this answer is still avoiding the deeper brand truth.</p>
-                        </div>
-                      )}
-                      {!viewChecking && viewVerdict?.breakthrough_detected && (
-                        <div className="pq-breakthrough-block" role="status">
-                          <span>Breakthrough recognized</span>
-                          <strong>{viewVerdict.breakthrough_seed || "Brand seed captured"}</strong>
-                          <p>{viewVerdict.breakthrough_reason || "That is the truth/edge. The ORB captured it as a brand seed."}</p>
-                        </div>
-                      )}
-                      <div className="pq-orb-verdict-grid">
-                        <span>status</span>
-                        <strong>{viewChecking ? "CHECKING" : viewVerdict.status}</strong>
-                        <span>discovery_id</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.associated_discovery_id || "none"}</strong>
-                        <span>target_confidence_threshold</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.target_confidence_threshold ?? "n/a"}</strong>
-                        <span>canonical_question</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.metadata?.canonical_question || "none"}</strong>
-                        <span>challenge_type</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.challenge_type || "none"}</strong>
-                        <span>pressure_used</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.pressure_used ?? "n/a"}</strong>
-                        <span>resistance_count</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.resistance_count ?? 0}</strong>
-                        <span>emotional_state</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.emotional_state || "neutral"}</strong>
-                        <span>tone_mode</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.tone_mode || "direct_challenge"}</strong>
-                        <span>next_q_id</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.next_q_id}</strong>
-                        <span>depth_score</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.depth_score}</strong>
-                        <span>breakthrough</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.breakthrough_detected ? `yes · ${viewVerdict.breakthrough_score}` : "no"}</strong>
-                        <span>breakthrough_seed</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.breakthrough_seed || "none"}</strong>
-                        <span>reply</span>
-                        <strong>{viewChecking ? "..." : viewVerdict.reply}</strong>
-                      </div>
-                    </div>
-                  )}
+              <section className="pq-conversation-shell" aria-label="Brand Godfather conversation">
+                <div className="pq-orb-row pq-orb-row--chat" aria-hidden="true">
+                  <OrbPresence className="pq-orb-presence">
+                    <BrandOrb size="welcome" />
+                  </OrbPresence>
                 </div>
-              </div>
 
-              <div className="pq-chat">
-                <div className="pq-bubble pq-bubble--bot">
-                  <img src="/Group%2021.svg" alt="" className="pq-bot-avatar" />
-                  <div className="pq-bubble-text">
-                    {isBossQuestion && <span className="pq-boss-label">Boss Question</span>}
-                    {questionLabel}
+                <div className="pq-chat-viewport" aria-live="polite">
+                  <div className="pq-chat-stream">
+                    {visibleTranscriptMessages.map((message) => (
+                      <PhaseTranscriptMessage
+                        key={message.id}
+                        message={message}
+                        onTypingFrame={scrollTranscriptToBottom}
+                      />
+                    ))}
+
+                    {orbChecking && (
+                      <div className="pq-chat-message-row pq-chat-message-row--brand">
+                        <article className="pq-chat-message pq-chat-message--brand pq-chat-message--status">
+                          <span className="pq-chat-message-label">Brand Godfather is thinking</span>
+                          <div className="pq-agentic-progress" aria-hidden="true">
+                            <span style={{ width: `${evaluationProgress}%` }} />
+                          </div>
+                          <p key={activeEvaluationStep} className="pq-agentic-metric pq-agentic-metric--fade">
+                            {evaluationProgress}% · {activeEvaluationStep}
+                          </p>
+                        </article>
+                      </div>
+                    )}
+
+                    {!viewChecking && viewVerdict?.guardrail?.triggered && (
+                      <div className="pq-chat-message-row pq-chat-message-row--brand">
+                        <div
+                          className={`pq-guardrail-block pq-guardrail-block--${String(
+                            viewVerdict.guardrail.violation_type || "relevance",
+                          ).replace(/[^a-z0-9_-]/gi, "_")}`}
+                          role="alert"
+                        >
+                          <span>
+                            {viewVerdict.guardrail.violation_type === "critical_safety"
+                              ? "Guardrail rejection"
+                              : "Strategy relevance check"}
+                          </span>
+                          <strong>{viewVerdict.guardrail.category || "guardrail_triggered"}</strong>
+                          <p>{viewVerdict.guardrail.response || viewVerdict.reply}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div ref={transcriptEndRef} className="pq-chat-end" aria-hidden="true" />
                   </div>
                 </div>
-              </div>
 
-              <div className="pq-input-wrap">
+                <div className="pq-input-wrap pq-input-wrap--composer">
+                  {nudgesLoading && <p className="pq-nudges-status">Thinking of ideas…</p>}
+                  {!nudgesLoading && nudgeQuality && activeNudge && (
+                    <div className={`pq-nudges-panel${nudgesFading ? " pq-nudges-panel--dissolve" : ""}`}>
+                      <button
+                        type="button"
+                        className="pq-nudge-chip"
+                        onClick={() => applyNudge(activeNudge)}
+                      >
+                        {activeNudge}
+                      </button>
+                      {nudges.length > 1 && (
+                        <p className="pq-nudges-status pq-nudges-status--muted">
+                          Tap Help me to go deeper for next suggestion ({nudgeIndex + 1}/{nudges.length})
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                 <div
                   className={`pq-input-row${
                     inputValue.includes("\n") || inputValue.length > 72
@@ -1755,7 +1990,8 @@ export default function PhaseQuestionPage() {
                   </button>
                 </div>
                 */}
-              </div>
+                </div>
+              </section>
 
               <button
                 type="button"

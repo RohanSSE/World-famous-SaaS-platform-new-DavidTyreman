@@ -1207,9 +1207,17 @@ def session_answer_create(request, pk):
         if question.id in phase2_question_ids:
             phase2_framework_index = phase2_question_ids.index(question.id) + 1
             allow_framework_phase2_question = get_phase2_framework(f"Q{phase2_framework_index}") is not None
+    allow_framework_phase3_question = False
+    if frontend_phase == 3 and question.stage == 4:
+        phase3_question_ids = list(
+            Question.objects.filter(stage=4, is_active=True).order_by('order', 'id').values_list('id', flat=True)
+        )
+        if question.id in phase3_question_ids:
+            phase3_framework_index = phase3_question_ids.index(question.id) + 1
+            allow_framework_phase3_question = get_phase3_framework(f"Q{phase3_framework_index}") is not None
 
     # ADD STAGE VALIDATION HERE
-    if not (allow_framework_phase1_question or allow_framework_phase2_question) and not session.can_access_stage(question.stage, request.user):
+    if not (allow_framework_phase1_question or allow_framework_phase2_question or allow_framework_phase3_question) and not session.can_access_stage(question.stage, request.user):
         if question.stage > 1:
             return Response({
                 "detail": "Please upgrade your plan to continue after Phase 1.",
@@ -1497,6 +1505,20 @@ def question_list(request):
                 "mode": "bulk",
                 "source": "phase2_frameworks",
                 "questions": _serialize_orb_phase2_questions(visible_questions),
+            })
+
+        if requested_stage == 3:
+            questions = Question.objects.filter(
+                stage=4,
+                is_active=True
+            ).order_by('order', 'id')[:len(PHASE3_FRAMEWORKS)]
+            visible_questions = [q for q in questions if q.is_visible_to(request.user)]
+            return Response({
+                "stage": 3,
+                "stage_name": dict(Question.STAGE_CHOICES).get(4),
+                "mode": "bulk",
+                "source": "phase3_frameworks",
+                "questions": _serialize_orb_phase3_questions(visible_questions),
             })
 
         questions = Question.objects.filter(
@@ -2304,6 +2326,7 @@ from user_sessions.services.rag_observability import should_include_debug
 from user_sessions.services.rag_agents import list_agents
 from brandgodfather.services.phase1_frameworks import PHASE1_FRAMEWORKS, get_framework, match_orb_framework
 from brandgodfather.services.phase2_frameworks import PHASE2_FRAMEWORKS, get_phase2_framework, match_phase2_orb_framework
+from brandgodfather.services.phase3_frameworks import PHASE3_FRAMEWORKS, get_phase3_framework, match_phase3_orb_framework
 
 logger = logging.getLogger(__name__)
 es_service = ElasticsearchService()
@@ -2699,6 +2722,26 @@ def _serialize_orb_phase2_questions(questions):
         item["order"] = index
         item["orb_framework_q_id"] = framework_key
         item["brandgodfather_q_id"] = f"P2_{framework_key}"
+        item["text"] = framework.get("question") or item.get("text") or f"Question {index}"
+        item["question"] = item["text"]
+        item["prompt"] = item["text"]
+        item["user_facing_text"] = item["text"]
+        item["associated_discovery_id"] = framework.get("associated_discovery_id")
+        item["target_confidence_threshold"] = framework.get("target_confidence_threshold")
+        item["orb_analysis_framework"] = framework.get("orb_analysis_framework") or {}
+    return data
+
+
+def _serialize_orb_phase3_questions(questions):
+    data = list(QuestionSerializer(questions, many=True).data)
+    for index, item in enumerate(data, start=1):
+        framework_key = f"Q{index}"
+        framework = PHASE3_FRAMEWORKS.get(framework_key) or {}
+        item["source_stage"] = item.get("stage")
+        item["stage"] = 3
+        item["order"] = index
+        item["orb_framework_q_id"] = framework_key
+        item["brandgodfather_q_id"] = f"P3_{framework_key}"
         item["text"] = framework.get("question") or item.get("text") or f"Question {index}"
         item["question"] = item["text"]
         item["prompt"] = item["text"]
@@ -4620,12 +4663,16 @@ def edit_conversation(request, pk, conversation_id):
 
     if frontend_phase == 2:
         orb_framework = match_phase2_orb_framework(question_text) or match_phase2_orb_framework(db_question_text)
+    elif frontend_phase == 3:
+        orb_framework = match_phase3_orb_framework(question_text) or match_phase3_orb_framework(db_question_text)
     else:
         orb_framework = (
             match_orb_framework(question_text)
             or match_phase2_orb_framework(question_text)
+            or match_phase3_orb_framework(question_text)
             or match_orb_framework(db_question_text)
             or match_phase2_orb_framework(db_question_text)
+            or match_phase3_orb_framework(db_question_text)
         )
     if not orb_framework:
         return Response({"detail": "No ORB framework mapping found for this question."}, status=422)
@@ -5388,6 +5435,7 @@ def answer_ai_suggestions(request, pk):
     )
     from brandgodfather.services.phase1_frameworks import get_framework
     from brandgodfather.services.phase2_frameworks import get_phase2_framework
+    from brandgodfather.services.phase3_frameworks import get_phase3_framework
 
     session = get_object_or_404(Session, pk=pk)
     if not session.has_access(request.user):
@@ -5413,14 +5461,20 @@ def answer_ai_suggestions(request, pk):
     # Per-phase ORB framework, keyed by Question.order.
     phase_framework = None
     phase_framework_block = ""
-    if question_stage == 1:
+    framework_phase_label = None
+    if question_stage == 2:
         phase_framework = get_framework(f"Q{int(getattr(question, 'order', 0) or 0)}")
-    elif question_stage == 2:
+        framework_phase_label = 1
+    elif question_stage == 3:
         phase_framework = get_phase2_framework(f"Q{int(getattr(question, 'order', 0) or 0)}")
+        framework_phase_label = 2
+    elif question_stage == 4:
+        phase_framework = get_phase3_framework(f"Q{int(getattr(question, 'order', 0) or 0)}")
+        framework_phase_label = 3
     if phase_framework:
         _fw = phase_framework["orb_analysis_framework"]
         phase_framework_block = (
-            f"\n\nPhase {question_stage} ORB analysis framework for THIS exact question:\n"
+            f"\n\nPhase {framework_phase_label} ORB analysis framework for THIS exact question:\n"
             "LOOK FOR (reward answers that genuinely hit these):\n- "
             + "\n- ".join(_fw["look_for"])
             + "\nAVOID (treat these as vendor traps / weak thinking):\n- "
