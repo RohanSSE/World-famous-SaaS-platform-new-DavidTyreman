@@ -56,7 +56,7 @@ export default function PhaseIntroPage() {
           context="phase_intro"
           phaseId={phase.id}
           variant="overlay"
-          eyebrow="Before question one"
+          // eyebrow="Before question one"
           storageKey={`phase-intro-quote-${phase.id}`}
         />
       )}

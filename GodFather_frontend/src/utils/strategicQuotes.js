@@ -1,13 +1,13 @@
 import { JOURNEY_PHASES, getPhaseAnswersStorageKey } from "../constants/journeyPhases";
 
 const QUOTE_BANK = [
-  {
-    id: "know-thyself",
-    text: "Know Thyself.",
-    author: "Inscribed on the Oracle Shrine of Apollo",
-    themes: ["identity", "self", "truth", "purpose", "origin"],
-    contexts: ["phase_intro", "brand_book_loading"],
-  },
+  // {
+  //   id: "know-thyself",
+  //   text: "Know Thyself.",
+  //   author: "Inscribed on the Oracle Shrine of Apollo",
+  //   themes: ["identity", "self", "truth", "purpose", "origin"],
+  //   contexts: ["phase_intro", "brand_book_loading"],
+  // },
   {
     id: "meaning",
     text: "Most businesses compete for attention. Strong brands create meaning.",
@@ -119,7 +119,7 @@ function scoreQuote(quote, { context, phaseId, sourceText }) {
     if (contextThemes.includes(theme)) score += 2;
   });
 
-  if (Number(phaseId) === 1 && quote.id === "know-thyself") score += 5;
+  // if (Number(phaseId) === 1 && quote.id === "know-thyself") score += 5;
   if (Number(phaseId) === 2 && quote.id === "only-one") score += 4;
   if (Number(phaseId) === 3 && quote.id === "experience") score += 4;
   if (context === "brand_book_ready" && quote.id === "experience") score += 6;
