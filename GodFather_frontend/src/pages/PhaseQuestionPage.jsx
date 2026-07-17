@@ -55,6 +55,10 @@ const ORB_EVALUATION_STEPS = [
 const BRAND_TRANSCRIPT_MAX_CHUNKS = 3;
 const BRAND_TRANSCRIPT_TARGET_CHARS = 230;
 const BRAND_TRANSCRIPT_MIN_CHUNKABLE_CHARS = 150;
+const BRAND_TYPEWRITER_QUESTION_SPEED = 34;
+const BRAND_TYPEWRITER_REPLY_SPEED = 30;
+const BRAND_TYPEWRITER_SENTENCE_PAUSE = 180;
+const BRAND_TYPEWRITER_COMMA_PAUSE = 90;
 
 function createTurnId(prefix) {
   const randomPart = Math.random().toString(36).slice(2, 8);
@@ -299,8 +303,10 @@ function PhaseTranscriptMessage({ message, onTypingFrame }) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const shouldType = message.role === "brand" && !prefersReducedMotion;
   const { display, isTyping, skipToEnd } = useTypewriter(message.text, {
-    speed: message.kind === "question" ? 14 : 12,
+    speed: message.kind === "question" ? BRAND_TYPEWRITER_QUESTION_SPEED : BRAND_TYPEWRITER_REPLY_SPEED,
     enabled: shouldType,
+    punctuationPause: BRAND_TYPEWRITER_SENTENCE_PAUSE,
+    commaPause: BRAND_TYPEWRITER_COMMA_PAUSE,
   });
   const visibleText = shouldType ? display : message.text;
 

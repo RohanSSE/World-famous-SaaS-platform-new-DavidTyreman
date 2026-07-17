@@ -3,16 +3,19 @@ import { useEffect, useRef, useState } from "react";
 /**
  * Typewriter with blinking cursor + interrupt support
  */
-export function useTypewriter(text, { speed = 18, enabled = true, onComplete } = {}) {
+export function useTypewriter(
+  text,
+  { speed = 18, enabled = true, onComplete, punctuationPause = 0, commaPause = 0 } = {},
+) {
   const [display, setDisplay] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const intervalRef = useRef(null);
+  const timeoutRef = useRef(null);
   const indexRef = useRef(0);
 
   const stop = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
     setIsTyping(false);
   };
@@ -25,6 +28,8 @@ export function useTypewriter(text, { speed = 18, enabled = true, onComplete } =
   };
 
   useEffect(() => {
+    let cancelled = false;
+
     stop();
     indexRef.current = 0;
     setDisplay("");
@@ -35,19 +40,37 @@ export function useTypewriter(text, { speed = 18, enabled = true, onComplete } =
     }
 
     setIsTyping(true);
-    intervalRef.current = setInterval(() => {
+    const getNextDelay = (typedCharacter) => {
+      if (punctuationPause && /[.!?]/.test(typedCharacter)) return punctuationPause;
+      if (commaPause && /[,;:]/.test(typedCharacter)) return commaPause;
+      return speed;
+    };
+
+    const typeNextCharacter = () => {
+      if (cancelled) return;
       indexRef.current += 1;
+      const nextDisplay = text.slice(0, indexRef.current);
+      setDisplay(nextDisplay);
+
       if (indexRef.current >= text.length) {
-        setDisplay(text);
         stop();
         onComplete?.();
-      } else {
-        setDisplay(text.slice(0, indexRef.current));
+        return;
       }
-    }, speed);
 
-    return () => stop();
-  }, [text, speed, enabled]);
+      timeoutRef.current = setTimeout(
+        typeNextCharacter,
+        getNextDelay(text[indexRef.current - 1]),
+      );
+    };
+
+    timeoutRef.current = setTimeout(typeNextCharacter, speed);
+
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, [text, speed, enabled, punctuationPause, commaPause]);
 
   return { display, isTyping, stop, skipToEnd };
 }
