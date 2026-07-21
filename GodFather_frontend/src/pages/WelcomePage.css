@@ -33,6 +33,15 @@
   margin-bottom: 1.25rem;
 }
 
+.welcome-orb-breeze {
+  opacity: 0;
+  filter: blur(18px);
+  transform: translate3d(-32px, 20px, 0) rotate(-2.5deg) scale(0.88);
+  animation: welcome-breeze-reveal 2.15s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  animation-delay: 0.25s;
+  will-change: opacity, transform, filter;
+}
+
 .welcome-title {
   font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
   font-weight: 500;
@@ -59,6 +68,7 @@
 
 .welcome-body {
   margin-bottom: 0;
+  min-height: 66px;
 }
 
 .welcome-body strong {
@@ -66,8 +76,22 @@
   color: #fff;
 }
 
-.welcome-cta {
+.welcome-type-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  background: #c0f9ff;
+  transform: translateY(2px);
+  animation: welcome-cursor-blink 0.85s steps(2, start) infinite;
+}
+
+.welcome-cta-slot {
   margin-top: 2rem;
+  min-height: 52px;
+}
+
+.welcome-cta {
   padding: 0.85rem 2.5rem;
   min-width: 220px;
   border: none;
@@ -80,11 +104,78 @@
   background: linear-gradient(90deg, #3959e5 0%, #507fec 45%, #8ee5ff 100%);
   box-shadow: 0 8px 28px rgba(57, 89, 229, 0.45);
   transition: transform 0.2s, box-shadow 0.2s;
+  opacity: 0;
+  transform: translate3d(0, 14px, 0) scale(0.98);
 }
 
-.welcome-cta:hover {
+.welcome-cta--ready {
+  animation: welcome-cta-reveal 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+.welcome-cta:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 12px 36px rgba(57, 89, 229, 0.55);
+}
+
+.welcome-cta:disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+@keyframes welcome-breeze-reveal {
+  0% {
+    opacity: 0;
+    filter: blur(18px);
+    transform: translate3d(-32px, 20px, 0) rotate(-2.5deg) scale(0.88);
+  }
+
+  62% {
+    opacity: 1;
+    filter: blur(3px);
+    transform: translate3d(8px, -4px, 0) rotate(0.45deg) scale(1.025);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) rotate(0) scale(1);
+  }
+}
+
+@keyframes welcome-cursor-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes welcome-cta-reveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-orb-breeze,
+  .welcome-cta {
+    animation-duration: 0.01ms;
+    animation-delay: 0s;
+  }
+
+  .welcome-type-cursor {
+    animation: none;
+  }
 }
 
 @media (max-width: 768px) {

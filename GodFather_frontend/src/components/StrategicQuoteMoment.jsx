@@ -43,16 +43,21 @@ export default function StrategicQuoteMoment({
     () => selectStrategicQuote({ context, phaseId, sourceText }),
     [context, phaseId, sourceText],
   );
-  const [quote, setQuote] = useState(fallbackQuote);
+  const shouldUseDynamicOverlay = variant === "overlay";
+  const [quote, setQuote] = useState(() => (shouldUseDynamicOverlay ? null : fallbackQuote));
   const [open, setOpen] = useState(() => variant === "overlay" && !getStorageFlag(resolvedStorageKey));
 
   useEffect(() => {
-    setQuote(fallbackQuote);
-  }, [fallbackQuote]);
+    setQuote(shouldUseDynamicOverlay ? null : fallbackQuote);
+  }, [fallbackQuote, shouldUseDynamicOverlay]);
 
   useEffect(() => {
     if (!sessionId) return;
     let cancelled = false;
+
+    if (shouldUseDynamicOverlay) {
+      setQuote(null);
+    }
 
     async function loadQuote() {
       try {
@@ -67,7 +72,9 @@ export default function StrategicQuoteMoment({
           role: data.role,
         });
       } catch {
-        /* keep local fallback */
+        if (!shouldUseDynamicOverlay) {
+          setQuote(fallbackQuote);
+        }
       }
     }
 
@@ -75,7 +82,7 @@ export default function StrategicQuoteMoment({
     return () => {
       cancelled = true;
     };
-  }, [context, fallbackQuote, phaseId, sessionId, sourceText]);
+  }, [context, fallbackQuote, phaseId, sessionId, shouldUseDynamicOverlay, sourceText]);
 
   useEffect(() => {
     if (variant === "overlay") {
@@ -87,6 +94,8 @@ export default function StrategicQuoteMoment({
     setStorageFlag(resolvedStorageKey);
     setOpen(false);
   };
+
+  if (variant === "overlay" && (!open || !quote)) return null;
 
   const quoteMarkup = (
     <figure className={`sqm-card sqm-card--${variant} ${quote.source === "user" ? "sqm-card--user" : ""} ${className}`}>
@@ -102,7 +111,6 @@ export default function StrategicQuoteMoment({
   );
 
   if (variant !== "overlay") return quoteMarkup;
-  if (!open) return null;
 
   return (
     <div className="sqm-overlay" role="dialog" aria-modal="true" aria-label="Strategic reflection">

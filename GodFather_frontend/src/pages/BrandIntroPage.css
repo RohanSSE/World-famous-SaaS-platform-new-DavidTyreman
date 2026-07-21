@@ -75,7 +75,6 @@
 .brand-intro-hero {
   text-align: center;
   margin: 0 auto 1rem;
-  animation: brandIntroFadeUp 0.7s ease-out both;
 }
 
 .brand-intro-orb-wrap {
@@ -97,6 +96,14 @@
   animation: brandIntroPulse 3s ease-in-out infinite;
 }
 
+.brand-intro-orb-breeze {
+  opacity: 0;
+  filter: blur(18px);
+  transform: translate3d(-32px, 20px, 0) rotate(-2.5deg) scale(0.88);
+  animation: brandIntroBreezeReveal 2.15s cubic-bezier(0.19, 1, 0.22, 1) 0.25s forwards;
+  will-change: opacity, transform, filter;
+}
+
 .brand-intro-heading {
   font-family: "NeueHaasGrotTextRound", "Haas Grot Text R Trial", system-ui, sans-serif;
   font-weight: 500;
@@ -107,6 +114,7 @@
   margin: 0 0 0.45rem;
   color: #fff;
   text-shadow: 0 0 26px rgba(118, 226, 255, 0.22);
+  min-height: 42px;
 }
 
 .brand-intro-subheading,
@@ -123,6 +131,7 @@
 
 .brand-intro-sub {
   margin: 0 0 0.7rem;
+  min-height: 32px;
 }
 
 .brand-intro-tactics {
@@ -130,6 +139,12 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.brand-intro-tactics--ready {
+  opacity: 1;
 }
 
 .brand-intro-tactic-pill {
@@ -177,6 +192,7 @@
   gap: 1rem;
   align-items: stretch;
   margin: 0 auto 1rem;
+  min-height: 194px;
 }
 
 .brand-intro-reveal-card {
@@ -186,6 +202,13 @@
     radial-gradient(circle at 0% 0%, rgba(142, 229, 255, 0.16), transparent 38%);
   box-shadow: 0 18px 58px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(18px);
+  opacity: 0;
+  transform: translateY(18px);
+  pointer-events: none;
+}
+
+.brand-intro-reveal-card--ready {
+  pointer-events: auto;
   animation: brandIntroFadeUp 0.72s ease-out both;
 }
 
@@ -249,6 +272,12 @@
   display: grid;
   gap: 0.55rem;
   width: 10.4rem;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.brand-intro-orb-prompts--ready {
+  opacity: 1;
 }
 
 .brand-intro-orb-prompts span {
@@ -341,6 +370,21 @@
 
 .brand-intro-footer-line {
   margin: 0 0 1.15rem;
+  min-height: 23px;
+}
+
+.brand-intro-type-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  background: #c0f9ff;
+  transform: translateY(2px);
+  animation: brandIntroCursorBlink 0.85s steps(2, start) infinite;
+}
+
+.brand-intro-cta-slot {
+  min-height: 48px;
 }
 
 .brand-intro-cta {
@@ -358,6 +402,12 @@
   background: linear-gradient(90deg, #3757e6 0%, #6d5cff 48%, #80e4ff 100%);
   box-shadow: 0 14px 36px rgba(57, 89, 229, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.32);
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  opacity: 0;
+  transform: translate3d(0, 14px, 0) scale(0.98);
+}
+
+.brand-intro-cta--ready {
+  animation: brandIntroCtaReveal 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 
 .brand-intro-cta:hover {
@@ -384,6 +434,50 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes brandIntroBreezeReveal {
+  0% {
+    opacity: 0;
+    filter: blur(18px);
+    transform: translate3d(-32px, 20px, 0) rotate(-2.5deg) scale(0.88);
+  }
+
+  62% {
+    opacity: 1;
+    filter: blur(3px);
+    transform: translate3d(8px, -4px, 0) rotate(0.45deg) scale(1.025);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) rotate(0) scale(1);
+  }
+}
+
+@keyframes brandIntroCursorBlink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes brandIntroCtaReveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
@@ -551,6 +645,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .brand-intro-hero,
+  .brand-intro-orb-breeze,
   .brand-intro-reveal-card,
   .brand-intro-footer,
   .brand-intro-tactic-pill,
@@ -563,5 +658,14 @@
   .brand-intro-tactic-pill,
   .brand-intro-cta {
     transition: none;
+  }
+
+  .brand-intro-type-cursor {
+    animation: none;
+  }
+
+  .brand-intro-reveal-card--ready {
+    opacity: 1;
+    transform: none;
   }
 }

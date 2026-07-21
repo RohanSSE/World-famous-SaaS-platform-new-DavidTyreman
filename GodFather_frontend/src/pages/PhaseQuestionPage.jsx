@@ -20,7 +20,7 @@ import {
   getCurrentQuestionStorageKey,
   getPhaseAnswersStorageKey,
 } from "../constants/journeyPhases";
-import chatIcon1 from "../assets/chat-icon1.png";
+// import chatIcon1 from "../assets/chat-icon1.png";
 import chatIcon2 from "../assets/chat-icon2.png";
 import {
   extractApplicableNudgeText,
@@ -584,6 +584,7 @@ export default function PhaseQuestionPage() {
   const livePreviewSeqRef = useRef(0);
   const replyRevealTimersRef = useRef([]);
   const currentInputAiDraftRef = useRef(false);
+  const justSentQuestionKeyRef = useRef(null);
   const answerRewardTimeoutRef = useRef(null);
   const transcriptHydratedKeyRef = useRef("");
   const transcriptEndRef = useRef(null);
@@ -862,6 +863,7 @@ export default function PhaseQuestionPage() {
       setTranscriptMessages([]);
       setTranscriptReady(false);
       transcriptHydratedKeyRef.current = "";
+      justSentQuestionKeyRef.current = null;
       return;
     }
     if (transcriptHydratedKeyRef.current === transcriptStorageKey) return;
@@ -910,6 +912,16 @@ export default function PhaseQuestionPage() {
     });
   }, []);
 
+  const clearInputAfterSend = useCallback((questionKey) => {
+    justSentQuestionKeyRef.current = questionKey || null;
+    currentInputAiDraftRef.current = false;
+    setInputValue("");
+    window.requestAnimationFrame(() => {
+      resizeInput();
+      inputRef.current?.focus();
+    });
+  }, []);
+
   useEffect(() => {
     scrollTranscriptToBottom();
   }, [transcriptMessages, orbChecking, inputValue, scrollTranscriptToBottom]);
@@ -923,7 +935,9 @@ export default function PhaseQuestionPage() {
     if (!q) return;
     const saved = answers[q.key];
     currentInputAiDraftRef.current = false;
-    setInputValue(saved != null ? String(saved) : "");
+    const keepInputCleared = justSentQuestionKeyRef.current === q.key;
+    setInputValue(keepInputCleared ? "" : saved != null ? String(saved) : "");
+    justSentQuestionKeyRef.current = null;
     setNudges([]);
     setNudgeQuality(null);
     setNudgeQuote(null);
@@ -1355,6 +1369,7 @@ export default function PhaseQuestionPage() {
     }
     setSubmitError("");
     appendTranscriptMessages(createUserTranscriptMessage(currentQuestion, currentIdx, value));
+    clearInputAfterSend(currentQuestion.key);
 
     setOrbChecking(true);
     setOrbVerdict(null);
@@ -1887,11 +1902,11 @@ export default function PhaseQuestionPage() {
                       >
                         {activeNudge}
                       </button>
-                      {nudges.length > 1 && (
+                      {/* {nudges.length > 1 && (
                         <p className="pq-nudges-status pq-nudges-status--muted">
                           Tap Help me to go deeper for next suggestion ({nudgeIndex + 1}/{nudges.length})
                         </p>
-                      )}
+                      )} */}
                     </div>
                   )}
 
@@ -1928,7 +1943,7 @@ export default function PhaseQuestionPage() {
                     placeholder={currentQuestion.placeholder}
                     aria-label="Your answer"
                   />
-                  <div className="pq-refine-wrap">
+                  {/* <div className="pq-refine-wrap">
                     <div className="pq-refine-tip">
                       Help me to go deeper
                     </div>
@@ -1942,7 +1957,7 @@ export default function PhaseQuestionPage() {
                     >
                       <img src={chatIcon1} alt="" />
                     </button>
-                  </div>
+                  </div> */}
                   <button
                     type="button"
                     className={`pq-icon-btn pq-icon-btn--send${allPhaseAnswered ? " pq-icon-btn--send-locked" : ""}`}
