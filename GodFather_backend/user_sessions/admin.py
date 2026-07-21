@@ -179,7 +179,7 @@ class AIOutputAdmin(admin.ModelAdmin):
     
 admin.site.register(FoundationSummary)
 
-from .models import Conversation, RAGQueryLog, AIUsageLog, EvaluationRun, EvaluationResult, BrandMemory
+from .models import Conversation, RAGQueryLog, AIUsageLog, EvaluationRun, EvaluationResult, BrandMemory, OrbTurnAuditLog
 admin.site.register(Conversation)
 
 BrandMemory._meta.verbose_name = "Episodic memory"
@@ -255,6 +255,66 @@ class BrandMemoryAdmin(admin.ModelAdmin):
         return obj.created_by.email if obj.created_by else "-"
     created_by_email.short_description = "Memory Created By"
     created_by_email.admin_order_field = "created_by__email"
+
+
+@admin.register(OrbTurnAuditLog)
+class OrbTurnAuditLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "id", "user_email", "user_id_display", "session_title", "question_preview",
+        "turn_index", "status", "score_movement", "confidence_score",
+        "target_confidence_threshold", "conversation_id_snapshot", "created_at",
+    )
+    list_filter = ("status", "associated_discovery_id", "session", "question", "conversation_dropped", "created_at")
+    search_fields = (
+        "user_email", "=user__id", "session__title", "question_text", "latest_answer",
+        "answer_preview", "response_preview", "associated_discovery_id", "=conversation_id_snapshot",
+    )
+    readonly_fields = (
+        "user", "user_email", "session", "question", "conversation", "conversation_id_snapshot",
+        "turn_index", "conversation_question_id", "question_text", "latest_answer",
+        "previous_score", "delta_score", "confidence_score", "target_confidence_threshold",
+        "answer_preview", "response_preview", "status", "associated_discovery_id",
+        "view_api_response", "metadata", "guardrail", "crux_context", "confidence_tracking",
+        "conversation_dropped", "source", "created_at",
+    )
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_select_related = ("user", "session", "question", "conversation")
+
+    fieldsets = (
+        ("User / Session", {"fields": ("user", "user_email", "session", "question", "conversation", "conversation_id_snapshot")} ),
+        ("Turn", {"fields": ("turn_index", "conversation_question_id", "question_text", "latest_answer", "answer_preview")} ),
+        ("Scoring", {"fields": ("previous_score", "delta_score", "confidence_score", "target_confidence_threshold", "status", "associated_discovery_id")} ),
+        ("Response", {"fields": ("response_preview", "view_api_response", "metadata", "guardrail", "crux_context", "confidence_tracking")} ),
+        ("Audit", {"fields": ("conversation_dropped", "source", "created_at"), "classes": ("collapse",)} ),
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def user_id_display(self, obj):
+        return obj.user_id or "-"
+    user_id_display.short_description = "User ID"
+    user_id_display.admin_order_field = "user_id"
+
+    def session_title(self, obj):
+        return obj.session.title if obj.session else "-"
+    session_title.short_description = "Session"
+    session_title.admin_order_field = "session__title"
+
+    def question_preview(self, obj):
+        text = (obj.question_text or "").replace("\n", " ").strip()
+        return text[:80] + ("..." if len(text) > 80 else "")
+    question_preview.short_description = "Question"
+
+    def score_movement(self, obj):
+        previous = "-" if obj.previous_score is None else obj.previous_score
+        delta = "-" if obj.delta_score is None else f"{obj.delta_score:+d}"
+        return f"{previous} ({delta})"
+    score_movement.short_description = "Prev / Delta"
 
 
 @admin.register(AIUsageLog)

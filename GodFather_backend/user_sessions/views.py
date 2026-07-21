@@ -2617,6 +2617,109 @@ def _record_orb_confidence_history(session, question, question_text, draft, orb_
         return []
 
 
+def _safe_int_or_none(value):
+    try:
+        if value is None or value == "":
+            return None
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _record_orb_turn_audit_log(
+    *,
+    user,
+    session,
+    question,
+    conversation=None,
+    conversation_snapshot=None,
+    question_text="",
+    latest_answer="",
+    orb_result=None,
+    previous_score=None,
+    delta_score=None,
+    target_confidence_threshold=None,
+    confidence_tracking=None,
+    view_api_response=None,
+    conversation_dropped=False,
+    source="edit_conversation_orb",
+):
+    try:
+        from user_sessions.models import OrbTurnAuditLog
+
+        orb_result = orb_result or {}
+        confidence_tracking = confidence_tracking if isinstance(confidence_tracking, dict) else {}
+        view_api_response = view_api_response if isinstance(view_api_response, dict) else {}
+        metadata = view_api_response.get("data", {}).get("metadata") if isinstance(view_api_response.get("data"), dict) else None
+        guardrail = view_api_response.get("data", {}).get("guardrail") if isinstance(view_api_response.get("data"), dict) else None
+        crux_context = view_api_response.get("data", {}).get("crux_context") if isinstance(view_api_response.get("data"), dict) else None
+        history = confidence_tracking.get("confidence_history") if isinstance(confidence_tracking, dict) else []
+        latest_history_entry = history[-1] if isinstance(history, list) and history else None
+        associated_discovery_id = str(
+            orb_result.get("associated_discovery_id")
+            or (metadata or {}).get("associated_discovery_id")
+            or ""
+        )
+
+        turn_index = _safe_int_or_none((latest_history_entry or {}).get("turn_index"))
+        if turn_index is None:
+            last_turn = OrbTurnAuditLog.objects.filter(
+                session=session,
+                question=question,
+                associated_discovery_id=associated_discovery_id,
+            ).order_by("-turn_index").first()
+            turn_index = (last_turn.turn_index if last_turn else 0) + 1
+
+        normalized_previous_score = _safe_int_or_none(previous_score)
+        if normalized_previous_score is None:
+            normalized_previous_score = _safe_int_or_none(confidence_tracking.get("previous_score"))
+        normalized_confidence_score = _safe_int_or_none(orb_result.get("confidence_score"))
+        if normalized_confidence_score is None:
+            normalized_confidence_score = _safe_int_or_none(confidence_tracking.get("latest_confidence_score"))
+        normalized_delta_score = _safe_int_or_none(delta_score)
+        if normalized_delta_score is None:
+            normalized_delta_score = _safe_int_or_none(confidence_tracking.get("delta_score"))
+        normalized_threshold = _safe_int_or_none(target_confidence_threshold)
+        if normalized_threshold is None:
+            normalized_threshold = _safe_int_or_none(confidence_tracking.get("target_confidence_threshold"))
+
+        conversation_id_snapshot = None
+        if conversation is not None:
+            conversation_id_snapshot = conversation.id
+        elif isinstance(conversation_snapshot, dict):
+            conversation_id_snapshot = conversation_snapshot.get("id")
+
+        OrbTurnAuditLog.objects.create(
+            user=user if getattr(user, "is_authenticated", False) else None,
+            user_email=getattr(user, "email", "") or "",
+            session=session,
+            question=question,
+            conversation=None if conversation_dropped else conversation,
+            conversation_id_snapshot=conversation_id_snapshot,
+            turn_index=turn_index,
+            conversation_question_id=getattr(question, "id", None),
+            question_text=str(question_text or ""),
+            latest_answer=str(latest_answer or ""),
+            previous_score=normalized_previous_score,
+            delta_score=normalized_delta_score,
+            confidence_score=normalized_confidence_score,
+            target_confidence_threshold=normalized_threshold,
+            answer_preview=str(latest_answer or "").strip()[:500],
+            response_preview=str(orb_result.get("response") or "").strip()[:500],
+            status=str(orb_result.get("status") or "").lower(),
+            associated_discovery_id=associated_discovery_id,
+            view_api_response=view_api_response,
+            metadata=metadata or {},
+            guardrail=guardrail or orb_result.get("guardrail") or {},
+            crux_context=crux_context or {},
+            confidence_tracking=confidence_tracking,
+            conversation_dropped=bool(conversation_dropped),
+            source=source,
+        )
+    except Exception as e:
+        logger.warning("ORB turn audit log save failed: %s", e)
+
+
 def _drop_rejected_orb_turn(conversation, incoming_content):
     """
     Remove a rejected turn that was pre-created by the frontend draft flow.
@@ -4758,6 +4861,24 @@ def edit_conversation(request, pk, conversation_id):
             },
         }
 
+        will_drop_rejected_turn = str(conversation.content or "").strip() == str(content or "").strip()
+        _record_orb_turn_audit_log(
+            user=request.user,
+            session=session,
+            question=question,
+            conversation=conversation,
+            conversation_snapshot=conversation_snapshot,
+            question_text=question_text,
+            latest_answer=draft,
+            orb_result=result,
+            previous_score=previous_score,
+            delta_score=0,
+            target_confidence_threshold=orb_framework["target_confidence_threshold"],
+            confidence_tracking=confidence_tracking,
+            view_api_response=view_api_response,
+            conversation_dropped=will_drop_rejected_turn,
+            source="edit_conversation_orb_guardrail_preflight",
+        )
         drop_result = _drop_rejected_orb_turn(conversation, content)
         return Response({
             "edited_message": {
@@ -4996,6 +5117,24 @@ After parsing, route database persistence by status.
                 },
             }
             confidence_tracking = view_api_response["data"]["confidence_tracking"]
+            will_drop_rejected_turn = str(conversation.content or "").strip() == str(content or "").strip()
+            _record_orb_turn_audit_log(
+                user=request.user,
+                session=session,
+                question=question,
+                conversation=conversation,
+                conversation_snapshot=conversation_snapshot,
+                question_text=question_text,
+                latest_answer=draft,
+                orb_result=result,
+                previous_score=previous_score,
+                delta_score=0,
+                target_confidence_threshold=orb_framework["target_confidence_threshold"],
+                confidence_tracking=confidence_tracking,
+                view_api_response=view_api_response,
+                conversation_dropped=will_drop_rejected_turn,
+                source="edit_conversation_orb_rejected",
+            )
             drop_result = _drop_rejected_orb_turn(conversation, content)
 
             return Response({
@@ -5078,6 +5217,23 @@ After parsing, route database persistence by status.
             },
         }
         confidence_tracking = view_api_response["data"]["confidence_tracking"]
+        _record_orb_turn_audit_log(
+            user=request.user,
+            session=session,
+            question=question,
+            conversation=conversation,
+            conversation_snapshot=conversation_snapshot,
+            question_text=question_text,
+            latest_answer=draft,
+            orb_result=result,
+            previous_score=previous_score,
+            delta_score=delta_score,
+            target_confidence_threshold=orb_framework["target_confidence_threshold"],
+            confidence_tracking=confidence_tracking,
+            view_api_response=view_api_response,
+            conversation_dropped=False,
+            source="edit_conversation_orb_confidence_history",
+        )
         
         Conversation.objects.create(session=session, question=question, role="assistant", content=assistant_response.strip())
         

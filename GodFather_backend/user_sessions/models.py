@@ -712,6 +712,70 @@ class Conversation(models.Model):
 
 
 
+class OrbTurnAuditLog(models.Model):
+    """Admin-visible audit record for each ORB evaluation turn."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orb_turn_audit_logs',
+    )
+    user_email = models.EmailField(blank=True, default='', db_index=True)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name='orb_turn_audit_logs')
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orb_turn_audit_logs',
+    )
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orb_turn_audit_logs',
+    )
+    conversation_id_snapshot = models.PositiveIntegerField(null=True, blank=True, db_index=True)
+    turn_index = models.PositiveIntegerField(default=1, db_index=True)
+    conversation_question_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
+    question_text = models.TextField(blank=True, default='')
+    latest_answer = models.TextField(blank=True, default='')
+    previous_score = models.IntegerField(null=True, blank=True)
+    delta_score = models.IntegerField(null=True, blank=True)
+    confidence_score = models.IntegerField(null=True, blank=True)
+    target_confidence_threshold = models.IntegerField(null=True, blank=True)
+    answer_preview = models.TextField(blank=True, default='')
+    response_preview = models.TextField(blank=True, default='')
+    status = models.CharField(max_length=32, blank=True, default='', db_index=True)
+    associated_discovery_id = models.CharField(max_length=128, blank=True, default='', db_index=True)
+    view_api_response = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    guardrail = models.JSONField(default=dict, blank=True)
+    crux_context = models.JSONField(default=dict, blank=True)
+    confidence_tracking = models.JSONField(default=dict, blank=True)
+    conversation_dropped = models.BooleanField(default=False)
+    source = models.CharField(max_length=128, blank=True, default='edit_conversation_orb')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user_email', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['session', '-created_at']),
+            models.Index(fields=['question', '-created_at']),
+            models.Index(fields=['associated_discovery_id', 'turn_index']),
+            models.Index(fields=['status', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"ORB turn {self.turn_index} - {self.user_email or 'unknown'} - Q{self.conversation_question_id or '-'}"
+
+
+
+
 class ReviewComment(models.Model):
     session = models.ForeignKey(Session, related_name='review_comments', on_delete=models.CASCADE)
     answer = models.ForeignKey(Answer, related_name='review_comments', on_delete=models.CASCADE, null=True, blank=True)

@@ -299,12 +299,13 @@ function usePrefersReducedMotion() {
   return prefersReducedMotion;
 }
 
-function PhaseTranscriptMessage({ message, onTypingFrame }) {
+function PhaseTranscriptMessage({ message, onTypingFrame, onTypingComplete }) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const shouldType = message.role === "brand" && !prefersReducedMotion;
   const { display, isTyping, skipToEnd } = useTypewriter(message.text, {
     speed: message.kind === "question" ? BRAND_TYPEWRITER_QUESTION_SPEED : BRAND_TYPEWRITER_REPLY_SPEED,
     enabled: shouldType,
+    onComplete: () => onTypingComplete?.(message.id),
     punctuationPause: BRAND_TYPEWRITER_SENTENCE_PAUSE,
     commaPause: BRAND_TYPEWRITER_COMMA_PAUSE,
   });
@@ -313,6 +314,10 @@ function PhaseTranscriptMessage({ message, onTypingFrame }) {
   useEffect(() => {
     if (message.role === "brand") onTypingFrame?.();
   }, [display, message.role, onTypingFrame]);
+
+  useEffect(() => {
+    if (message.role === "brand" && !shouldType) onTypingComplete?.(message.id);
+  }, [message.id, message.role, onTypingComplete, shouldType]);
 
   return (
     <div className={`pq-chat-message-row pq-chat-message-row--${message.role}`}>
@@ -571,6 +576,7 @@ export default function PhaseQuestionPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [transcriptMessages, setTranscriptMessages] = useState([]);
   const [transcriptReady, setTranscriptReady] = useState(false);
+  const [visibleBrandMessageLimit, setVisibleBrandMessageLimit] = useState(1);
   const nudgesDebounceRef = useRef(null);
   const nudgePickedRef = useRef(false);
   const livePreviewDebounceRef = useRef(null);
@@ -582,6 +588,7 @@ export default function PhaseQuestionPage() {
   const transcriptHydratedKeyRef = useRef("");
   const transcriptEndRef = useRef(null);
   const questionIndexRestoredRef = useRef(false);
+  const visibleBrandSequenceRef = useRef("");
   const shouldForceQuestionRefineRef = useRef(
     typeof performance !== "undefined" &&
       performance.getEntriesByType?.("navigation")?.[0]?.type === "reload",
@@ -1533,11 +1540,61 @@ export default function PhaseQuestionPage() {
     }
   };
 
+  const currentQuestion = questions[currentIdx];
+  const visibleTranscriptMessages = transcriptMessages.filter((message) => {
+    if (!message) return false;
+    if (message.questionIndex === currentIdx) return true;
+    return currentQuestion?.key && message.questionKey === currentQuestion.key;
+  });
+  const visibleBrandMessageIds = visibleTranscriptMessages
+    .filter((message) => message.role === "brand")
+    .map((message) => message.id);
+  const visibleBrandSequenceKey = visibleBrandMessageIds.join("|");
+
+  useEffect(() => {
+    const previousKey = visibleBrandSequenceRef.current;
+    const previousIds = previousKey ? previousKey.split("|") : [];
+    const hasSamePrefix = previousIds.every((id, index) => visibleBrandMessageIds[index] === id);
+
+    setVisibleBrandMessageLimit((currentLimit) => {
+      if (!visibleBrandMessageIds.length) return 0;
+      if (!previousIds.length || !hasSamePrefix) return 1;
+
+      const nextLimit =
+        visibleBrandMessageIds.length > previousIds.length && currentLimit >= previousIds.length
+          ? currentLimit + 1
+          : currentLimit;
+      return Math.max(1, Math.min(nextLimit, visibleBrandMessageIds.length));
+    });
+    visibleBrandSequenceRef.current = visibleBrandSequenceKey;
+  }, [visibleBrandMessageIds, visibleBrandSequenceKey]);
+
+  const handleBrandTypingComplete = useCallback((messageId) => {
+    setVisibleBrandMessageLimit((currentLimit) => {
+      const messageIndex = visibleBrandMessageIds.indexOf(messageId);
+      if (messageIndex < 0) return currentLimit;
+      return Math.max(currentLimit, Math.min(messageIndex + 2, visibleBrandMessageIds.length));
+    });
+  }, [visibleBrandMessageIds]);
+
+  let renderedBrandMessages = 0;
+  let transcriptBlocked = false;
+  const sequentialTranscriptMessages = visibleTranscriptMessages.filter((message) => {
+    if (transcriptBlocked) return false;
+    if (message.role === "brand") {
+      renderedBrandMessages += 1;
+      if (renderedBrandMessages > visibleBrandMessageLimit) {
+        transcriptBlocked = true;
+        return false;
+      }
+    }
+    return true;
+  });
+
   if (!phase || !isPhaseUnlocked(phase.id)) {
     return <Navigate to="/journey-phases" replace />;
   }
 
-  const currentQuestion = questions[currentIdx];
   const billingSource = billing || getStoredBillingUser();
   const journeyQuestionNumber = getJourneyQuestionNumber(phaseId, currentIdx);
   const isPhaseOneOrbJourney = Number(phaseId) === 1;
@@ -1599,11 +1656,6 @@ export default function PhaseQuestionPage() {
       }
     : null;
   const activeEvaluationStep = ORB_EVALUATION_STEPS[evaluationStepIndex % ORB_EVALUATION_STEPS.length];
-  const visibleTranscriptMessages = transcriptMessages.filter((message) => {
-    if (!message) return false;
-    if (message.questionIndex === currentIdx) return true;
-    return currentQuestion?.key && message.questionKey === currentQuestion.key;
-  });
 
   return (
     <div className="pq-page">
@@ -1778,11 +1830,12 @@ export default function PhaseQuestionPage() {
 
                 <div className="pq-chat-viewport" aria-live="polite">
                   <div className="pq-chat-stream">
-                    {visibleTranscriptMessages.map((message) => (
+                    {sequentialTranscriptMessages.map((message) => (
                       <PhaseTranscriptMessage
                         key={message.id}
                         message={message}
                         onTypingFrame={scrollTranscriptToBottom}
+                        onTypingComplete={handleBrandTypingComplete}
                       />
                     ))}
 

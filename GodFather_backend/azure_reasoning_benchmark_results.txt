@@ -1,0 +1,132 @@
+Azure OpenAI Reasoning Benchmark Results
+==========================================
+Generated UTC: 2026-07-21 04:33:01
+Deployment: gpt-4o
+Temperature: 0.0
+Cases run: 6
+Pass threshold: 0.75 per case
+API key: not printed
+
+Summary
+------------------------------------------
+Overall reasoning score: 0.917 / 1.000
+Passed cases: 6/6
+Average latency: 1959.3 ms
+Median latency: 1713.8 ms
+Total tokens: 1254
+
+Case Results
+------------------------------------------
+[R01] Constrained Inventory Split (math_reasoning) - PASS
+Score: 1.000
+Latency: 4159.4 ms
+Tokens: prompt=95 completion=189 total=284
+Scoring evidence: south_15, north_30, east_27, total_72
+Prompt:
+A warehouse has 72 display units for three stores. North must receive twice as many units as South. East must receive 12 more units than South. How many units should each store receive? Return the answer with a brief rationale.
+Model answer:
+Let the number of units South receives be \( x \). Then:
+
+- North receives \( 2x \) (twice as many as South).
+- East receives \( x + 12 \) (12 more than South).
+
+The total number of units is 72, so:
+\[
+x + 2x + (x + 12) = 72
+\]
+Simplify:
+\[
+4x + 12 = 72
+\]
+\[
+4x = 60
+\]
+\[
+x = 15
+\]
+
+Thus:
+- South receives \( x = 15 \) units.
+- North receives \( 2x = 30 \) units.
+- East receives \( x + 12 = 27 \) units.
+
+**Final Answer:** South: 15, North: 30, East: 27. This satisfies the total of 72 units and the given conditions.
+
+[R02] Cross-Time-Zone Meeting Choice (constraint_reasoning) - PASS
+Score: 0.750
+Latency: 1711.9 ms
+Tokens: prompt=142 completion=125 total=267
+Scoring evidence: recommends_tuesday, mentions_10_00, handles_timezone
+Prompt:
+Schedule a 45-minute call for Priya in London and Marcus in New York. Priya is available Monday 15:00-17:00 London time and Tuesday 14:00-16:00 London time. Marcus is available Monday 09:00-09:30 New York time and Tuesday 10:00-12:00 New York time. London is 5 hours ahead of New York. What is the earliest valid slot? Explain briefly.
+Model answer:
+The earliest valid slot is **Tuesday, 15:00-15:45 London time (10:00-10:45 New York time)**.
+
+**Rationale:**  
+- Priya is available Tuesday 14:00-16:00 London time.  
+- Marcus is available Tuesday 10:00-12:00 New York time, which corresponds to 15:00-17:00 London time.  
+- The overlapping time is 15:00-16:00 London time, and the earliest 45-minute slot within this overlap is 15:00-15:45 London time.
+
+[R03] Refund Policy Exception (rule_application) - PASS
+Score: 1.000
+Latency: 1078.1 ms
+Tokens: prompt=113 completion=38 total=151
+Scoring evidence: store_credit, opened_item, non_defective, within_30_days
+Prompt:
+Policy: unopened items can be refunded within 14 days. Defective opened items can be refunded within 30 days. Non-defective opened items can receive store credit within 30 days. A customer returns an opened, non-defective item after 17 days and says they changed their mind. What outcome should support offer?
+Model answer:
+The customer should be offered store credit. 
+
+Rationale: The item is opened, non-defective, and returned within 30 days, which qualifies for store credit under the policy.
+
+[R04] Causal Experiment Design (business_reasoning) - PASS
+Score: 0.750
+Latency: 1715.7 ms
+Tokens: prompt=96 completion=69 total=165
+Scoring evidence: isolates_variable, success_metric, measures_impact
+Prompt:
+A SaaS team changed pricing, homepage copy, and onboarding emails in the same week. Signups rose 18%, but paid conversion fell 6%. Propose the simplest test plan to identify which change caused the paid-conversion drop.
+Model answer:
+The simplest test plan is to revert each change one at a time while keeping the others constant, starting with the most likely culprit (e.g., pricing). Measure the paid conversion rate after each reversion to isolate the impact.
+
+Rationale: This sequential rollback approach minimizes complexity and allows you to pinpoint the change affecting paid conversion with minimal disruption.
+
+[R05] Weighted Vendor Decision (quantitative_decision) - PASS
+Score: 1.000
+Latency: 2027.5 ms
+Tokens: prompt=112 completion=158 total=270
+Scoring evidence: chooses_beta, weighted_score_78_9, compares_alpha, mentions_weights
+Prompt:
+Choose between vendor Alpha and vendor Beta. Score weights: reliability 50%, cost 30%, support 20%. Alpha scores reliability 90, cost 60, support 65. Beta scores reliability 78, cost 85, support 72. Which vendor has the higher weighted score? Show the scores briefly.
+Model answer:
+To calculate the weighted scores:
+
+**Alpha:**
+- Reliability: 90 × 0.50 = 45
+- Cost: 60 × 0.30 = 18
+- Support: 65 × 0.20 = 13
+- Total: 45 + 18 + 13 = **76**
+
+**Beta:**
+- Reliability: 78 × 0.50 = 39
+- Cost: 85 × 0.30 = 25.5
+- Support: 72 × 0.20 = 14.4
+- Total: 39 + 25.5 + 14.4 = **78.9**
+
+**Conclusion:** Vendor Beta has the higher weighted score (78.9 vs. 76).
+
+[R06] Contradictory Requirements (critical_reasoning) - PASS
+Score: 1.000
+Latency: 1063.4 ms
+Tokens: prompt=92 completion=25 total=117
+Scoring evidence: flags_contradiction, needs_source_of_truth, asks_clarifying_question, avoids_fabrication
+Prompt:
+A product brief says the free plan allows unlimited projects. Later it says the free plan has a hard limit of 300 projects. The launch FAQ must be accurate. What should the assistant do before drafting the FAQ answer?
+Model answer:
+The assistant should clarify the discrepancy by consulting the product team or relevant stakeholders to confirm the accurate limit for the free plan.
+
+Notes
+------------------------------------------
+Scores are deterministic rubric checks over generated answers, not a second LLM judge.
+This benchmark is intentionally compact; rerun with the same temperature for comparable trend checks.
+No secrets from .env are written to this report.
